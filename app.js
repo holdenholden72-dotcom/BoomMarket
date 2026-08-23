@@ -65,10 +65,14 @@ sortModal.addEventListener('click', (e) => {
 
 document.querySelectorAll('.sort-content li').forEach(li => {
     li.addEventListener('click', () => {
-document.querySelectorAll('.sort-content li').forEach(item => item.classList.remove('active'));
-        li.classList.add('active');
-        const type = li.getAttribute('data-sort');
+        // Сначала убираем класс active у абсолютно всех пунктов
+        document.querySelectorAll('.sort-content li').forEach(el => el.classList.remove('active'));
         
+        // Затем добавляем active только на тот пункт, на который нажали
+        li.classList.add('active');
+        
+        const type = li.getAttribute('data-sort');
+
         if (type === 'time_asc') items.sort((a, b) => a.time - b.time);
         if (type === 'time_desc') items.sort((a, b) => b.time - a.time);
         if (type === 'price_asc') items.sort((a, b) => a.price - b.price);
@@ -80,7 +84,6 @@ document.querySelectorAll('.sort-content li').forEach(item => item.classList.rem
         renderGrid(items);
     });
 });
-
 searchInput.addEventListener('input', (e) => {
     const val = e.target.value.toLowerCase();
     const filtered = items.filter(i => i.name.toLowerCase().includes(val));
