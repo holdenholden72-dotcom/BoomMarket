@@ -64,17 +64,21 @@ body {
     font-weight: bold;
     cursor: pointer;
 }
-
 /* Фильтры и поиск */
 .filter-section {
-    padding: 0 16px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 16px;
+    margin-bottom: 12px;
+    width: 100%;
 }
 
 .search-box {
+    flex: 1;
     position: relative;
-    margin-bottom: 12px;
+    margin-bottom: 0;
 }
-
 .search-box input {
     width: 100%;
     background: #1c1c1e;
@@ -649,4 +653,22 @@ body {
 
 .filter-section .search-box {
     flex: 1;
+}
+/* Отступ снизу для всей страницы, чтобы контент не прятался под меню */
+body {
+    padding-bottom: 90px;
+}
+
+/* Фиксированная нижняя навигация */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: #161618;
+    border-top: 1px solid #222;
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    z-index: 1000;
 }

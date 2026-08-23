@@ -64,15 +64,14 @@ if (sortModal) {
         }
     });
 }
+   const sortItems = document.querySelectorAll('.sort-content li');
 
-const sortItems = document.querySelectorAll('.sort-content li');
-
-sortItems.forEach(li => {
-    li.addEventListener('click', () => {
+sortItems.forEach(sortLi => {
+    sortLi.addEventListener('click', () => {
         sortItems.forEach(item => item.classList.remove('active'));
-        li.classList.add('active');
+        sortLi.classList.add('active');
 
-        const type = li.getAttribute('data-sort');
+        const type = sortLi.getAttribute('data-sort');
 
         if (type === 'time_asc') items.sort((a, b) => a.time - b.time);
         if (type === 'time_desc') items.sort((a, b) => b.time - a.time);
@@ -81,10 +80,11 @@ sortItems.forEach(li => {
         if (type === 'num_asc') items.sort((a, b) => a.number - b.number);
         if (type === 'num_desc') items.sort((a, b) => b.number - a.number);
 
-        sortModal.classList.remove('active');
+        inventorySortModal.classList.remove('active');
         renderGrid(items);
     });
 });
+
 searchInput.addEventListener('input', (e) => {
     const val = e.target.value.toLowerCase();
     const filtered = items.filter(i => i.name.toLowerCase().includes(val));
