@@ -638,3 +638,15 @@ body {
 .sort-content li.active .sort-dot {
     background-color: #ffd13b; /* Желтый цвет */
 }
+/* Стили для поиска в инвентаре */
+.filter-section {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 0 16px;
+    margin-bottom: 12px;
+}
+
+.filter-section .search-box {
+    flex: 1;
+}

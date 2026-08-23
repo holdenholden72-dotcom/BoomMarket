@@ -93,3 +93,29 @@ const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
     manifestUrl: 'https://holdenholden72-dotcom.github.io/BoomMarket/tonconnect-manifest.json',
     buttonRootId: 'walletBtn'
 });
+// Элементы сортировки инвентаря
+const inventorySortTriggerBtn = document.getElementById('inventorySortTriggerBtn');
+const inventorySortModal = document.getElementById('inventorySortModal');
+const inventorySortItems = inventorySortModal.querySelectorAll('.sort-content li');
+
+// Открытие модалки сортировки инвентаря
+inventorySortTriggerBtn.addEventListener('click', () => {
+    inventorySortModal.classList.toggle('active');
+});
+
+// Закрытие при клике вне окна
+inventorySortModal.addEventListener('click', (e) => {
+    if (e.target === inventorySortModal) {
+        inventorySortModal.classList.remove('active');
+    }
+});
+
+// Логика выбора пункта сортировки с желтыми кружками
+inventorySortItems.forEach(li => {
+    li.addEventListener('click', () => {
+        inventorySortItems.forEach(item => item.classList.remove('active'));
+        li.classList.add('active');
+        
+        inventorySortModal.classList.remove('active');
+    });
+});
