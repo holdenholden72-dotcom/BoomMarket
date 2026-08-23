@@ -89,11 +89,6 @@ const walletBtn = document.getElementById('walletBtn');
 const walletModal = document.getElementById('walletModal');
 const closeWalletModal = document.getElementById('closeWalletModal');
 
-walletBtn.addEventListener('click', () => {
-    walletModal.classList.add('active');
-});
-
-closeWalletModal.addEventListener('click', () => {
     walletModal.classList.remove('active');
 });
 
@@ -102,21 +97,8 @@ walletModal.addEventListener('click', (e) => {
         walletModal.classList.remove('active');
     }
 });
-// Логика кнопки «Connect Wallet in Telegram»
-const connectTgBtn = document.querySelector('.connect-tg-btn');
-
-if (connectTgBtn) {
-    connectTgBtn.addEventListener('click', () => {
-        // Ссылка на официальный бот/мини-приложение кошелька в Telegram
-        const walletUrl = 'https://t.me/wallet';
-        
-        // Проверяем, запущены ли мы внутри Telegram Mini App
-        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
-            // Если в Телеграме — открываем официально через их API
-            window.Telegram.WebApp.openTelegramLink(walletUrl);
-        } else {
-            // Если открыто в обычном браузере для теста — открываем в новой вкладке
-            window.open(walletUrl, '_blank');
-        }
-    });
-}
+// Инициализация TonConnect UI для подключения кошелька с именем BoomMarket
+const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+    manifestUrl: 'https://holdenholden72-dotcom.github.io/BoomMarket/tonconnect-manifest.json',
+    buttonRootId: 'walletBtn'
+});
