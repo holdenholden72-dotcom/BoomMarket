@@ -64,21 +64,17 @@ body {
     font-weight: bold;
     cursor: pointer;
 }
+
 /* Фильтры и поиск */
 .filter-section {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 0 16px;
-    margin-bottom: 12px;
-    width: 100%;
+    padding: 0 16px 12px;
 }
 
 .search-box {
-    flex: 1;
     position: relative;
-    margin-bottom: 0;
+    margin-bottom: 12px;
 }
+
 .search-box input {
     width: 100%;
     background: #1c1c1e;
@@ -618,57 +614,4 @@ body {
     justify-content: center;
     color: #fff;
     font-size: 12px;
-}
-/* Стили для кружков сортировки */
-.sort-content li {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    padding: 12px 16px;
-}
-
-.sort-content li .sort-dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: #707579; /* Серый по умолчанию */
-    margin-right: 12px;
-    flex-shrink: 0;
-    transition: background-color 0.2s ease;
-}
-
-/* Когда пункт активен — кружок становится желтым */
-.sort-content li.active .sort-dot {
-    background-color: #ffd13b; /* Желтый цвет */
-}
-/* Стили для поиска в инвентаре */
-.filter-section {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    padding: 0 16px;
-    margin-bottom: 12px;
-}
-
-.filter-section .search-box {
-    flex: 1;
-}
-/* Отступ снизу для всей страницы, чтобы контент не прятался под меню */
-body {
-    padding-bottom: 90px;
-}
-
-/* Фиксированная нижняя навигация */
-.bottom-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background: #161618;
-    border-top: 1px solid #222;
-    display: flex;
-    justify-content: space-around;
-    padding: 10px 0;
-    z-index: 1000;
 }

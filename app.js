@@ -15,22 +15,18 @@ const marketScreen = document.getElementById('marketScreen');
 const profileScreen = document.getElementById('profileScreen');
 const openProfileBtn = document.getElementById('openProfileBtn');
 const backToMarketBtn = document.getElementById('backToMarketBtn');
-// Открытие профиля по клику на аватарку или блок профиля
-const userProfileBlock = document.querySelector('.user-profile');
 
-if (userProfileBlock && profileScreen && marketScreen) {
-    userProfileBlock.addEventListener('click', () => {
-        marketScreen.classList.remove('active');
-        profileScreen.classList.add('active');
-    });
-}
-// Возврат в маркет (с защитой от null)
-if (backToMarketBtn && profileScreen && marketScreen) {
-    backToMarketBtn.addEventListener('click', () => {
-        profileScreen.classList.remove('active');
-        marketScreen.classList.add('active');
-    });
-}
+// Открытие профиля
+openProfileBtn.addEventListener('click', () => {
+    marketScreen.classList.remove('active');
+    profileScreen.classList.add('active');
+});
+
+// Возврат в маркет
+backToMarketBtn.addEventListener('click', () => {
+    profileScreen.classList.remove('active');
+    marketScreen.classList.add('active');
+});
 
 function renderGrid(data) {
     grid.innerHTML = '';
@@ -57,22 +53,20 @@ function renderGrid(data) {
 
 renderGrid(items);
 
-if (sortModal) {
-    sortModal.addEventListener('click', (e) => {
-        if (e.target === sortModal) {
-            sortModal.classList.remove('active');
-        }
-    });
-}
-   const sortItems = document.querySelectorAll('.sort-content li');
+sortTriggerBtn.addEventListener('click', () => {
+    sortModal.classList.toggle('active');
+});
 
-sortItems.forEach(sortLi => {
-    sortLi.addEventListener('click', () => {
-        sortItems.forEach(item => item.classList.remove('active'));
-        sortLi.classList.add('active');
+sortModal.addEventListener('click', (e) => {
+    if (e.target === sortModal) {
+        sortModal.classList.remove('active');
+    }
+});
 
-        const type = sortLi.getAttribute('data-sort');
-
+document.querySelectorAll('.sort-content li').forEach(li => {
+    li.addEventListener('click', () => {
+        const type = li.getAttribute('data-sort');
+        
         if (type === 'time_asc') items.sort((a, b) => a.time - b.time);
         if (type === 'time_desc') items.sort((a, b) => b.time - a.time);
         if (type === 'price_asc') items.sort((a, b) => a.price - b.price);
@@ -80,7 +74,7 @@ sortItems.forEach(sortLi => {
         if (type === 'num_asc') items.sort((a, b) => a.number - b.number);
         if (type === 'num_desc') items.sort((a, b) => b.number - a.number);
 
-        inventorySortModal.classList.remove('active');
+        sortModal.classList.remove('active');
         renderGrid(items);
     });
 });
@@ -94,60 +88,4 @@ searchInput.addEventListener('input', (e) => {
 const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
     manifestUrl: 'https://holdenholden72-dotcom.github.io/BoomMarket/tonconnect-manifest.json',
     buttonRootId: 'walletBtn'
-});
-// Элементы сортировки инвентаря
-const inventorySortTriggerBtn = document.getElementById('inventorySortTriggerBtn');
-const inventorySortModal = document.getElementById('inventorySortModal');
-const inventorySortItems = inventorySortModal.querySelectorAll('.sort-content li');
-
-// Открытие модалки сортировки инвентаря
-inventorySortTriggerBtn.addEventListener('click', () => {
-    inventorySortModal.classList.toggle('active');
-});
-
-// Закрытие при клике вне окна
-inventorySortModal.addEventListener('click', (e) => {
-    if (e.target === inventorySortModal) {
-        inventorySortModal.classList.remove('active');
-    }
-});
-
-// Логика выбора пункта сортировки с желтыми кружками
-inventorySortItems.forEach(li => {
-    li.addEventListener('click', () => {
-        inventorySortItems.forEach(item => item.classList.remove('active'));
-        li.classList.add('active');
-        
-        inventorySortModal.classList.remove('active');
-    });
-});
-// Нижняя навигация: переключение экранов
-const bottomNavItems = document.querySelectorAll('.bottom-nav .nav-item');
-if (bottomNavItems.length > 0) {
-    bottomNavItems.forEach((item, index) => {
-        item.addEventListener('click', () => {
-            bottomNavItems.forEach(nav => nav.classList.remove('active'));
-            item.classList.add('active');
-
-            // Индекс 4 — это последняя кнопка "Хранилище"
-            if (index === 4) {
-                marketScreen.classList.remove('active');
-                profileScreen.classList.add('active');
-            } 
-            // Индекс 0 — первая кнопка "Маркет"
-            else if (index === 0) {
-                profileScreen.classList.remove('active');
-                marketScreen.classList.add('active');
-            }
-        });
-    });
-}
-// Проверяем, что элементы найдены и вызываем отрисовку при загрузке
-document.addEventListener('DOMContentLoaded', () => {
-    console.log("Страница загружена, отрисовываем карточки...");
-    if (typeof renderGrid === 'function' && typeof items !== 'undefined') {
-        renderGrid(items);
-    } else {
-        console.error("Ошибка: функция renderGrid или массив items не найдены!");
-    }
 });

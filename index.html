@@ -11,73 +11,67 @@
 <body>
 
     <!-- ЭКРАН 1: МАРКЕТ -->
-<div id="marketScreen" class="screen active">
-    
-    <!-- Шапка сайта -->
-    <header class="header">
-        <div class="user-profile">
-            <div class="avatar" id="openProfileBtn"></div>
-            <div class="balance">
-                <span class="diamond-icon">💎</span>
-                <span id="user-balance">0</span>
-                <button class="add-btn">+</button>
-            </div>
-        </div>
-        <div class="wallet-container">
-            <button class="wallet-btn" id="walletBtn">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1-.9-2-2-2h12v4"></path></svg>
-                Connect Wallet
-            </button>
-        </div>
-    </header>
-
-    <!-- Поиск и фильтры -->
-    <div class="filter-section">
-        <div class="search-box">
-            <span class="search-icon">🔍</span>
-            <input type="text" id="searchInput" placeholder="Поиск по названию NFT">
-        </div>
-
-        <div class="filter-scroll">
-            <button class="sort-trigger-btn" id="sortTriggerBtn">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M10 18h4"></path></svg>
-            </button>
-            <select class="dropdown-filter" id="filterNft">
-                <option value="">NFT</option>
-                <option value="Ice Cream">Ice Cream</option>
-            </select>
-            <select class="dropdown-filter" id="filterModel">
-                <option value="">Модель</option>
-                <option value="Classic">Classic</option>
-            </select>
-            <select class="dropdown-filter" id="filterBg">
-                <option value="">Фон</option>
-                <option value="Beige">Beige</option>
-                <option value="Blue">Blue</option>
-            </select>
-            <select class="dropdown-filter" id="filterSymbol">
-                <option value="">Символ</option>
-                <option value="Clover">🍀</option>
-            </select>
+    <div id="marketScreen" class="screen active">
+        <!-- Верхняя панель -->
+        <!-- Верхняя панель -->
+<header class="header">
+    <div class="user-profile">
+        <div class="avatar" id="openProfileBtn"></div>
+        <div class="balance">
+            <span class="diamond-icon">💎</span>
+            <span id="user-balance">0.01</span>
+            <button class="add-btn">+</button>
         </div>
     </div>
+    <div class="wallet-container">
+        <button class="wallet-btn" id="walletBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"></path></svg>
+        </button>
+    </div>
+</header>
+                           
+        <!-- Поиск и фильтры -->
+        <div class="filter-section">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" placeholder="Поиск по названию NFT">
+            </div>
+            
+            <div class="filter-scroll">
+                <button class="sort-trigger-btn" id="sortTriggerBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
+                </button>
+                <select class="dropdown-filter" id="filterNft">
+                    <option value="">NFT</option>
+                    <option value="Ice Cream">Ice Cream</option>
+                </select>
+                <select class="dropdown-filter" id="filterModel">
+                    <option value="">Модель</option>
+                    <option value="Classic">Classic</option>
+                </select>
+                <select class="dropdown-filter" id="filterBg">
+                    <option value="">Фон</option>
+                    <option value="Beige">Beige</option>
+                    <option value="Blue">Blue</option>
+                </select>
+                <select class="dropdown-filter" id="filterSymbol">
+                    <option value="">Символ</option>
+                    <option value="Clover">☘️</option>
+                </select>
+            </div>
+        </div>
 
-    <!-- Сетка карточек -->
-    <div id="grid" class="nft-grid"></div>
-
-</div>
-                     
         <!-- Модальное окно сортировки (3 полоски) -->
         <div class="sort-modal" id="sortModal">
             <div class="sort-content">
                 <h3>Сортировка</h3>
                 <ul>
-                   <li data-sort="time_asc"><span class="sort-dot"></span>Время размещения (По возрастанию)</li>
-<li data-sort="time_desc"><span class="sort-dot"></span>Время размещения (По убыванию)</li>
-<li data-sort="price_asc"><span class="sort-dot"></span>Цена (По возрастанию)</li>
-<li data-sort="price_desc"><span class="sort-dot"></span>Цена (По убыванию)</li>
-<li data-sort="num_asc"><span class="sort-dot"></span>Номер подарка (По возрастанию)</li>
-<li data-sort="num_desc"><span class="sort-dot"></span>Номер подарка (По убыванию)</li>
+                    <li data-sort="time_asc">Время размещения (По возрастанию)</li>
+                    <li data-sort="time_desc">Время размещения (По убыванию)</li>
+                    <li data-sort="price_asc">Цена (По возрастанию)</li>
+                    <li data-sort="price_desc">Цена (По убыванию)</li>
+                    <li data-sort="num_asc">Номер подарка (По возрастанию)</li>
+                    <li data-sort="num_desc">Номер подарка (По убыванию)</li>
                 </ul>
             </div>
         </div>
@@ -89,64 +83,14 @@
     </div>
 
     <!-- ЭКРАН 2: ПРОФИЛЬ -->
-    <!-- ЭКРАН 2: ПРОФИЛЬ -->
-<div id="profileScreen" class="screen">
-    <header class="profile-header">
-        <!-- Кнопка назад и т.д. -->
-    </header>
+    <div id="profileScreen" class="screen">
+        <header class="profile-header">
+            <button class="back-btn" id="backToMarketBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Назад
+            </button>
+        </header>
 
-    <!-- СЮДА ВСТАВЛЯЕМ ПОИСК И ФИЛЬТРЫ ИНВЕНТАРЯ -->
-    <div class="filter-section">
-        <div class="search-box" style="width: 100%;">
-            <span class="search-icon">🔍</span>
-            <input type="text" id="inventorySearchInput" placeholder="Поиск по названию NFT">
-        </div>
-    </div>
-
-    <div class="filter-scroll">
-        <button class="sort-trigger-btn" id="inventorySortTriggerBtn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
-        </button>
-        <select class="dropdown-filter" id="inventoryFilterNft">
-            <option value="">NFT</option>
-            <option value="Ice Cream">Ice Cream</option>
-        </select>
-        <select class="dropdown-filter" id="inventoryFilterModel">
-            <option value="">Модель</option>
-            <option value="Classic">Classic</option>
-        </select>
-        <select class="dropdown-filter" id="inventoryFilterBg">
-            <option value="">Фон</option>
-            <option value="Beige">Beige</option>
-            <option value="Blue">Blue</option>
-        </select>
-        <select class="dropdown-filter" id="inventoryFilterSymbol">
-            <option value="">Символ</option>
-            <option value="Clover">🍀</option>
-        </select>
-    </div>
-
-    <!-- Модальное окно сортировки для инвентаря -->
-    <div class="sort-modal" id="inventorySortModal">
-        <div class="sort-content">
-            <h3>Сортировка</h3>
-            <ul>
-                <li data-sort="time_asc"><span class="sort-dot"></span>Время размещения (По возрастанию)</li>
-                <li data-sort="time_desc"><span class="sort-dot"></span>Время размещения (По убыванию)</li>
-                <li data-sort="price_asc"><span class="sort-dot"></span>Цена (По возрастанию)</li>
-                <li data-sort="price_desc"><span class="sort-dot"></span>Цена (По убыванию)</li>
-                <li data-sort="num_asc"><span class="sort-dot"></span>Номер подарка (По возрастанию)</li>
-                <li data-sort="num_desc"><span class="sort-dot"></span>Номер подарка (По убыванию)</li>
-            </ul>
-        </div>
-    </div>
-    <!-- КОНЕЦ ВСТАВКИ -->
-
-    <!-- Дальше идут твои вкладки "Хранилище / На продаже" -->
-    <div class="profile-tabs">
-        ...
-    </div>
-       
         <div class="profile-content">
             <!-- Баланс и статистика -->
             <div class="profile-top-card">
@@ -189,8 +133,22 @@
                 <span>ИСТОРИЯ</span>
                 <span class="arrow-right">›</span>
             </div>
-                        
-                    
+            
+            <div class="history-date">21 августа</div>
+            
+            <div class="history-item">
+                <div class="history-left">
+                    <div class="history-icon-box">↓</div>
+                    <div class="history-info">
+                        <div class="history-action">Вывод</div>
+                        <div class="history-status">Успешно <span>14:58</span></div>
+                    </div>
+                </div>
+                <div class="history-sum negative">- 💎 10.7285</div>
+            </div>
+        </div>
+    </div>
+
     <!-- Нижняя навигация -->
     <nav class="bottom-nav">
         <button class="nav-item active">
