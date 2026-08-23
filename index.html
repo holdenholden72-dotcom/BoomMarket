@@ -13,20 +13,23 @@
     <!-- ЭКРАН 1: МАРКЕТ -->
     <div id="marketScreen" class="screen active">
         <!-- Верхняя панель -->
-        <header class="header">
-            <div class="user-profile">
-                <div class="avatar" id="openProfileBtn"></div>
-                <div class="balance">
-                    <span class="diamond-icon">💎</span>
-                    <span id="user-balance">0.01</span>
-                    <button class="add-btn">+</button>
-                </div>
-                 <button class="wallet-btn" id="walletBtn">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z"/></svg>
-</button>
-            </div>
-        </header>
-
+        <!-- Верхняя панель -->
+<header class="header">
+    <div class="user-profile">
+        <div class="avatar" id="openProfileBtn"></div>
+        <div class="balance">
+            <span class="diamond-icon">💎</span>
+            <span id="user-balance">0.01</span>
+            <button class="add-btn">+</button>
+        </div>
+    </div>
+    <div class="wallet-container">
+        <button class="wallet-btn" id="walletBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"></path></svg>
+        </button>
+    </div>
+</header>
+                           
         <!-- Поиск и фильтры -->
         <div class="filter-section">
             <div class="search-box">
