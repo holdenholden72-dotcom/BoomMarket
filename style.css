@@ -1,0 +1,616 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+    background-color: #0f0f0f;
+    color: #ffffff;
+    padding-bottom: 80px;
+}
+
+.screen {
+    display: none;
+}
+
+.screen.active {
+    display: block;
+}
+
+/* Шапка маркетплейса */
+.header {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.avatar {
+    width: 36px;
+    height: 36px;
+    background: #333;
+    border-radius: 50%;
+    cursor: pointer;
+    background-image: url('data:image/svg+xml;utf8,<svg fill="%23888" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>');
+    background-size: cover;
+}
+
+.balance {
+    background: #1c1c1e;
+    padding: 4px 10px 4px 8px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.add-btn {
+    background: #2c2c2e;
+    color: #fff;
+    border: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* Фильтры и поиск */
+.filter-section {
+    padding: 0 16px 12px;
+}
+
+.search-box {
+    position: relative;
+    margin-bottom: 12px;
+}
+
+.search-box input {
+    width: 100%;
+    background: #1c1c1e;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 12px 12px 40px;
+    color: #fff;
+    font-size: 14px;
+    outline: none;
+}
+
+.search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #8e8e93;
+}
+
+.filter-scroll {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.filter-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.sort-trigger-btn, .dropdown-filter {
+    background: #1c1c1e;
+    border: none;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.sort-trigger-btn {
+    padding: 8px 10px;
+    fill: #fff;
+}
+
+/* Сетка карточек */
+.market-grid {
+    padding: 0 16px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.nft-card {
+    background: #1c1c1e;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.nft-image-container {
+    height: 160px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nft-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 4px;
+    border-radius: 8px;
+}
+
+.nft-img {
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+}
+
+.nft-info {
+    padding: 12px;
+}
+
+.nft-title {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.nft-number {
+    font-size: 12px;
+    color: #8e8e93;
+    margin-bottom: 10px;
+}
+
+.nft-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.nft-price {
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.cart-btn {
+    background: #2c2c2e;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+/* Стили экрана профиля */
+.profile-header {
+    padding: 12px 16px;
+}
+
+.back-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.profile-content {
+    padding: 0 16px;
+}
+
+.profile-top-card {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.balance-box {
+    flex: 1.2;
+    background: linear-gradient(135deg, #2b2345 0%, #1c1c1e 100%);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 110px;
+}
+
+.diamond-big {
+    font-size: 20px;
+}
+
+.balance-num {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.balance-label {
+    font-size: 12px;
+    color: #8e8e93;
+}
+
+.stats-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.stat-mini-card {
+    background: #1c1c1e;
+    border-radius: 12px;
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 50px;
+}
+
+.stat-title {
+    font-size: 13px;
+    color: #8e8e93;
+}
+
+.stat-value {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.section-title {
+    font-size: 12px;
+    color: #8e8e93;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.action-btn {
+    background: #1c1c1e;
+    border: none;
+    border-radius: 14px;
+    padding: 14px 0;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.action-icon {
+    font-size: 18px;
+    background: #2c2c2e;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.history-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.history-date {
+    font-size: 13px;
+    color: #8e8e93;
+    margin-bottom: 10px;
+}
+
+.history-item {
+    background: #1c1c1e;
+    border-radius: 14px;
+    padding: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.history-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.history-icon-box {
+    background: #2c2c2e;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.history-action {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 2px;
+}
+
+.history-status {
+    font-size: 12px;
+    color: #34c759;
+}
+
+.history-status span {
+    color: #8e8e93;
+    margin-left: 4px;
+}
+
+.history-sum {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.history-sum.negative {
+    color: #fff;
+}
+
+/* Модальное окно сортировки */
+.sort-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    z-index: 100;
+    align-items: flex-end;
+}
+
+.sort-modal.active {
+    display: flex;
+}
+
+.sort-content {
+    background: #1c1c1e;
+    width: 100%;
+    border-radius: 20px 20px 0 0;
+    padding: 20px;
+}
+
+.sort-content h3 {
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+.sort-content ul {
+    list-style: none;
+}
+
+.sort-content li {
+    padding: 12px 0;
+    border-bottom: 1px solid #2c2c2e;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* Нижняя навигация */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: #161618;
+    border-top: 1px solid #222;
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 0;
+    z-index: 50;
+}
+
+.nav-item {
+    background: none;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #8e8e93;
+    font-size: 10px;
+    gap: 4px;
+    cursor: pointer;
+}
+
+.nav-item.active {
+    color: #ffffff;
+}
+
+.nav-icon {
+    font-size: 18px;
+}
+.wallet-btn {
+    background: #1c1c1e;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+/* Модальное окно кошелька */
+.wallet-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 200;
+    align-items: flex-end;
+}
+
+.wallet-modal.active {
+    display: flex;
+}
+
+.wallet-modal-content {
+    background: #18181a;
+    width: 100%;
+    border-radius: 24px 24px 0 0;
+    padding: 24px 20px 30px;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.close-modal-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: #2c2c2e;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    color: #8e8e93;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.wallet-modal-header {
+    text-align: center;
+    margin-bottom: 24px;
+    margin-top: 10px;
+}
+
+.wallet-modal-header h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #fff;
+}
+
+.wallet-modal-header p {
+    font-size: 13px;
+    color: #8e8e93;
+    padding: 0 20px;
+    line-height: 1.4;
+}
+
+.connect-tg-btn {
+    width: 100%;
+    background: #2ea6ff;
+    color: #fff;
+    border: none;
+    border-radius: 16px;
+    padding: 16px;
+    font-size: 15px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    margin-bottom: 24px;
+}
+
+.other-apps-title {
+    text-align: center;
+    font-size: 13px;
+    color: #8e8e93;
+    margin-bottom: 16px;
+}
+
+.wallets-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.wallet-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.wallet-app-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.wallet-app-icon.tonkeeper { background: #0098ea; }
+.wallet-app-icon.gram { background: #4a90e2; }
+.wallet-app-icon.mywallet { background: #1c3faa; }
+.wallet-app-icon.view-all { background: #2c2c2e; }
+
+.wallet-item span:last-child {
+    font-size: 11px;
+    color: #8e8e93;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.ton-connect-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #2c2c2e;
+    padding-top: 16px;
+    font-size: 13px;
+    color: #8e8e93;
+}
+
+.help-icon {
+    background: #2c2c2e;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 12px;
+}
