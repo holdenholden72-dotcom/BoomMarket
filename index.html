@@ -198,5 +198,21 @@
 </div>
 
     <script src="app.js"></script>
+<!-- Модальное окно вывода средств -->
+<div class="modal" id="withdrawModal">
+    <div class="modal-content">
+        <button class="close-modal" id="closeWithdrawModal">&times;</button>
+        
+        <h2>Вивід коштів</h2>
+        
+        <!-- Поле ввода суммы -->
+        <div class="withdraw-input-box">
+            <input type="number" id="withdrawAmount" placeholder="Сума (мін. 0.5)" step="0.1">
+        </div>
+        
+        <!-- Кнопка подтверждения вывода -->
+        <button class="action-btn" id="confirmWithdrawBtn">Вивести</button>
+    </div>
+</div>
 </body>
 </html>
