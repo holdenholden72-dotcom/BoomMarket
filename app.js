@@ -133,46 +133,32 @@ window.addEventListener('click', (event) => {
     }
 });
 
-// 4. Проверка и подтверждение вывода
+// 4. Проверка кошелька и подтверждение вывода
 if (confirmWithdrawBtn) {
     confirmWithdrawBtn.addEventListener('click', async () => {
-        // Проверка подключения кошелька TonConnect
-        if (!tonconnectUI.connected) {
+        // Проверяем, подключен ли кошелек через TonConnect UI
+        if (!window.tonconnectUI || !window.tonconnectUI.wallet) {
             alert('Пожалуйста, подключите кошелек!');
-            tonconnectUI.openModal();
+            // Закрываем окно вывода, чтобы не мешало
+            withdrawModal.style.display = 'none';
+            // Открываем родное модальное окно подключения TonConnect
+            if (window.tonconnectUI) {
+                window.tonconnectUI.openModal();
+            }
             return;
         }
 
         const amount = parseFloat(withdrawAmountInput.value);
 
-        // Проверка лимитов (от 0.5 до 100 000)
+        // Проверка минимальной суммы
         if (isNaN(amount) || amount < 0.5) {
             alert('Минимальная сумма для вывода: 0.5');
             return;
         }
 
-        if (amount > 100000) {
-            alert('Максимальная сумма для вывода: 100,000');
-            return;
-        }
-
-        // Проверка баланса
-        const userBalanceElement = document.getElementById('user-balance');
-        const currentBalance = userBalanceElement ? parseFloat(userBalanceElement.innerText) || 0 : 0;
-
-        if (amount > currentBalance) {
-            alert('Недостаточно средств на балансе!');
-            return;
-        }
-
-        // Если все проверки пройдены
-        try {
-            alert(`Запрос на вывод ${amount} успешно создан!`);
-            withdrawModal.style.display = 'none';
-            withdrawAmountInput.value = '';
-        } catch (error) {
-            console.error('Ошибка при выводе:', error);
-            alert('Произошла ошибка при выводе средств.');
-        }
+        // Если кошелек подключен и сумма введена верно
+        alert(`Запрос на вывод ${amount} успешно создан!`);
+        withdrawModal.style.display = 'none';
+        withdrawAmountInput.value = '';
     });
 }
