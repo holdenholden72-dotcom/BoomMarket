@@ -20,7 +20,7 @@
         <div class="balance">
             <span class="diamond-icon">💎</span>
             <span id="user-balance">0</span>
-            <button class="add-btn">+</button>
+           <button class="add-btn" id="plusDepositBtn">+</button>
         </div>
     </div>
     <div class="wallet-container">
@@ -117,11 +117,10 @@
                 <button class="action-btn" id="withdrawBtn">
                     <span class="action-icon">↓</span>
                     <span>Вывод</span>
-                </button>
-                <button class="action-btn">
-                    <span class="action-icon">+</span>
-                    <span>Ввод</span>
-                </button>
+                <button class="action-btn" id="quickDepositBtn">
+    <span class="action-icon">+</span>
+    <span>Ввод</span>
+</button>
                 <button class="action-btn">
                     <span class="action-icon">🎁</span>
                     <span>Добавить</span>
@@ -213,6 +212,16 @@
             <button class="action-btn" id="confirmWithdrawBtn">Вывести</button>
         </div>
     </div>
+       <div id="depositModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <button class="close-modal" id="closeDepositModal">&times;</button>
+        <h2>Пополнение баланса</h2>
+        <div class="withdraw-input-box">
+            <input type="number" id="depositAmount" placeholder="Сумма (мин. 0.01)" step="0.01" min="0.01">
+        </div>
+        <button class="action-btn" id="confirmDepositBtn">Пополнить</button>
+    </div>
+</div>
 
     <!-- Скрипт подключаем один раз в самом конце -->
     <script src="app.js"></script>

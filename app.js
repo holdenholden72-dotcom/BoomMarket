@@ -160,3 +160,52 @@ if (confirmWithdrawBtn) {
         withdrawAmountInput.value = '';
     });
 }
+// === БЛОК ПОПОЛНЕНИЯ СРЕДСТВ ===
+const depositModal = document.getElementById('depositModal');
+const plusDepositBtn = document.getElementById('plusDepositBtn');
+const quickDepositBtn = document.getElementById('quickDepositBtn');
+const closeDepositModalBtn = document.getElementById('closeDepositModal');
+const confirmDepositBtn = document.getElementById('confirmDepositBtn');
+const depositAmountInput = document.getElementById('depositAmount');
+const userBalanceElement = document.getElementById('user-balance');
+
+const openDeposit = () => {
+    if (depositModal) depositModal.style.display = 'flex';
+};
+
+if (plusDepositBtn) plusDepositBtn.addEventListener('click', openDeposit);
+if (quickDepositBtn) quickDepositBtn.addEventListener('click', openDeposit);
+
+if (closeDepositModalBtn) {
+    closeDepositModalBtn.addEventListener('click', () => {
+        depositModal.style.display = 'none';
+    });
+}
+
+window.addEventListener('click', (event) => {
+    if (event.target === depositModal) {
+        depositModal.style.display = 'none';
+    }
+});
+
+if (confirmDepositBtn) {
+    confirmDepositBtn.addEventListener('click', () => {
+        const amount = parseFloat(depositAmountInput.value);
+
+        if (isNaN(amount) || amount < 0.01) {
+            alert('Минимальная сумма для пополнения: 0.01');
+            return;
+        }
+
+        let currentBalance = userBalanceElement ? parseFloat(userBalanceElement.innerText) || 0 : 0;
+        currentBalance += amount;
+        
+        if (userBalanceElement) {
+            userBalanceElement.innerText = currentBalance.toFixed(2);
+        }
+
+        alert(`Баланс успешно пополнен на ${amount}!`);
+        depositModal.style.display = 'none';
+        depositAmountInput.value = '';
+    });
+}
