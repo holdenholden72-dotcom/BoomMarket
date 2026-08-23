@@ -133,7 +133,7 @@ window.addEventListener('click', (event) => {
     }
 });
 
-// 4. Подтверждение вывода
+// 4. Подтверждение вывода с проверкой баланса
 if (confirmWithdrawBtn) {
     confirmWithdrawBtn.addEventListener('click', () => {
         const amount = parseFloat(withdrawAmountInput.value);
@@ -141,6 +141,16 @@ if (confirmWithdrawBtn) {
         // Проверка минимальной суммы
         if (isNaN(amount) || amount < 0.5) {
             alert('Минимальная сумма для вывода: 0.5');
+            return;
+        }
+
+        // Получаем текущий баланс игрока со страницы
+        const userBalanceElement = document.getElementById('user-balance');
+        const currentBalance = userBalanceElement ? parseFloat(userBalanceElement.innerText) || 0 : 0;
+
+        // Проверяем, чтобы сумма не превышала баланс
+        if (amount > currentBalance) {
+            alert(`Недостаточно средств! Ваш баланс: ${currentBalance}`);
             return;
         }
 
