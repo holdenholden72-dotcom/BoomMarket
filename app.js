@@ -84,19 +84,6 @@ searchInput.addEventListener('input', (e) => {
     const filtered = items.filter(i => i.name.toLowerCase().includes(val));
     renderGrid(filtered);
 });
-// Логика модального окна кошелька
-const walletBtn = document.getElementById('walletBtn');
-const walletModal = document.getElementById('walletModal');
-const closeWalletModal = document.getElementById('closeWalletModal');
-
-    walletModal.classList.remove('active');
-});
-
-walletModal.addEventListener('click', (e) => {
-    if (e.target === walletModal) {
-        walletModal.classList.remove('active');
-    }
-});
 // Инициализация TonConnect UI для подключения кошелька с именем BoomMarket
 const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
     manifestUrl: 'https://holdenholden72-dotcom.github.io/BoomMarket/tonconnect-manifest.json',
