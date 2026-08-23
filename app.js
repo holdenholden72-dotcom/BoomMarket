@@ -63,10 +63,15 @@ sortModal.addEventListener('click', (e) => {
     }
 });
 
-document.querySelectorAll('.sort-content li').forEach(li => {
+const sortItems = document.querySelectorAll('.sort-content li');
+
+sortItems.forEach(li => {
     li.addEventListener('click', () => {
+        sortItems.forEach(item => item.classList.remove('active'));
+        li.classList.add('active');
+
         const type = li.getAttribute('data-sort');
-        
+
         if (type === 'time_asc') items.sort((a, b) => a.time - b.time);
         if (type === 'time_desc') items.sort((a, b) => b.time - a.time);
         if (type === 'price_asc') items.sort((a, b) => a.price - b.price);
@@ -78,7 +83,6 @@ document.querySelectorAll('.sort-content li').forEach(li => {
         renderGrid(items);
     });
 });
-
 searchInput.addEventListener('input', (e) => {
     const val = e.target.value.toLowerCase();
     const filtered = items.filter(i => i.name.toLowerCase().includes(val));
