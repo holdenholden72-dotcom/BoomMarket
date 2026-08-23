@@ -632,3 +632,63 @@ body {
 .sort-content li.active {
     color: #ffd700; /* Можно сделать и текст желтоватым для красоты */
 }
+/* Стили для модального окна вывода */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: #1a1a1a;
+    padding: 20px;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 320px;
+    text-align: center;
+    position: relative;
+    color: #ffffff;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.close-modal {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.close-modal:hover {
+    color: #fff;
+}
+
+.withdraw-input-box {
+    margin: 20px 0;
+}
+
+.withdraw-input-box input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #333;
+    background-color: #2a2a2a;
+    color: #fff;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+.withdraw-input-box input:focus {
+    border-color: #007aff;
+    outline: none;
+}

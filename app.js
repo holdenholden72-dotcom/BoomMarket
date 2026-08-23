@@ -105,50 +105,74 @@ if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData
         }
     }
 }
+// === БЛОК ВЫВОДА СРЕДСТВ ===
 const withdrawModal = document.getElementById('withdrawModal');
+const openWithdrawBtn = document.getElementById('withdrawBtn');
+const closeWithdrawModalBtn = document.getElementById('closeWithdrawModal');
 const confirmWithdrawBtn = document.getElementById('confirmWithdrawBtn');
 const withdrawAmountInput = document.getElementById('withdrawAmount');
 
-confirmWithdrawBtn.addEventListener('click', async () => {
-    // 1. Проверяем, подключен ли кошелек через TonConnect
-    if (!tonconnectUI.connected) {
-        alert('Пожалуйста, подключите кошелек!');
-        tonconnectUI.openModal();
-        return;
-    }
+// 1. Открытие окна по клику на кнопку "Вывод"
+if (openWithdrawBtn) {
+    openWithdrawBtn.addEventListener('click', () => {
+        withdrawModal.style.display = 'flex';
+    });
+}
 
-    // 2. Получаем введенную сумму
-    const amount = parseFloat(withdrawAmountInput.value);
+// 2. Закрытие окна по крестику
+if (closeWithdrawModalBtn) {
+    closeWithdrawModalBtn.addEventListener('click', () => {
+        withdrawModal.style.display = 'none';
+    });
+}
 
-    // 3. Проверяем минимальную и максимальную сумму
-    if (isNaN(amount) || amount < 0.5) {
-        alert('Минимальная сумма для вывода: 0.5');
-        return;
-    }
-
-    if (amount > 100000) {
-        alert('Максимальная сумма для вывода: 100,000');
-        return;
-    }
-
-    // 4. Проверяем, хватает ли средств на балансе игрока
-    const userBalanceElement = document.getElementById('user-balance');
-    const currentBalance = userBalanceElement ? parseFloat(userBalanceElement.innerText) || 0 : 0;
-
-    if (amount > currentBalance) {
-        alert('Недостаточно средств на балансе!');
-        return;
-    }
-
-    // 5. Если все проверки пройдены успешно
-    try {
-        alert(`Запрос на вывод ${amount} успешно создан!`);
-        
-        // Закрываем модалку и очищаем поле ввода
-        withdrawModal.classList.remove('active');
-        withdrawAmountInput.value = '';
-    } catch (error) {
-        console.error('Ошибка при выводе:', error);
-        alert('Произошла ошибка при выводе средств.');
+// 3. Закрытие при клике вне окна
+window.addEventListener('click', (event) => {
+    if (event.target === withdrawModal) {
+        withdrawModal.style.display = 'none';
     }
 });
+
+// 4. Проверка и подтверждение вывода
+if (confirmWithdrawBtn) {
+    confirmWithdrawBtn.addEventListener('click', async () => {
+        // Проверка подключения кошелька TonConnect
+        if (!tonconnectUI.connected) {
+            alert('Пожалуйста, подключите кошелек!');
+            tonconnectUI.openModal();
+            return;
+        }
+
+        const amount = parseFloat(withdrawAmountInput.value);
+
+        // Проверка лимитов (от 0.5 до 100 000)
+        if (isNaN(amount) || amount < 0.5) {
+            alert('Минимальная сумма для вывода: 0.5');
+            return;
+        }
+
+        if (amount > 100000) {
+            alert('Максимальная сумма для вывода: 100,000');
+            return;
+        }
+
+        // Проверка баланса
+        const userBalanceElement = document.getElementById('user-balance');
+        const currentBalance = userBalanceElement ? parseFloat(userBalanceElement.innerText) || 0 : 0;
+
+        if (amount > currentBalance) {
+            alert('Недостаточно средств на балансе!');
+            return;
+        }
+
+        // Если все проверки пройдены
+        try {
+            alert(`Запрос на вывод ${amount} успешно создан!`);
+            withdrawModal.style.display = 'none';
+            withdrawAmountInput.value = '';
+        } catch (error) {
+            console.error('Ошибка при выводе:', error);
+            alert('Произошла ошибка при выводе средств.');
+        }
+    });
+}
