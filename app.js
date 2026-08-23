@@ -142,3 +142,12 @@ if (bottomNavItems.length > 0) {
         });
     });
 }
+// Проверяем, что элементы найдены и вызываем отрисовку при загрузке
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("Страница загружена, отрисовываем карточки...");
+    if (typeof renderGrid === 'function' && typeof items !== 'undefined') {
+        renderGrid(items);
+    } else {
+        console.error("Ошибка: функция renderGrid или массив items не найдены!");
+    }
+});
