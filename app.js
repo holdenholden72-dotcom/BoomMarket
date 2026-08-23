@@ -136,8 +136,10 @@ window.addEventListener('click', (event) => {
 // 4. Проверка кошелька и подтверждение вывода
 if (confirmWithdrawBtn) {
     confirmWithdrawBtn.addEventListener('click', async () => {
-        // Проверяем подключение через tonconnectUI.connected
-        if (!window.tonconnectUI || !window.tonconnectUI.connected) {
+        // Проверяем надежно: подключен ли через UI или есть ли активный кошелек вхранилище
+        const isConnected = window.tonconnectUI && (window.tonconnectUI.connected || window.tonconnectUI.wallet);
+
+        if (!isConnected) {
             alert('Пожалуйста, подключите кошелек!');
             withdrawModal.style.display = 'none';
             if (window.tonconnectUI) {
@@ -154,7 +156,7 @@ if (confirmWithdrawBtn) {
             return;
         }
 
-        // Если кошелек подключен и сумма введена верно
+        // Если кошелек точно подключен
         alert(`Запрос на вывод ${amount} успешно создан!`);
         withdrawModal.style.display = 'none';
         withdrawAmountInput.value = '';
