@@ -615,3 +615,22 @@ body {
     color: #fff;
     font-size: 12px;
 }
+/* Базовый вид точки (серая по умолчанию) */
+.sort-content li .sort-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #777777; /* Серый цвет для невыбранных */
+    margin-right: 10px;
+    transition: background-color 0.2s ease;
+}
+
+/* Когда пункт выбран (добавляем класс active на li) */
+.sort-content li.active .sort-dot {
+    background-color: #ffd700; /* Желтый цвет для выбранного */
+}
+
+.sort-content li.active {
+    color: #ffd700; /* Можно сделать и текст желтоватым для красоты */
+}

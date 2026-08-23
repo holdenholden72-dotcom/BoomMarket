@@ -65,6 +65,8 @@ sortModal.addEventListener('click', (e) => {
 
 document.querySelectorAll('.sort-content li').forEach(li => {
     li.addEventListener('click', () => {
+document.querySelectorAll('.sort-content li').forEach(item => item.classList.remove('active'));
+        li.classList.add('active');
         const type = li.getAttribute('data-sort');
         
         if (type === 'time_asc') items.sort((a, b) => a.time - b.time);
