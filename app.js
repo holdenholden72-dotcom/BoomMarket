@@ -15,13 +15,15 @@ const marketScreen = document.getElementById('marketScreen');
 const profileScreen = document.getElementById('profileScreen');
 const openProfileBtn = document.getElementById('openProfileBtn');
 const backToMarketBtn = document.getElementById('backToMarketBtn');
+// Открытие профиля по клику на аватарку или блок профиля
+const userProfileBlock = document.querySelector('.user-profile');
 
-// Открытие профиля
-openProfileBtn.addEventListener('click', () => {
-    marketScreen.classList.remove('active');
-    profileScreen.classList.add('active');
-});
-
+if (userProfileBlock && profileScreen && marketScreen) {
+    userProfileBlock.addEventListener('click', () => {
+        marketScreen.classList.remove('active');
+        profileScreen.classList.add('active');
+    });
+}
 // Возврат в маркет
 backToMarketBtn.addEventListener('click', () => {
     profileScreen.classList.remove('active');
@@ -119,3 +121,24 @@ inventorySortItems.forEach(li => {
         inventorySortModal.classList.remove('active');
     });
 });
+// Нижняя навигация: переключение экранов
+const bottomNavItems = document.querySelectorAll('.bottom-nav .nav-item');
+if (bottomNavItems.length > 0) {
+    bottomNavItems.forEach((item, index) => {
+        item.addEventListener('click', () => {
+            bottomNavItems.forEach(nav => nav.classList.remove('active'));
+            item.classList.add('active');
+
+            // Индекс 4 — это последняя кнопка "Хранилище"
+            if (index === 4) {
+                marketScreen.classList.remove('active');
+                profileScreen.classList.add('active');
+            } 
+            // Индекс 0 — первая кнопка "Маркет"
+            else if (index === 0) {
+                profileScreen.classList.remove('active');
+                marketScreen.classList.add('active');
+            }
+        });
+    });
+}
