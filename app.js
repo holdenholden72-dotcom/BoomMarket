@@ -167,7 +167,10 @@ const quickDepositBtn = document.getElementById('quickDepositBtn');
 const closeDepositModalBtn = document.getElementById('closeDepositModal');
 const confirmDepositBtn = document.getElementById('confirmDepositBtn');
 const depositAmountInput = document.getElementById('depositAmount');
-const userBalanceElement = document.getElementById('user-balance');
+
+// Ищем ВСЕ элементы с классом .user-balance на странице
+const userBalanceElements = document.querySelectorAll('.user-balance');
+
 const openDeposit = () => {
     if (depositModal) depositModal.style.display = 'flex';
 };
@@ -196,12 +199,18 @@ if (confirmDepositBtn) {
             return;
         }
 
-        let currentBalance = userBalanceElement ? parseFloat(userBalanceElement.innerText) || 0 : 0;
-        currentBalance += amount;
-
-        if (userBalanceElement) {
-            userBalanceElement.innerText = currentBalance.toFixed(2);
+        // Берем текущий баланс из первого найденного элемента
+        let currentBalance = 0;
+        if (userBalanceElements.length > 0) {
+            currentBalance = parseFloat(userBalanceElements[0].innerText) || 0;
         }
+        
+        currentBalance += amount;
+        
+        // Обновляем баланс во ВСЕХ элементах с классом .user-balance
+        userBalanceElements.forEach(el => {
+            el.innerText = currentBalance.toFixed(2);
+        });
 
         alert(`Баланс успешно пополнен на ${amount}!`);
         depositModal.style.display = 'none';
