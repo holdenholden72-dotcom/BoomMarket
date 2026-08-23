@@ -24,11 +24,13 @@ if (userProfileBlock && profileScreen && marketScreen) {
         profileScreen.classList.add('active');
     });
 }
-// Возврат в маркет
-backToMarketBtn.addEventListener('click', () => {
-    profileScreen.classList.remove('active');
-    marketScreen.classList.add('active');
-});
+// Возврат в маркет (с защитой от null)
+if (backToMarketBtn && profileScreen && marketScreen) {
+    backToMarketBtn.addEventListener('click', () => {
+        profileScreen.classList.remove('active');
+        marketScreen.classList.add('active');
+    });
+}
 
 function renderGrid(data) {
     grid.innerHTML = '';
@@ -55,15 +57,13 @@ function renderGrid(data) {
 
 renderGrid(items);
 
-sortTriggerBtn.addEventListener('click', () => {
-    sortModal.classList.toggle('active');
-});
-
-sortModal.addEventListener('click', (e) => {
-    if (e.target === sortModal) {
-        sortModal.classList.remove('active');
-    }
-});
+if (sortModal) {
+    sortModal.addEventListener('click', (e) => {
+        if (e.target === sortModal) {
+            sortModal.classList.remove('active');
+        }
+    });
+}
 
 const sortItems = document.querySelectorAll('.sort-content li');
 
