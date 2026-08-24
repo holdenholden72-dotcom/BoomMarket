@@ -164,7 +164,7 @@ if (confirmWithdrawBtn) {
 const depositModal = document.getElementById('depositModal');
 const plusDepositBtn = document.getElementById('plusDepositBtn');
 const quickDepositBtn = document.getElementById('quickDepositBtn');
-const closeDepositModalBtn = document.querySelector('.close-modal');
+const closeDepositModalBtn = document.getElementById('closeDepositModal');
 const confirmDepositBtn = document.getElementById('confirmDepositBtn');
 const depositAmountInput = document.getElementById('depositAmount');
 
