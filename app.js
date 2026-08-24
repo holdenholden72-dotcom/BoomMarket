@@ -206,15 +206,13 @@ if (confirmDepositBtn) {
     });
 }
 // Открытие и закрытие модального окна вывода
-const openWithdrawBtn = document.getElementById('openWithdrawBtn');
+const withdrawBtn = document.getElementById('withdrawBtn');
 const closeWithdrawModalBtn = document.getElementById('closeWithdrawModal');
 
-if (openWithdrawBtn && withdrawModal) {
-    openWithdrawBtn.addEventListener('click', () => {
+if (withdrawBtn && withdrawModal) {
+    withdrawBtn.addEventListener('click', () => {
         withdrawModal.style.display = 'flex';
     });
-}
-
 if (closeWithdrawModalBtn && withdrawModal) {
     closeWithdrawModalBtn.addEventListener('click', () => {
         withdrawModal.style.display = 'none';
