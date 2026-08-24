@@ -172,24 +172,25 @@ const depositAmountInput = document.getElementById('depositAmount');
 const userBalanceElements = document.querySelectorAll('.user-balance');
 
 const openDeposit = () => {
-    if (depositModal) depositModal.style.display = 'flex';
+    // 1. Сначала находим кнопку профиля или экран профиля и активируем его
+    const profileScreen = document.getElementById('profileScreen');
+    const marketScreen = document.getElementById('marketScreen');
+    
+    if (profileScreen && marketScreen) {
+        marketScreen.classList.remove('active');
+        profileScreen.classList.add('active');
+    }
+
+    // 2. Затем открываем модальное окно пополнения
+    if (depositModal) {
+        depositModal.style.display = 'flex';
+    }
 };
 
 if (plusDepositBtn) plusDepositBtn.addEventListener('click', openDeposit);
-if (quickDepositBtn) quickDepositBtn.addEventListener('click', openDeposit);
-
-if (closeDepositModalBtn) {
-    closeDepositModalBtn.addEventListener('click', () => {
-        depositModal.style.display = 'none';
-    });
-}
-
-window.addEventListener('click', (event) => {
-    if (event.target === depositModal) {
-        depositModal.style.display = 'none';
-    }
+if (quickDepositBtn) quickDepositBtn.addEventListener('click', () => {
+    if (depositModal) depositModal.style.display = 'flex';
 });
-
 if (confirmDepositBtn) {
     confirmDepositBtn.addEventListener('click', () => {
         const amount = parseFloat(depositAmountInput.value);
