@@ -213,6 +213,8 @@ if (withdrawBtn && withdrawModal) {
     withdrawBtn.addEventListener('click', () => {
         withdrawModal.style.display = 'flex';
     });
+}
+
 if (closeWithdrawModalBtn && withdrawModal) {
     closeWithdrawModalBtn.addEventListener('click', () => {
         withdrawModal.style.display = 'none';
