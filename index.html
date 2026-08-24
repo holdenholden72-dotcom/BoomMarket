@@ -220,28 +220,56 @@
     </div>
 </div>
 
-    <!-- Скрипт подключаем один раз в самом конце -->
-    <script src="app.js"></script>
-
 <!-- Модальное окно при клике на NFT -->
-<div id="nftModal" class="modal-overlay" onclick="closeNftModal(event)">
-    <div class="modal-content" onclick="event.stopPropagation()">
-        <div class="modal-header">
-            <h3>Детали предмета</h3>
-            <button class="close-btn" onclick="closeNftModal()">&times;</button>
-        </div>
-        <div class="modal-body">
-            <img id="modalImage" src="" alt="NFT Modal" class="modal-nft-img">
-            <h2 id="modalTitle">Название NFT</h2>
-            <div class="modal-price-card">
-                <span class="label">Стоимость</span>
-                <span id="modalPrice" class="value">💎 0.00</span>
+    <div id="nftModal" class="modal-overlay" onclick="closeNftModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>Детали предмета</h3>
+                <button class="close-btn" onclick="closeNftModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <img id="modalImage" src="" alt="NFT Modal" class="modal-nft-img">
+                <h2 id="modalTitle">Название NFT</h2>
+                <div class="modal-price-card">
+                    <span class="label">Стоимость</span>
+                    <span id="modalPrice" class="value">💎 0.00</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="action-btn" onclick="closeNftModal()">Закрыть</button>
             </div>
         </div>
-        <div class="modal-footer">
-            <button class="action-btn" onclick="closeNftModal()">Закрыть</button>
+    </div>
+
+    <!-- Кастомное модальное окно фильтра NFT (без оборота) -->
+    <div id="customNftModal" class="modal-overlay" onclick="closeNftFilterModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>Выбор NFT</h3>
+                <button class="close-btn" onclick="closeNftFilterModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="width: 100%;">
+                <div class="nft-item" style="width: 100%; box-sizing: border-box;">
+                    <div class="nft-left">
+                        <input type="checkbox" class="nft-checkbox">
+                        <img src="https://via.placeholder.com/48" alt="NFT" class="nft-icon">
+                        <div class="nft-info">
+                            <span class="nft-name">Ice Cream</span>
+                            <span class="nft-change" style="color: #34c759;">+1.8%</span>
+                        </div>
+                    </div>
+                    <div class="nft-right">
+                        <span class="nft-price">💎 3.41</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="action-btn" onclick="closeNftFilterModal()">Показать результаты</button>
+            </div>
         </div>
     </div>
-</div>
+
+    <!-- Скрипт подключаем в самом конце, после всех модалок -->
+    <script src="app.js"></script>
 </body>
 </html>
