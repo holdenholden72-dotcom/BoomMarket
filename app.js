@@ -207,6 +207,7 @@ if (confirmDepositBtn && depositAmountInput) {
         depositModal.style.display = 'none';
         depositAmountInput.value = '';
     });
+}
 
 // Открытие и закрытие модального окна вывода
 const withdrawBtn = document.getElementById('withdrawBtn');
