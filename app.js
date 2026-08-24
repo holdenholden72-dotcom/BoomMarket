@@ -95,12 +95,11 @@ const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
     buttonRootId: 'walletBtn'
 
 // Автоматическая загрузка аватарки из Telegram
-if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-    const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
-    if (tgUser.photo_url) {
+if (window.Telegram && window.Telegram.WebApp) {
+    const tgUser = window.Telegram.WebApp.initDataUnsafe?.user;
+    if (tgUser && tgUser.photo_url) {
         const avatarElement = document.getElementById('openProfileBtn');
         if (avatarElement) {
-            // Если элемент стал тегом <img>, меняем src
             avatarElement.src = tgUser.photo_url;
         }
     }
