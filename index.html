@@ -220,27 +220,6 @@
     </div>
 </div>
 
-<!-- Модальное окно при клике на NFT -->
-    <div id="nftModal" class="modal-overlay" onclick="closeNftModal(event)">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <div class="modal-header">
-                <h3>Детали предмета</h3>
-                <button class="close-btn" onclick="closeNftModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <img id="modalImage" src="" alt="NFT Modal" class="modal-nft-img">
-                <h2 id="modalTitle">Название NFT</h2>
-                <div class="modal-price-card">
-                    <span class="label">Стоимость</span>
-                    <span id="modalPrice" class="value">💎 0.00</span>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="action-btn" onclick="closeNftModal()">Закрыть</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Кастомное модальное окно фильтра NFT (без оборота) -->
     <div id="customNftModal" class="modal-overlay" onclick="closeNftFilterModal(event)">
         <div class="modal-content" onclick="event.stopPropagation()">
