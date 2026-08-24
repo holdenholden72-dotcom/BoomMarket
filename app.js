@@ -93,7 +93,7 @@ searchInput.addEventListener('input', (e) => {
 const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
     manifestUrl: 'https://holdenholden72-dotcom.github.io/BoomMarket/tonconnect-manifest.json',
     buttonRootId: 'walletBtn'
-});
+
 // Автоматическая загрузка аватарки из Telegram
 if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
     const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
@@ -105,6 +105,9 @@ if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData
         }
     }
 }
+// === ПОИСК БАЛАНСА НА СТРАНИЦЕ (должен быть выше всех функций) ===
+const userBalanceElements = document.querySelectorAll('.user-balance');
+
 // === БЛОК ВЫВОДА СРЕДСТВ ===
 const withdrawModal = document.getElementById('withdrawModal');
 const confirmWithdrawBtn = document.getElementById('confirmWithdrawBtn');
@@ -150,9 +153,6 @@ const quickDepositBtn = document.getElementById('quickDepositBtn');
 const closeDepositModalBtn = document.getElementById('closeDepositModal');
 const confirmDepositBtn = document.getElementById('confirmDepositBtn');
 const depositAmountInput = document.getElementById('depositAmount');
-
-// Ищем ВСЕ элементы с классом .user-balance на странице
-const userBalanceElements = document.querySelectorAll('.user-balance');
 
 const openDeposit = () => {
     // 1. Сначала находим кнопку профиля или экран профиля и активируем его
