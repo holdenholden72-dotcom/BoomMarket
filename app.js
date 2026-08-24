@@ -107,54 +107,37 @@ if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData
 }
 // === БЛОК ВЫВОДА СРЕДСТВ ===
 const withdrawModal = document.getElementById('withdrawModal');
-const openWithdrawBtn = document.getElementById('withdrawBtn');
-const closeWithdrawModalBtn = document.getElementById('closeWithdrawModal');
 const confirmWithdrawBtn = document.getElementById('confirmWithdrawBtn');
 const withdrawAmountInput = document.getElementById('withdrawAmount');
 
-// 1. Открытие окна по клику на кнопку "Вывод"
-if (openWithdrawBtn) {
-    openWithdrawBtn.addEventListener('click', () => {
-        withdrawModal.style.display = 'flex';
-    });
-}
-
-// 2. Закрытие окна по крестику
-if (closeWithdrawModalBtn) {
-    closeWithdrawModalBtn.addEventListener('click', () => {
-        withdrawModal.style.display = 'none';
-    });
-}
-
-// 3. Закрытие при клике вне окна
-window.addEventListener('click', (event) => {
-    if (event.target === withdrawModal) {
-        withdrawModal.style.display = 'none';
-    }
-});
-
-// 4. Подтверждение вывода с проверкой баланса
 if (confirmWithdrawBtn) {
     confirmWithdrawBtn.addEventListener('click', () => {
         const amount = parseFloat(withdrawAmountInput.value);
-
-        // Проверка минимальной суммы
-        if (isNaN(amount) || amount < 0.5) {
-            alert('Минимальная сумма для вывода: 0.5');
+        
+        // 1. Проверяем, введено ли число больше нуля
+        if (isNaN(amount) || amount <= 0) {
+            alert('Введите корректную сумму для вывода!');
             return;
         }
 
-        // Получаем текущий баланс игрока со страницы
-        const userBalanceElement = document.getElementById('user-balance');
-        const currentBalance = userBalanceElement ? parseFloat(userBalanceElement.innerText) || 0 : 0;
+        // 2. Берем текущий баланс
+        let currentBalance = parseFloat(localStorage.getItem('userBalance')) || 100;
 
-        // Проверяем, чтобы сумма не превышала баланс
+        // 3. Проверяем, хватает ли средств
         if (amount > currentBalance) {
-            alert(`Недостаточно средств! Ваш баланс: ${currentBalance}`);
+            alert('Недостаточно средств на балансе!');
             return;
         }
 
-        // Успешный запрос на вывод
+        // 4. Списываем средства и сохраняем
+        currentBalance -= amount;
+        localStorage.setItem('userBalance', currentBalance);
+
+        // Обновляем баланс на экране
+        userBalanceElements.forEach(el => {
+            el.textContent = currentBalance;
+        });
+
         alert(`Запрос на вывод ${amount} успешно создан!`);
         withdrawModal.style.display = 'none';
         withdrawAmountInput.value = '';
