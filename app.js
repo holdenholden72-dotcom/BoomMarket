@@ -158,27 +158,25 @@ const closeDepositModalBtn = document.getElementById('closeDepositModal');
 const confirmDepositBtn = document.getElementById('confirmDepositBtn');
 const depositAmountInput = document.getElementById('depositAmount');
 
-const openDeposit = () => {
-    // 1. Сначала находим кнопку профиля или экран профиля и активируем его
-    const profileScreen = document.getElementById('profileScreen');
-    const marketScreen = document.getElementById('marketScreen');
-    
-    if (profileScreen && marketScreen) {
-        marketScreen.classList.remove('active');
-        profileScreen.classList.add('active');
-    }
-
-    // 2. Затем открываем модальное окно пополнения
-    if (depositModal) {
+if (quickDepositBtn && depositModal) {
+    quickDepositBtn.addEventListener('click', () => {
         depositModal.style.display = 'flex';
-    }
-};
+    });
+}
 
-if (plusDepositBtn) plusDepositBtn.addEventListener('click', openDeposit);
-if (quickDepositBtn) quickDepositBtn.addEventListener('click', () => {
-    if (depositModal) depositModal.style.display = 'flex';
-});
-if (confirmDepositBtn) {
+if (plusDepositBtn && depositModal) {
+    plusDepositBtn.addEventListener('click', () => {
+        depositModal.style.display = 'flex';
+    });
+}
+
+if (closeDepositModalBtn && depositModal) {
+    closeDepositModalBtn.addEventListener('click', () => {
+        depositModal.style.display = 'none';
+    });
+}
+
+if (confirmDepositBtn && depositAmountInput) {
     confirmDepositBtn.addEventListener('click', () => {
         const amount = parseFloat(depositAmountInput.value);
 
@@ -187,24 +185,29 @@ if (confirmDepositBtn) {
             return;
         }
 
-        // Берем текущий баланс из первого найденного элемента
-        let currentBalance = 0;
-        if (userBalanceElements.length > 0) {
-            currentBalance = parseFloat(userBalanceElements[0].innerText) || 0;
+        // Берем текущий баланс из localStorage или элементов с классом .user-balance
+        let currentBalance = parseFloat(localStorage.getItem('userBalance')) || 0;
+        
+        const userBalanceElements = document.querySelectorAll('.user-balance');
+        if (userBalanceElements.length > 0 && currentBalance === 0) {
+            currentBalance = parseFloat(userBalanceElements[0].textContent) || 0;
         }
-        
+
         currentBalance += amount;
-        
+
+        // Сохраняем в localStorage
+        localStorage.setItem('userBalance', currentBalance);
+
         // Обновляем баланс во ВСЕХ элементах с классом .user-balance
         userBalanceElements.forEach(el => {
-            el.innerText = currentBalance.toFixed(2);
+            el.textContent = currentBalance.toFixed(2);
         });
 
         alert(`Баланс успешно пополнен на ${amount}!`);
         depositModal.style.display = 'none';
         depositAmountInput.value = '';
     });
-}
+
 // Открытие и закрытие модального окна вывода
 const withdrawBtn = document.getElementById('withdrawBtn');
 const closeWithdrawModalBtn = document.getElementById('closeWithdrawModal');
