@@ -94,16 +94,33 @@ const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
     manifestUrl: 'https://holdenholden72-dotcom.github.io/BoomMarket/tonconnect-manifest.json',
     buttonRootId: 'walletBtn'
 });
-// Автоматическая загрузка аватарки из Telegram
-if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-    const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
-    if (tgUser.photo_url) {
-        const avatarElement = document.getElementById('openProfileBtn');
-        if (avatarElement) {
-            // Если элемент стал тегом <img>, меняем src
-            avatarElement.src = tgUser.photo_url;
+// === Telegram WebApp ===
+const tg = window.Telegram?.WebApp;
+
+if (tg) {
+    tg.ready();          // говорим Telegram, что приложение готово
+    tg.expand();         // раскрываем на весь экран
+
+    // Пока просто берём данные пользователя (позже будем проверять на сервере)
+    const user = tg.initDataUnsafe?.user;
+
+    if (user) {
+        console.log('Пользователь Telegram:', user);
+
+        // Ставим аватарку
+        if (user.photo_url) {
+            const avatarElement = document.getElementById('openProfileBtn');
+            if (avatarElement) {
+                avatarElement.src = user.photo_url;
+            }
         }
+
+        // Можно сохранить ID пользователя
+        localStorage.setItem('tg_user_id', user.id);
+        localStorage.setItem('tg_username', user.username || '');
     }
+} else {
+    console.log('Открыто не в Telegram');
 }
 // === БЛОК ВЫВОДА СРЕДСТВ ===
 const withdrawModal = document.getElementById('withdrawModal');
