@@ -209,18 +209,18 @@ if (confirmDepositBtn && depositAmountInput) {
     });
 }
 
-// Функция открытия модального окна фильтра NFT
-function openNftFilterModal() {
-    const modal = document.getElementById('customNftModal');
-    if (modal) {
-        modal.classList.add('active');
-    }
+// Открытие и закрытие модального окна вывода
+const withdrawBtn = document.getElementById('withdrawBtn');
+const closeWithdrawModalBtn = document.getElementById('closeWithdrawModal');
+
+if (withdrawBtn && withdrawModal) {
+    withdrawBtn.addEventListener('click', () => {
+        withdrawModal.style.display = 'flex';
+    });
 }
 
-// Функция закрытия модального окна фильтра NFT
-function closeNftFilterModal() {
-    const modal = document.getElementById('customNftModal');
-    if (modal) {
-        modal.classList.remove('active');
-    }
+if (closeWithdrawModalBtn && withdrawModal) {
+    closeWithdrawModalBtn.addEventListener('click', () => {
+        withdrawModal.style.display = 'none';
+    });
 }

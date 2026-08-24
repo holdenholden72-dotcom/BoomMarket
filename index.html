@@ -41,7 +41,10 @@
                 <button class="sort-trigger-btn" id="sortTriggerBtn">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
                 </button>
-               <button class="dropdown-filter" id="nftFilterBtn" onclick="openNftFilterModal()">NFT ▾</button>
+                <select class="dropdown-filter" id="filterNft">
+                    <option value="">NFT</option>
+                    <option value="Ice Cream">Ice Cream</option>
+                </select>
                 <select class="dropdown-filter" id="filterModel">
                     <option value="">Модель</option>
                     <option value="Classic">Classic</option>
@@ -220,35 +223,7 @@
     </div>
 </div>
 
-    <!-- Кастомное модальное окно фильтра NFT (без оборота) -->
-    <div id="customNftModal" class="modal-overlay" onclick="closeNftFilterModal(event)">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <div class="modal-header">
-                <h3>Выбор NFT</h3>
-                <button class="close-btn" onclick="closeNftFilterModal()">&times;</button>
-            </div>
-            <div class="modal-body" style="width: 100%;">
-                <div class="nft-item" style="width: 100%; box-sizing: border-box;">
-                    <div class="nft-left">
-                        <input type="checkbox" class="nft-checkbox">
-                        <img src="https://via.placeholder.com/48" alt="NFT" class="nft-icon">
-                        <div class="nft-info">
-                            <span class="nft-name">Ice Cream</span>
-                            <span class="nft-change" style="color: #34c759;">+1.8%</span>
-                        </div>
-                    </div>
-                    <div class="nft-right">
-                        <span class="nft-price">💎 3.41</span>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="action-btn" onclick="closeNftFilterModal()">Показать результаты</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Скрипт подключаем в самом конце, после всех модалок -->
+    <!-- Скрипт подключаем один раз в самом конце -->
     <script src="app.js"></script>
 </body>
 </html>
