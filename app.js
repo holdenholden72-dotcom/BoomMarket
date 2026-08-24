@@ -224,3 +224,26 @@ if (closeWithdrawModalBtn && withdrawModal) {
         withdrawModal.style.display = 'none';
     });
 }
+// Функция открытия модального окна с передачей данных NFT
+function openNftModal(name, price, change, imgSrc) {
+    const modal = document.getElementById('nftModal');
+    const title = document.getElementById('modalTitle');
+    const priceEl = document.getElementById('modalPrice');
+    const image = document.getElementById('modalImage');
+
+    if (title) title.innerText = name;
+    if (priceEl) priceEl.innerText = price;
+    if (image) image.src = imgSrc;
+    
+    if (modal) {
+        modal.classList.add('active');
+    }
+}
+
+// Функция закрытия модального окна
+function closeNftModal(event) {
+    const modal = document.getElementById('nftModal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}

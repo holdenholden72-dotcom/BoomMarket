@@ -225,5 +225,40 @@
 
     <!-- Скрипт подключаем один раз в самом конце -->
     <script src="app.js"></script>
+<!-- Элемент списка NFT в коллекции (без оборота, только цена и иконка) -->
+<div class="nft-item" onclick="openNftModal('Happy ...', '💎 4.37', '0%', 'https://via.placeholder.com/48')">
+    <div class="nft-left">
+        <input type="checkbox" class="nft-checkbox" onclick="event.stopPropagation()">
+        <img src="https://via.placeholder.com/48" alt="NFT" class="nft-icon">
+        <div class="nft-info">
+            <span class="nft-name">Happy ...</span>
+            <span class="nft-change">0%</span>
+        </div>
+    </div>
+    <div class="nft-right">
+        <span class="nft-price">💎 4.37</span>
+    </div>
+</div>
+
+<!-- Модальное окно при клике на NFT -->
+<div id="nftModal" class="modal-overlay" onclick="closeNftModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3>Детали предмета</h3>
+            <button class="close-btn" onclick="closeNftModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <img id="modalImage" src="" alt="NFT Modal" class="modal-nft-img">
+            <h2 id="modalTitle">Название NFT</h2>
+            <div class="modal-price-card">
+                <span class="label">Стоимость</span>
+                <span id="modalPrice" class="value">💎 0.00</span>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="action-btn" onclick="closeNftModal()">Закрыть</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
