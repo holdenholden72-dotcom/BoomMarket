@@ -93,53 +93,68 @@ searchInput.addEventListener('input', (e) => {
 const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
     manifestUrl: 'https://holdenholden72-dotcom.github.io/BoomMarket/tonconnect-manifest.json',
     buttonRootId: 'walletBtn'
-
+});
 // Автоматическая загрузка аватарки из Telegram
-if (window.Telegram && window.Telegram.WebApp) {
-    const tgUser = window.Telegram.WebApp.initDataUnsafe?.user;
-    if (tgUser && tgUser.photo_url) {
+if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+    const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
+    if (tgUser.photo_url) {
         const avatarElement = document.getElementById('openProfileBtn');
         if (avatarElement) {
+            // Если элемент стал тегом <img>, меняем src
             avatarElement.src = tgUser.photo_url;
         }
     }
 }
-// === ПОИСК БАЛАНСА НА СТРАНИЦЕ (должен быть выше всех функций) ===
-const userBalanceElements = document.querySelectorAll('.user-balance');
-
 // === БЛОК ВЫВОДА СРЕДСТВ ===
 const withdrawModal = document.getElementById('withdrawModal');
+const openWithdrawBtn = document.getElementById('withdrawBtn');
+const closeWithdrawModalBtn = document.getElementById('closeWithdrawModal');
 const confirmWithdrawBtn = document.getElementById('confirmWithdrawBtn');
 const withdrawAmountInput = document.getElementById('withdrawAmount');
 
+// 1. Открытие окна по клику на кнопку "Вывод"
+if (openWithdrawBtn) {
+    openWithdrawBtn.addEventListener('click', () => {
+        withdrawModal.style.display = 'flex';
+    });
+}
+
+// 2. Закрытие окна по крестику
+if (closeWithdrawModalBtn) {
+    closeWithdrawModalBtn.addEventListener('click', () => {
+        withdrawModal.style.display = 'none';
+    });
+}
+
+// 3. Закрытие при клике вне окна
+window.addEventListener('click', (event) => {
+    if (event.target === withdrawModal) {
+        withdrawModal.style.display = 'none';
+    }
+});
+
+// 4. Подтверждение вывода с проверкой баланса
 if (confirmWithdrawBtn) {
     confirmWithdrawBtn.addEventListener('click', () => {
         const amount = parseFloat(withdrawAmountInput.value);
-        
-        // 1. Проверяем, введено ли число больше нуля
-        if (isNaN(amount) || amount <= 0) {
-            alert('Введите корректную сумму для вывода!');
+
+        // Проверка минимальной суммы
+        if (isNaN(amount) || amount < 0.5) {
+            alert('Минимальная сумма для вывода: 0.5');
             return;
         }
 
-        // 2. Берем текущий баланс
-        let currentBalance = parseFloat(localStorage.getItem('userBalance')) || 100;
+        // Получаем текущий баланс игрока со страницы
+        const userBalanceElement = document.getElementById('user-balance');
+        const currentBalance = userBalanceElement ? parseFloat(userBalanceElement.innerText) || 0 : 0;
 
-        // 3. Проверяем, хватает ли средств
+        // Проверяем, чтобы сумма не превышала баланс
         if (amount > currentBalance) {
-            alert('Недостаточно средств на балансе!');
+            alert(`Недостаточно средств! Ваш баланс: ${currentBalance}`);
             return;
         }
 
-        // 4. Списываем средства и сохраняем
-        currentBalance -= amount;
-        localStorage.setItem('userBalance', currentBalance);
-
-        // Обновляем баланс на экране
-        userBalanceElements.forEach(el => {
-            el.textContent = currentBalance;
-        });
-
+        // Успешный запрос на вывод
         alert(`Запрос на вывод ${amount} успешно создан!`);
         withdrawModal.style.display = 'none';
         withdrawAmountInput.value = '';
@@ -152,6 +167,9 @@ const quickDepositBtn = document.getElementById('quickDepositBtn');
 const closeDepositModalBtn = document.getElementById('closeDepositModal');
 const confirmDepositBtn = document.getElementById('confirmDepositBtn');
 const depositAmountInput = document.getElementById('depositAmount');
+
+// Ищем ВСЕ элементы с классом .user-balance на странице
+const userBalanceElements = document.querySelectorAll('.user-balance');
 
 const openDeposit = () => {
     // 1. Сначала находим кнопку профиля или экран профиля и активируем его
