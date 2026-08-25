@@ -97,13 +97,13 @@ const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
     buttonRootId: 'walletBtn'
 });
 
-// === Telegram WebApp + реальная авторизация через бэкенд ===
+// === Telegram WebApp + авторизация через бэкенд по JWT ===
 const tg = window.Telegram?.WebApp;
 
-// Храним initData в памяти на время сессии — используется как "пропуск"
-// для запросов к защищённым эндпоинтам (/api/balance, /api/deposit, /api/withdraw).
-// В будущем стоит заменить на нормальный JWT-токен, выданный сервером один раз при входе.
-let currentInitData = null;
+// Токен сессии — выдаётся сервером один раз при /api/auth и живёт 24 часа.
+// Хранится только в памяти вкладки: закрыл приложение — при следующем открытии
+// initData снова под рукой у Telegram, и мы просто получаем новый токен.
+let authToken = null;
 
 function updateBalanceUI(balance) {
     const userBalanceElements = document.querySelectorAll('.user-balance');
@@ -114,8 +114,6 @@ function updateBalanceUI(balance) {
 
 function showAuthError(message) {
     console.error('Ошибка авторизации:', message);
-    // Не пугаем пользователя алертом при каждом открытии — просто лог в консоль.
-    // Баланс останется 0, пока не решится проблема с авторизацией.
 }
 
 async function authenticateWithBackend(initData) {
@@ -133,7 +131,7 @@ async function authenticateWithBackend(initData) {
             return;
         }
 
-        currentInitData = initData;
+        authToken = data.token;
         updateBalanceUI(data.user.balance);
 
         console.log('Авторизован как:', data.user.username || data.user.first_name);
@@ -155,8 +153,6 @@ if (tg) {
         }
     }
 
-    // initData — подписанная строка, проверяется на сервере.
-    // Именно её, а не initDataUnsafe, нужно слать на бэкенд.
     if (tg.initData) {
         authenticateWithBackend(tg.initData);
     } else {
@@ -180,7 +176,7 @@ if (confirmWithdrawBtn) {
             return;
         }
 
-        if (!currentInitData) {
+        if (!authToken) {
             alert('Не удалось подтвердить личность. Попробуйте перезайти.');
             return;
         }
@@ -190,7 +186,7 @@ if (confirmWithdrawBtn) {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Telegram-Init-Data': currentInitData,
+                    'Authorization': `Bearer ${authToken}`,
                 },
                 body: JSON.stringify({ amount }),
             });
@@ -251,21 +247,20 @@ if (confirmDepositBtn && depositAmountInput) {
             return;
         }
 
-        if (!currentInitData) {
+        if (!authToken) {
             alert('Не удалось подтвердить личность. Попробуйте перезайти.');
             return;
         }
 
         // ВАЖНО: сейчас это зачисляет сумму без проверки реального TON-платежа.
-        // Это временная заглушка — когда подключим приём настоящих транзакций
-        // через TON Connect, здесь будет проверка транзакции в блокчейне вместо
-        // прямого вызова /api/deposit с фронтенда.
+        // Временная заглушка — когда подключим TON Connect, здесь будет проверка
+        // настоящей транзакции в блокчейне вместо прямого вызова /api/deposit.
         try {
             const res = await fetch(`${API_URL}/api/deposit`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Telegram-Init-Data': currentInitData,
+                    'Authorization': `Bearer ${authToken}`,
                 },
                 body: JSON.stringify({ amount }),
             });
