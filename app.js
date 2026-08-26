@@ -1,5 +1,5 @@
 // === Адрес бэкенда на Railway ===
-const API_URL = 'https://boom-backend-production-46b5.up.railway.app';
+const API_URL = 'https://boom-backend-production-dc56.up.railway.app';
 
 const items = [
     { id: 1, name: "Ice Cream", number: 56824, price: 3.37, time: 1719000000, model: "Classic", bg: "#b5a48d", symbol: "☘️", img: "https://images.emojiterra.com/google/android-12l/512px/1f366.png" },
