@@ -692,3 +692,11 @@ body {
     border-color: #007aff;
     outline: none;
 }
+
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: #8e8e93;
+    padding: 60px 20px;
+    font-size: 14px;
+}
