@@ -112,11 +112,29 @@ async function loadCollections() {
     }
 }
 
+async function loadAllFilters() {
+    try {
+        const data = await fetchJSON(`${API_URL}/api/filters`);
+        const { models = [], backdrops = [], symbols = [] } = data.filters || {};
+
+        filterModelSelect.innerHTML =
+            '<option value="">Модель</option>' +
+            models.map(m => `<option value="${escapeHtml(m.name)}">${escapeHtml(m.name)}</option>`).join('');
+        filterBgSelect.innerHTML =
+            '<option value="">Фон</option>' +
+            backdrops.map(b => `<option value="${escapeHtml(b.name)}">${escapeHtml(b.name)}</option>`).join('');
+        filterSymbolSelect.innerHTML =
+            '<option value="">Символ</option>' +
+            symbols.map(s => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}</option>`).join('');
+    } catch (e) {
+        console.error('Ошибка загрузки общих фильтров:', e);
+    }
+}
+
 async function loadFiltersForCollection(collectionId) {
     if (!collectionId) {
-        filterModelSelect.innerHTML = '<option value="">Модель</option>';
-        filterBgSelect.innerHTML = '<option value="">Фон</option>';
-        filterSymbolSelect.innerHTML = '<option value="">Символ</option>';
+        // Ничего конкретного не выбрано — показываем полный список по всем коллекциям.
+        await loadAllFilters();
         return;
     }
 
@@ -158,6 +176,7 @@ async function loadListings() {
 
 // Инициализация витрины
 loadCollections();
+loadAllFilters();
 loadListings();
 
 sortTriggerBtn.addEventListener('click', () => {
