@@ -1,24 +1,10 @@
 // === Адрес бэкенда на Railway ===
-const API_URL = 'https://boom-backend-production-dc56.up.railway.app';
-
-// === Состояние фильтров/сортировки для витрины ===
-let currentFilters = {
-    collectionId: null,
-    model: null,
-    backdrop: null,
-    symbol: null,
-    search: '',
-    sort: null,
-};
+const API_URL = 'https://boom-backend-production-46b5.up.railway.app';
 
 const grid = document.getElementById('marketGrid');
 const searchInput = document.getElementById('searchInput');
 const sortTriggerBtn = document.getElementById('sortTriggerBtn');
 const sortModal = document.getElementById('sortModal');
-const filterNftSelect = document.getElementById('filterNft');
-const filterModelSelect = document.getElementById('filterModel');
-const filterBgSelect = document.getElementById('filterBg');
-const filterSymbolSelect = document.getElementById('filterSymbol');
 
 // Элементы для переключения экранов
 const marketScreen = document.getElementById('marketScreen');
@@ -26,63 +12,337 @@ const profileScreen = document.getElementById('profileScreen');
 const openProfileBtn = document.getElementById('openProfileBtn');
 const backToMarketBtn = document.getElementById('backToMarketBtn');
 
-// Открытие профиля
 openProfileBtn.addEventListener('click', () => {
     marketScreen.classList.remove('active');
     profileScreen.classList.add('active');
 });
 
-// Возврат в маркет
 backToMarketBtn.addEventListener('click', () => {
     profileScreen.classList.remove('active');
     marketScreen.classList.add('active');
 });
 
-function escapeHtml(str) {
-    if (!str) return '';
-    return String(str).replace(/[&<>"']/g, (c) => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-    }[c]));
+// =====================================================================
+// СОСТОЯНИЕ ФИЛЬТРОВ И ДАННЫХ
+// =====================================================================
+
+// Текущие применённые фильтры (мультивыбор — везде массивы)
+const activeFilters = {
+    collectionIds: [],   // выбранные id коллекций (NFT)
+    models: [],          // выбранные названия моделей
+    backdrops: [],        // выбранные названия фонов
+    symbols: [],          // выбранные названия символов
+    sort: null,
+};
+
+let currentSearch = '';
+
+// Кэш справочников с сервера
+let collectionsCache = [];       // [{id, name, image_url}]
+let traitsCache = { models: [], backdrops: [], symbols: [] }; // зависит от выбранных коллекций
+
+// =====================================================================
+// ОБЩАЯ МОДАЛКА МУЛЬТИВЫБОРА (переиспользуется для 4 фильтров)
+// =====================================================================
+
+const filterPickerModal = document.getElementById('filterPickerModal');
+const filterPickerTitle = document.getElementById('filterPickerTitle');
+const filterPickerSearch = document.getElementById('filterPickerSearch');
+const filterPickerSelectAll = document.getElementById('filterPickerSelectAll');
+const filterPickerList = document.getElementById('filterPickerList');
+const filterPickerReset = document.getElementById('filterPickerReset');
+const filterPickerApply = document.getElementById('filterPickerApply');
+const closeFilterPicker = document.getElementById('closeFilterPicker');
+
+const filterButtons = {
+    collection: document.getElementById('filterNftBtn'),
+    model: document.getElementById('filterModelBtn'),
+    backdrop: document.getElementById('filterBgBtn'),
+    symbol: document.getElementById('filterSymbolBtn'),
+};
+
+const filterTitles = {
+    collection: 'Коллекция',
+    model: 'Модель',
+    backdrop: 'Фон',
+    symbol: 'Символ',
+};
+
+const filterStateKeys = {
+    collection: 'collectionIds',
+    model: 'models',
+    backdrop: 'backdrops',
+    symbol: 'symbols',
+};
+
+// Текущий открытый фильтр и его временный (черновой) выбор — применяется
+// только по кнопке "Показать результаты", отменяется при закрытии крестиком.
+let openFilterType = null;
+let draftSelection = new Set();
+
+/** Возвращает список опций {value, label, image, colorHex, rarity} для указанного типа фильтра. */
+function getOptionsForFilterType(type) {
+    if (type === 'collection') {
+        return collectionsCache.map(c => ({
+            value: String(c.id),
+            label: c.name,
+            image: c.image_url,
+        }));
+    }
+    if (type === 'model') {
+        return traitsCache.models.map(m => ({
+            value: m.name,
+            label: m.name,
+            image: m.icon_url,
+            rarity: m.rarity_permille,
+        }));
+    }
+    if (type === 'backdrop') {
+        return traitsCache.backdrops.map(b => ({
+            value: b.name,
+            label: b.name,
+            colorHex: b.color_hex,
+            rarity: b.rarity_permille,
+        }));
+    }
+    if (type === 'symbol') {
+        return traitsCache.symbols.map(s => ({
+            value: s.name,
+            label: s.name,
+            image: s.icon_url,
+            rarity: s.rarity_permille,
+        }));
+    }
+    return [];
 }
 
-// Фонов без цвета в базе (color_hex мы пока не собираем) — генерируем
-// стабильный цвет по названию фона, чтобы карточки не были все одинаковые.
-function backdropColor(name) {
-    if (!name) return '#2c2c2e';
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+function renderFilterPickerList() {
+    const search = filterPickerSearch.value.trim().toLowerCase();
+    const allOptions = getOptionsForFilterType(openFilterType);
+    const visibleOptions = search
+        ? allOptions.filter(o => o.label.toLowerCase().includes(search))
+        : allOptions;
+
+    filterPickerList.innerHTML = '';
+
+    if (visibleOptions.length === 0) {
+        filterPickerList.innerHTML = `<li class="filter-picker-empty">Ничего не найдено</li>`;
+        updateSelectAllCheckbox([]);
+        return;
     }
-    const hue = Math.abs(hash) % 360;
-    return `hsl(${hue}, 35%, 32%)`;
+
+    visibleOptions.forEach(opt => {
+        const li = document.createElement('li');
+        li.className = 'filter-picker-row';
+
+        const checked = draftSelection.has(opt.value) ? 'checked' : '';
+
+        let thumbHtml;
+        if (opt.colorHex) {
+            thumbHtml = `<span class="filter-picker-thumb is-color" style="background:${opt.colorHex}"></span>`;
+        } else if (opt.image) {
+            thumbHtml = `<img class="filter-picker-thumb" src="${opt.image}" alt="">`;
+        } else {
+            thumbHtml = `<span class="filter-picker-thumb is-placeholder">?</span>`;
+        }
+
+        const rarityHtml = (opt.rarity !== undefined && opt.rarity !== null)
+            ? `<span class="filter-picker-rarity">${opt.rarity}%</span>`
+            : '';
+
+        li.innerHTML = `
+            <input type="checkbox" ${checked} data-value="${opt.value}">
+            ${thumbHtml}
+            <span class="filter-picker-name">${opt.label}</span>
+            ${rarityHtml}
+        `;
+
+        li.addEventListener('click', (e) => {
+            // Клик по самому чекбоксу уже переключает его — не переключаем дважды
+            if (e.target.tagName !== 'INPUT') {
+                const checkbox = li.querySelector('input[type="checkbox"]');
+                checkbox.checked = !checkbox.checked;
+            }
+            const checkbox = li.querySelector('input[type="checkbox"]');
+            if (checkbox.checked) {
+                draftSelection.add(opt.value);
+            } else {
+                draftSelection.delete(opt.value);
+            }
+            updateSelectAllCheckbox(visibleOptions);
+        });
+
+        filterPickerList.appendChild(li);
+    });
+
+    updateSelectAllCheckbox(visibleOptions);
+}
+
+function updateSelectAllCheckbox(visibleOptions) {
+    if (visibleOptions.length === 0) {
+        filterPickerSelectAll.checked = false;
+        filterPickerSelectAll.indeterminate = false;
+        return;
+    }
+    const selectedCount = visibleOptions.filter(o => draftSelection.has(o.value)).length;
+    filterPickerSelectAll.checked = selectedCount === visibleOptions.length;
+    filterPickerSelectAll.indeterminate = selectedCount > 0 && selectedCount < visibleOptions.length;
+}
+
+function openFilterPicker(type) {
+    openFilterType = type;
+    draftSelection = new Set(activeFilters[filterStateKeys[type]]);
+    filterPickerTitle.textContent = filterTitles[type];
+    filterPickerSearch.value = '';
+    renderFilterPickerList();
+    filterPickerModal.classList.add('active');
+}
+
+function closeFilterPickerModal() {
+    filterPickerModal.classList.remove('active');
+    openFilterType = null;
+}
+
+Object.entries(filterButtons).forEach(([type, btn]) => {
+    if (btn) btn.addEventListener('click', () => openFilterPicker(type));
+});
+
+closeFilterPicker.addEventListener('click', closeFilterPickerModal);
+
+filterPickerModal.addEventListener('click', (e) => {
+    if (e.target === filterPickerModal) closeFilterPickerModal();
+});
+
+filterPickerSearch.addEventListener('input', renderFilterPickerList);
+
+filterPickerSelectAll.addEventListener('change', () => {
+    const search = filterPickerSearch.value.trim().toLowerCase();
+    const allOptions = getOptionsForFilterType(openFilterType);
+    const visibleOptions = search
+        ? allOptions.filter(o => o.label.toLowerCase().includes(search))
+        : allOptions;
+
+    if (filterPickerSelectAll.checked) {
+        visibleOptions.forEach(o => draftSelection.add(o.value));
+    } else {
+        visibleOptions.forEach(o => draftSelection.delete(o.value));
+    }
+    renderFilterPickerList();
+});
+
+filterPickerReset.addEventListener('click', () => {
+    draftSelection.clear();
+    renderFilterPickerList();
+});
+
+filterPickerApply.addEventListener('click', async () => {
+    const type = openFilterType;
+    const key = filterStateKeys[type];
+    activeFilters[key] = [...draftSelection];
+
+    updateFilterPillUI(type);
+    closeFilterPickerModal();
+
+    // Если поменяли выбор коллекций (NFT) — модели/фоны/символы нужно
+    // перезагрузить, сузив их до выбранных коллекций.
+    if (type === 'collection') {
+        await loadTraits();
+    }
+
+    await loadListings();
+});
+
+function updateFilterPillUI(type) {
+    const btn = filterButtons[type];
+    if (!btn) return;
+
+    const key = filterStateKeys[type];
+    const count = activeFilters[key].length;
+
+    btn.innerHTML = filterTitles[type] === 'Коллекция' ? 'NFT' : filterTitles[type];
+    if (count > 0) {
+        btn.classList.add('has-selection');
+        btn.innerHTML += ` <span class="pill-count">${count}</span>`;
+    } else {
+        btn.classList.remove('has-selection');
+    }
+}
+
+// =====================================================================
+// ЗАГРУЗКА СПРАВОЧНИКОВ И ЛИСТИНГОВ С СЕРВЕРА
+// =====================================================================
+
+async function loadCollections() {
+    try {
+        const res = await fetch(`${API_URL}/api/collections`);
+        const data = await res.json();
+        if (data.ok) collectionsCache = data.collections;
+    } catch (e) {
+        console.error('Не удалось загрузить коллекции:', e);
+    }
+}
+
+async function loadTraits() {
+    try {
+        const params = new URLSearchParams();
+        if (activeFilters.collectionIds.length) {
+            params.set('collectionIds', activeFilters.collectionIds.join(','));
+        }
+        const res = await fetch(`${API_URL}/api/filters?${params.toString()}`);
+        const data = await res.json();
+        if (data.ok) traitsCache = data.filters;
+    } catch (e) {
+        console.error('Не удалось загрузить фильтры:', e);
+    }
+}
+
+function buildListingsQuery() {
+    const params = new URLSearchParams();
+    if (activeFilters.collectionIds.length) params.set('collectionId', activeFilters.collectionIds.join(','));
+    if (activeFilters.models.length) params.set('model', activeFilters.models.join(','));
+    if (activeFilters.backdrops.length) params.set('backdrop', activeFilters.backdrops.join(','));
+    if (activeFilters.symbols.length) params.set('symbol', activeFilters.symbols.join(','));
+    if (currentSearch) params.set('search', currentSearch);
+    if (activeFilters.sort) params.set('sort', activeFilters.sort);
+    return params.toString();
+}
+
+async function loadListings() {
+    try {
+        const res = await fetch(`${API_URL}/api/listings?${buildListingsQuery()}`);
+        const data = await res.json();
+        if (data.ok) renderGrid(data.listings);
+    } catch (e) {
+        console.error('Не удалось загрузить листинги:', e);
+        grid.innerHTML = `<div class="empty-state">Не удалось загрузить маркет. Проверьте соединение.</div>`;
+    }
 }
 
 function renderGrid(listings) {
     grid.innerHTML = '';
 
-    if (!listings.length) {
-        grid.innerHTML = '<div class="empty-state">Пока нет активных лотов — загляните позже</div>';
+    if (!listings || listings.length === 0) {
+        grid.innerHTML = `<div class="empty-state">Пока нет активных лотов по выбранным фильтрам</div>`;
         return;
     }
 
     listings.forEach(item => {
         const card = document.createElement('div');
         card.className = 'nft-card';
-        const bg = item.backdrop_color || backdropColor(item.backdrop_name);
+
+        const bg = item.backdrop_color || '#333';
         const badge = item.symbol_icon
-            ? `<img src="${item.symbol_icon}" style="width:18px;height:18px;">`
-            : (item.symbol_name || '');
-        const title = item.model_name
-            ? `${escapeHtml(item.collection_name)} · ${escapeHtml(item.model_name)}`
-            : escapeHtml(item.collection_name);
+            ? `<img class="nft-badge-img" src="${item.symbol_icon}" alt="">`
+            : '';
+        const image = item.model_icon || item.collection_image || '';
 
         card.innerHTML = `
             <div class="nft-image-container" style="background-color: ${bg};">
                 <div class="nft-badge">${badge}</div>
-                <img src="${item.collection_image || ''}" class="nft-img" alt="${escapeHtml(item.collection_name)}">
+                ${image ? `<img src="${image}" class="nft-img" alt="${item.collection_name}">` : ''}
             </div>
             <div class="nft-info">
-                <div class="nft-title">${title}</div>
+                <div class="nft-title">${item.collection_name}</div>
                 <div class="nft-number">#${item.gift_number}</div>
                 <div class="nft-bottom">
                     <div class="nft-price">💎 ${item.price}</div>
@@ -94,90 +354,16 @@ function renderGrid(listings) {
     });
 }
 
-// === Загрузка коллекций и лотов с бэкенда ===
-async function fetchJSON(url) {
-    const res = await fetch(url);
-    return res.json();
-}
+// =====================================================================
+// ПОИСК И СОРТИРОВКА
+// =====================================================================
 
-async function loadCollections() {
-    try {
-        const data = await fetchJSON(`${API_URL}/api/collections`);
-        const collections = data.collections || [];
-        filterNftSelect.innerHTML =
-            '<option value="">NFT</option>' +
-            collections.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
-    } catch (e) {
-        console.error('Ошибка загрузки коллекций:', e);
-    }
-}
-
-async function loadAllFilters() {
-    try {
-        const data = await fetchJSON(`${API_URL}/api/filters`);
-        const { models = [], backdrops = [], symbols = [] } = data.filters || {};
-
-        filterModelSelect.innerHTML =
-            '<option value="">Модель</option>' +
-            models.map(m => `<option value="${escapeHtml(m.name)}">${escapeHtml(m.name)}</option>`).join('');
-        filterBgSelect.innerHTML =
-            '<option value="">Фон</option>' +
-            backdrops.map(b => `<option value="${escapeHtml(b.name)}">${escapeHtml(b.name)}</option>`).join('');
-        filterSymbolSelect.innerHTML =
-            '<option value="">Символ</option>' +
-            symbols.map(s => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}</option>`).join('');
-    } catch (e) {
-        console.error('Ошибка загрузки общих фильтров:', e);
-    }
-}
-
-async function loadFiltersForCollection(collectionId) {
-    if (!collectionId) {
-        // Ничего конкретного не выбрано — показываем полный список по всем коллекциям.
-        await loadAllFilters();
-        return;
-    }
-
-    try {
-        const data = await fetchJSON(`${API_URL}/api/collections/${collectionId}/filters`);
-        const { models = [], backdrops = [], symbols = [] } = data.filters || {};
-
-        filterModelSelect.innerHTML =
-            '<option value="">Модель</option>' +
-            models.map(m => `<option value="${escapeHtml(m.name)}">${escapeHtml(m.name)}</option>`).join('');
-        filterBgSelect.innerHTML =
-            '<option value="">Фон</option>' +
-            backdrops.map(b => `<option value="${escapeHtml(b.name)}">${escapeHtml(b.name)}</option>`).join('');
-        filterSymbolSelect.innerHTML =
-            '<option value="">Символ</option>' +
-            symbols.map(s => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}</option>`).join('');
-    } catch (e) {
-        console.error('Ошибка загрузки фильтров коллекции:', e);
-    }
-}
-
-async function loadListings() {
-    const params = new URLSearchParams();
-    if (currentFilters.collectionId) params.set('collectionId', currentFilters.collectionId);
-    if (currentFilters.model) params.set('model', currentFilters.model);
-    if (currentFilters.backdrop) params.set('backdrop', currentFilters.backdrop);
-    if (currentFilters.symbol) params.set('symbol', currentFilters.symbol);
-    if (currentFilters.search) params.set('search', currentFilters.search);
-    if (currentFilters.sort) params.set('sort', currentFilters.sort);
-
-    try {
-        const data = await fetchJSON(`${API_URL}/api/listings?${params.toString()}`);
-        renderGrid(data.listings || []);
-    } catch (e) {
-        console.error('Ошибка загрузки листингов:', e);
-        renderGrid([]);
-    }
-}
-
-// Инициализация витрины
-loadCollections();
-loadAllFilters();
-loadListings();
+let searchDebounceTimer = null;
+searchInput.addEventListener('input', (e) => {
+    currentSearch = e.target.value;
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(loadListings, 300);
+});
 
 sortTriggerBtn.addEventListener('click', () => {
     sortModal.classList.toggle('active');
@@ -193,48 +379,23 @@ document.querySelectorAll('.sort-content li').forEach(li => {
     li.addEventListener('click', () => {
         document.querySelectorAll('.sort-content li').forEach(el => el.classList.remove('active'));
         li.classList.add('active');
-
-        currentFilters.sort = li.getAttribute('data-sort');
+        activeFilters.sort = li.getAttribute('data-sort');
         sortModal.classList.remove('active');
         loadListings();
     });
 });
 
-filterNftSelect.addEventListener('change', async () => {
-    currentFilters.collectionId = filterNftSelect.value || null;
-    currentFilters.model = null;
-    currentFilters.backdrop = null;
-    currentFilters.symbol = null;
-    await loadFiltersForCollection(currentFilters.collectionId);
-    loadListings();
-});
+// =====================================================================
+// ИНИЦИАЛИЗАЦИЯ МАРКЕТА
+// =====================================================================
 
-filterModelSelect.addEventListener('change', () => {
-    currentFilters.model = filterModelSelect.value || null;
-    loadListings();
-});
+(async function initMarket() {
+    grid.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    await Promise.all([loadCollections(), loadTraits()]);
+    await loadListings();
+})();
 
-filterBgSelect.addEventListener('change', () => {
-    currentFilters.backdrop = filterBgSelect.value || null;
-    loadListings();
-});
-
-filterSymbolSelect.addEventListener('change', () => {
-    currentFilters.symbol = filterSymbolSelect.value || null;
-    loadListings();
-});
-
-let searchDebounceTimer = null;
-searchInput.addEventListener('input', (e) => {
-    clearTimeout(searchDebounceTimer);
-    const val = e.target.value;
-    searchDebounceTimer = setTimeout(() => {
-        currentFilters.search = val;
-        loadListings();
-    }, 300);
-});
-
-// Инициализация TonConnect UI для подключения кошелька с именем BoomMarket
+// Инициализация TonConnect UI
 const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
     manifestUrl: 'https://holdenholden72-dotcom.github.io/BoomMarket/tonconnect-manifest.json',
     buttonRootId: 'walletBtn'
@@ -243,9 +404,6 @@ const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
 // === Telegram WebApp + авторизация через бэкенд по JWT ===
 const tg = window.Telegram?.WebApp;
 
-// Токен сессии — выдаётся сервером один раз при /api/auth и живёт 24 часа.
-// Хранится только в памяти вкладки: закрыл приложение — при следующем открытии
-// initData снова под рукой у Telegram, и мы просто получаем новый токен.
 let authToken = null;
 
 function updateBalanceUI(balance) {
@@ -395,9 +553,6 @@ if (confirmDepositBtn && depositAmountInput) {
             return;
         }
 
-        // ВАЖНО: сейчас это зачисляет сумму без проверки реального TON-платежа.
-        // Временная заглушка — когда подключим TON Connect, здесь будет проверка
-        // настоящей транзакции в блокчейне вместо прямого вызова /api/deposit.
         try {
             const res = await fetch(`${API_URL}/api/deposit`, {
                 method: 'POST',
@@ -426,7 +581,6 @@ if (confirmDepositBtn && depositAmountInput) {
     });
 }
 
-// Открытие и закрытие модального окна вывода
 const withdrawBtn = document.getElementById('withdrawBtn');
 const closeWithdrawModalBtn = document.getElementById('closeWithdrawModal');
 

@@ -700,3 +700,217 @@ body {
     padding: 60px 20px;
     font-size: 14px;
 }
+/* === Добавка к style.css: мультивыбор фильтров === */
+
+/* Кнопки-пилюли фильтров (заменяют старые <select>) */
+.filter-pill {
+    background: #1c1c1e;
+    border: none;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.filter-pill.has-selection {
+    background: #2b2345;
+    color: #d9c8ff;
+}
+
+.filter-pill .pill-count {
+    background: #ffd700;
+    color: #000;
+    font-weight: 700;
+    font-size: 11px;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+}
+
+/* Модалка мультивыбора */
+.filter-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 300;
+    align-items: flex-end;
+}
+
+.filter-modal.active {
+    display: flex;
+}
+
+.filter-picker-content {
+    background: #18181a;
+    width: 100%;
+    max-height: 80vh;
+    border-radius: 24px 24px 0 0;
+    padding: 20px 20px 16px;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.filter-picker-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.filter-picker-header h3 {
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.filter-picker-search {
+    position: relative;
+    margin-bottom: 14px;
+}
+
+.filter-picker-search input {
+    width: 100%;
+    background: #1c1c1e;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 12px 12px 40px;
+    color: #fff;
+    font-size: 14px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.filter-picker-search .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #8e8e93;
+}
+
+.filter-picker-select-all {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 4px;
+    font-size: 14px;
+    color: #8e8e93;
+    cursor: pointer;
+    border-bottom: 1px solid #2c2c2e;
+    margin-bottom: 4px;
+}
+
+.filter-picker-list {
+    list-style: none;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 120px;
+}
+
+.filter-picker-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 4px;
+    cursor: pointer;
+}
+
+.filter-picker-row input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    accent-color: #ffd700;
+}
+
+.filter-picker-thumb {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    object-fit: cover;
+    background: #2c2c2e;
+}
+
+.filter-picker-thumb.is-color {
+    border-radius: 50%;
+}
+
+.filter-picker-thumb.is-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #8e8e93;
+}
+
+.filter-picker-name {
+    flex: 1;
+    font-size: 14px;
+}
+
+.filter-picker-rarity {
+    background: #2c2c2e;
+    color: #ffd700;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 8px;
+}
+
+.filter-picker-empty {
+    text-align: center;
+    color: #8e8e93;
+    font-size: 13px;
+    padding: 24px 0;
+}
+
+.filter-picker-footer {
+    display: flex;
+    gap: 10px;
+    padding-top: 14px;
+}
+
+.filter-picker-reset {
+    flex: 1;
+    background: #2c2c2e;
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    padding: 14px 0;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.filter-picker-apply {
+    flex: 2;
+    background: #ffd700;
+    color: #000;
+    border: none;
+    border-radius: 14px;
+    padding: 14px 0;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Иконка символа на карточке товара, когда это картинка, а не эмодзи */
+.nft-badge-img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    display: block;
+}

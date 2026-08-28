@@ -13,7 +13,6 @@
     <!-- ЭКРАН 1: МАРКЕТ -->
     <div id="marketScreen" class="screen active">
         <!-- Верхняя панель -->
-        <!-- Верхняя панель -->
 <header class="header">
     <div class="user-profile">
         <img class="avatar" id="openProfileBtn" src="" alt="Avatar">
@@ -29,35 +28,23 @@
         </button>
     </div>
 </header>
-                           
+
         <!-- Поиск и фильтры -->
         <div class="filter-section">
             <div class="search-box">
                 <span class="search-icon">🔍</span>
                 <input type="text" id="searchInput" placeholder="Поиск по названию NFT">
             </div>
-            
+
             <div class="filter-scroll">
                 <button class="sort-trigger-btn" id="sortTriggerBtn">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
                 </button>
-                <select class="dropdown-filter" id="filterNft">
-                    <option value="">NFT</option>
-                    <option value="Ice Cream">Ice Cream</option>
-                </select>
-                <select class="dropdown-filter" id="filterModel">
-                    <option value="">Модель</option>
-                    <option value="Classic">Classic</option>
-                </select>
-                <select class="dropdown-filter" id="filterBg">
-                    <option value="">Фон</option>
-                    <option value="Beige">Beige</option>
-                    <option value="Blue">Blue</option>
-                </select>
-                <select class="dropdown-filter" id="filterSymbol">
-                    <option value="">Символ</option>
-                    <option value="Clover">☘️</option>
-                </select>
+                <!-- Кнопки-пилюли открывают общую модалку мультивыбора (см. #filterPickerModal) -->
+                <button class="filter-pill" id="filterNftBtn" data-filter-type="collection">NFT</button>
+                <button class="filter-pill" id="filterModelBtn" data-filter-type="model">Модель</button>
+                <button class="filter-pill" id="filterBgBtn" data-filter-type="backdrop">Фон</button>
+                <button class="filter-pill" id="filterSymbolBtn" data-filter-type="symbol">Символ</button>
             </div>
         </div>
 
@@ -73,6 +60,34 @@
                     <li data-sort="num_asc">Номер подарка (По возрастанию)</li>
                     <li data-sort="num_desc">Номер подарка (По убыванию)</li>
                 </ul>
+            </div>
+        </div>
+
+        <!-- Общая модалка мультивыбора: переиспользуется для NFT / Модель / Фон / Символ,
+             содержимое списка каждый раз заполняется в app.js под конкретный фильтр -->
+        <div class="filter-modal" id="filterPickerModal">
+            <div class="filter-picker-content">
+                <div class="filter-picker-header">
+                    <h3 id="filterPickerTitle">Коллекция</h3>
+                    <button class="close-modal-btn" id="closeFilterPicker">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <div class="filter-picker-search">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="filterPickerSearch" placeholder="Поиск">
+                </div>
+                <label class="filter-picker-select-all">
+                    <input type="checkbox" id="filterPickerSelectAll">
+                    <span>Выбрать все</span>
+                </label>
+                <ul class="filter-picker-list" id="filterPickerList">
+                    <!-- Строки чекбоксов генерируются через JS -->
+                </ul>
+                <div class="filter-picker-footer">
+                    <button class="filter-picker-reset" id="filterPickerReset">Сбросить</button>
+                    <button class="filter-picker-apply" id="filterPickerApply">Показать результаты</button>
+                </div>
             </div>
         </div>
 
@@ -156,7 +171,7 @@
         <button class="close-modal-btn" id="closeWalletModal">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
         </button>
-        
+
         <div class="wallet-modal-header">
             <h2>Connect your TON wallet</h2>
             <p>Use Wallet in Telegram or choose other application</p>
@@ -200,14 +215,14 @@
     <div class="modal" id="withdrawModal" style="display: none;">
         <div class="modal-content">
             <button class="close-modal" id="closeWithdrawModal">&times;</button>
-            
+
             <h2>Вывод средств</h2>
-            
+
             <!-- Поле ввода суммы -->
             <div class="withdraw-input-box">
                 <input type="number" id="withdrawAmount" placeholder="Сумма (мин. 0.5)" step="0.1">
             </div>
-            
+
             <!-- Кнопка подтверждения вывода -->
             <button class="action-btn" id="confirmWithdrawBtn">Вывести</button>
         </div>
