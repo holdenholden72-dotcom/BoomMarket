@@ -1,5 +1,5 @@
 // === Адрес бэкенда на Railway ===
-const API_URL = 'https://boom-backend-production-46b5.up.railway.app';
+const API_URL = 'https://boom-backend-production-dc56.up.railway.app';
 
 const grid = document.getElementById('marketGrid');
 const searchInput = document.getElementById('searchInput');
