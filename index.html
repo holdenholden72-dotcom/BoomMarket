@@ -170,7 +170,7 @@
 
                <!-- Нижняя навигация -->
     <nav class="bottom-nav">
-        <button class="nav-item active" id="navMarketBtn">
+        <button class="nav-item" data-nav="market">
             <span class="nav-icon">🏪</span>
             <span class="nav-text">Маркет</span>
         </button>
@@ -182,7 +182,7 @@
             <span class="nav-icon">🧾</span>
             <span class="nav-text">Ордеры</span>
         </button>
-        <button class="nav-item">
+        <button class="nav-item" data-nav="history">
             <span class="nav-icon">🕘</span>
             <span class="nav-text">История</span>
         </button>
@@ -191,6 +191,48 @@
             <span class="nav-text">Хранилище</span>
         </button>
     </nav>
+        </div>
+    </div>
+
+    <!-- ЭКРАН 3: ИСТОРИЯ -->
+    <div id="historyScreen" class="screen">
+        <header class="profile-header">
+            <button class="back-btn" id="backToProfileFromHistoryBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Назад
+            </button>
+        </header>
+
+        <div class="profile-content">
+            <div class="section-title">ИСТОРИЯ ОПЕРАЦИЙ</div>
+
+            <ul class="history-list" id="historyList">
+                <!-- Строки генерируются через JS (см. loadHistory/renderHistoryList в app.js) -->
+            </ul>
+
+            <!-- Нижняя навигация -->
+            <nav class="bottom-nav">
+                <button class="nav-item" data-nav="market">
+                    <span class="nav-icon">🏪</span>
+                    <span class="nav-text">Маркет</span>
+                </button>
+                <button class="nav-item">
+                    <span class="nav-icon">🎮</span>
+                    <span class="nav-text">Игровой хаб</span>
+                </button>
+                <button class="nav-item">
+                    <span class="nav-icon">🧾</span>
+                    <span class="nav-text">Ордеры</span>
+                </button>
+                <button class="nav-item active" data-nav="history">
+                    <span class="nav-icon">🕘</span>
+                    <span class="nav-text">История</span>
+                </button>
+                <button class="nav-item">
+                    <span class="nav-icon">📦</span>
+                    <span class="nav-text">Хранилище</span>
+                </button>
+            </nav>
         </div>
     </div>
 
@@ -337,6 +379,46 @@
             <button class="action-btn listing-detail-buy" id="listingDetailBuyBtn">
                 Купить <span id="listingDetailPrice"></span> 💎
             </button>
+        </div>
+    </div>
+
+    <!-- Модальное окно детального просмотра операции истории (открывается при клике на картинку подарка) -->
+    <div id="historyDetailModal" class="modal" style="display: none;">
+        <div class="modal-content listing-detail-content">
+            <button class="close-modal listing-detail-close" id="closeHistoryDetail">&times;</button>
+
+            <div class="listing-detail-image-wrap" id="historyDetailImageWrap">
+                <img id="historyDetailImage" class="listing-detail-image" src="" alt="">
+            </div>
+            <div class="listing-detail-title" id="historyDetailTitle"></div>
+            <div class="listing-detail-number" id="historyDetailNumber"></div>
+
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Коллекция</span>
+                <span class="listing-detail-value" id="historyDetailCollection"></span>
+            </div>
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Модель</span>
+                <span class="listing-detail-value" id="historyDetailModel"></span>
+            </div>
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Фон</span>
+                <span class="listing-detail-value" id="historyDetailBackdrop"></span>
+            </div>
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Символ</span>
+                <span class="listing-detail-value" id="historyDetailSymbol"></span>
+            </div>
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Операция</span>
+                <span class="listing-detail-value" id="historyDetailType"></span>
+            </div>
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Дата</span>
+                <span class="listing-detail-value" id="historyDetailDate"></span>
+            </div>
+
+            <div class="history-detail-amount" id="historyDetailAmount"></div>
         </div>
     </div>
 

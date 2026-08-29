@@ -9,28 +9,55 @@ const sortModal = document.getElementById('sortModal');
 // Элементы для переключения экранов
 const marketScreen = document.getElementById('marketScreen');
 const profileScreen = document.getElementById('profileScreen');
+const historyScreen = document.getElementById('historyScreen');
 const openProfileBtn = document.getElementById('openProfileBtn');
 const backToMarketBtn = document.getElementById('backToMarketBtn');
+const backToProfileFromHistoryBtn = document.getElementById('backToProfileFromHistoryBtn');
+
+const screensByName = {
+    market: marketScreen,
+    profile: profileScreen,
+    history: historyScreen,
+};
+
+/** Показывает один экран из screensByName, скрывая остальные, и подсвечивает
+ * соответствующий пункт во всех копиях нижней навигации (она есть на нескольких экранах). */
+function showScreen(name) {
+    Object.values(screensByName).forEach(screen => {
+        if (screen) screen.classList.remove('active');
+    });
+    if (screensByName[name]) screensByName[name].classList.add('active');
+
+    document.querySelectorAll('.bottom-nav .nav-item').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-nav') === name);
+    });
+
+    if (name === 'history') {
+        loadHistory();
+    }
+}
 
 openProfileBtn.addEventListener('click', () => {
-    marketScreen.classList.remove('active');
-    profileScreen.classList.add('active');
+    showScreen('profile');
 });
 
 backToMarketBtn.addEventListener('click', () => {
-    profileScreen.classList.remove('active');
-    marketScreen.classList.add('active');
+    showScreen('market');
 });
 
-// Кнопка "Маркет" в нижней навигации (видна на экране профиля) —
-// возвращает на экран маркета, где покупают/продают NFT.
-const navMarketBtn = document.getElementById('navMarketBtn');
-if (navMarketBtn) {
-    navMarketBtn.addEventListener('click', () => {
-        profileScreen.classList.remove('active');
-        marketScreen.classList.add('active');
+if (backToProfileFromHistoryBtn) {
+    backToProfileFromHistoryBtn.addEventListener('click', () => {
+        showScreen('profile');
     });
 }
+
+// Нижняя навигация встречается на нескольких экранах (профиль, история) —
+// делегируем клики по data-nav вместо привязки к id конкретной кнопки.
+document.querySelectorAll('.bottom-nav .nav-item[data-nav]').forEach(btn => {
+    btn.addEventListener('click', () => {
+        showScreen(btn.getAttribute('data-nav'));
+    });
+});
 
 // =====================================================================
 // СОСТОЯНИЕ ФИЛЬТРОВ И ДАННЫХ
@@ -469,6 +496,174 @@ if (listingDetailBuyBtn) {
         } finally {
             listingDetailBuyBtn.disabled = false;
         }
+    });
+}
+
+// =====================================================================
+// ИСТОРИЯ ОПЕРАЦИЙ
+// =====================================================================
+
+const historyList = document.getElementById('historyList');
+const historyById = new Map(); // кэш загруженной истории по id — для детальной карточки
+
+const historyTypeLabels = {
+    deposit: 'Пополнение баланса',
+    withdraw: 'Вывод средств',
+    buy: 'Покупка NFT',
+    sell: 'Продажа NFT',
+};
+
+const historyTypeIcons = {
+    deposit: '➕',
+    withdraw: '➖',
+};
+
+/** Сервер отдаёт время в UTC как "YYYY-MM-DD HH:MM:SS" (SQLite datetime('now')) —
+ * добавляем "T"/"Z", чтобы Date() распознал строку как UTC, а не как локальное время. */
+function formatHistoryDate(isoString) {
+    if (!isoString) return '';
+    const iso = isoString.includes('T') ? isoString : isoString.replace(' ', 'T') + 'Z';
+    const date = new Date(iso);
+    if (isNaN(date.getTime())) return isoString;
+
+    const datePart = date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const timePart = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    return `${datePart} · ${timePart}`;
+}
+
+function formatAmount(amount) {
+    const sign = amount > 0 ? '+' : '';
+    return `${sign}${amount} 💎`;
+}
+
+function renderHistoryList(items) {
+    historyList.innerHTML = '';
+    historyById.clear();
+
+    if (!items || items.length === 0) {
+        historyList.innerHTML = `<div class="empty-state">Пока нет операций</div>`;
+        return;
+    }
+
+    items.forEach(item => {
+        historyById.set(String(item.id), item);
+
+        // "Картинка подарка" и клик на полную карточку доступны только для покупок/продаж —
+        // у пополнения/вывода нет привязанного NFT.
+        const isGift = item.type === 'buy' || item.type === 'sell';
+
+        const li = document.createElement('li');
+        li.className = 'history-row' + (isGift ? ' has-gift' : '');
+        if (isGift) li.dataset.historyId = item.id;
+
+        let thumbHtml;
+        if (isGift) {
+            const image = item.model_image || item.collection_image || '';
+            const bg = item.backdrop_color || '#333';
+            thumbHtml = `
+                <div class="history-thumb" style="background-color:${bg};">
+                    ${image ? `<img src="${image}" alt="">` : ''}
+                </div>`;
+        } else {
+            thumbHtml = `<div class="history-thumb is-icon">${historyTypeIcons[item.type] || '💎'}</div>`;
+        }
+
+        const title = isGift ? item.collection_name : (historyTypeLabels[item.type] || item.type);
+        const metaParts = [];
+        if (isGift && item.gift_number) metaParts.push(`#${item.gift_number}`);
+        metaParts.push(formatHistoryDate(item.created_at));
+
+        const amountClass = item.amount >= 0 ? 'positive' : 'negative';
+
+        li.innerHTML = `
+            ${thumbHtml}
+            <div class="history-info">
+                <div class="history-name">${title}</div>
+                <div class="history-meta">${metaParts.join(' · ')}</div>
+            </div>
+            <div class="history-amount ${amountClass}">${formatAmount(item.amount)}</div>
+        `;
+
+        historyList.appendChild(li);
+    });
+}
+
+async function loadHistory() {
+    if (!historyList) return;
+
+    if (!authToken) {
+        historyList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
+        return;
+    }
+
+    historyList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+
+    try {
+        const res = await fetch(`${API_URL}/api/history`, {
+            headers: { 'Authorization': `Bearer ${authToken}` },
+        });
+        const data = await res.json();
+
+        if (!data.ok) {
+            historyList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить историю'}</div>`;
+            return;
+        }
+
+        renderHistoryList(data.history);
+    } catch (e) {
+        historyList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        console.error(e);
+    }
+}
+
+// === Детальная карточка операции (открывается по клику на картинку подарка) ===
+const historyDetailModal = document.getElementById('historyDetailModal');
+const closeHistoryDetailBtn = document.getElementById('closeHistoryDetail');
+const historyDetailImageWrap = document.getElementById('historyDetailImageWrap');
+const historyDetailImage = document.getElementById('historyDetailImage');
+const historyDetailTitle = document.getElementById('historyDetailTitle');
+const historyDetailNumber = document.getElementById('historyDetailNumber');
+const historyDetailCollection = document.getElementById('historyDetailCollection');
+const historyDetailModelEl = document.getElementById('historyDetailModel');
+const historyDetailBackdrop = document.getElementById('historyDetailBackdrop');
+const historyDetailSymbol = document.getElementById('historyDetailSymbol');
+const historyDetailType = document.getElementById('historyDetailType');
+const historyDetailDate = document.getElementById('historyDetailDate');
+const historyDetailAmount = document.getElementById('historyDetailAmount');
+
+function openHistoryDetail(item) {
+    const image = item.model_image || item.collection_image || '';
+    historyDetailImageWrap.style.backgroundColor = item.backdrop_color || '#333';
+    historyDetailImage.src = image;
+    historyDetailTitle.textContent = item.collection_name;
+    historyDetailNumber.textContent = item.gift_number ? `#${item.gift_number}` : '';
+    historyDetailCollection.textContent = item.collection_name || '—';
+    historyDetailModelEl.textContent = traitLabel(item.model_name);
+    historyDetailBackdrop.textContent = traitLabel(item.backdrop_name);
+    historyDetailSymbol.textContent = traitLabel(item.symbol_name);
+    historyDetailType.textContent = historyTypeLabels[item.type] || item.type;
+    historyDetailDate.textContent = formatHistoryDate(item.created_at);
+
+    const amountClass = item.amount >= 0 ? 'positive' : 'negative';
+    historyDetailAmount.className = `history-detail-amount ${amountClass}`;
+    historyDetailAmount.textContent = formatAmount(item.amount);
+
+    historyDetailModal.style.display = 'flex';
+}
+
+if (historyList) {
+    historyList.addEventListener('click', (e) => {
+        const row = e.target.closest('.history-row.has-gift');
+        if (!row) return;
+        const item = historyById.get(row.dataset.historyId);
+        if (!item) return;
+        openHistoryDetail(item);
+    });
+}
+
+if (closeHistoryDetailBtn && historyDetailModal) {
+    closeHistoryDetailBtn.addEventListener('click', () => {
+        historyDetailModal.style.display = 'none';
     });
 }
 
@@ -938,8 +1133,7 @@ if (confirmCreateListingBtn) {
             resetListingForm();
 
             // Возвращаемся на маркет и обновляем список — новый лот должен появиться сразу.
-            profileScreen.classList.remove('active');
-            marketScreen.classList.add('active');
+            showScreen('market');
             await loadListings();
         } catch (e) {
             alert('Ошибка соединения с сервером');
