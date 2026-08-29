@@ -22,6 +22,16 @@ backToMarketBtn.addEventListener('click', () => {
     marketScreen.classList.add('active');
 });
 
+// Кнопка "Маркет" в нижней навигации (видна на экране профиля) —
+// возвращает на экран маркета, где покупают/продают NFT.
+const navMarketBtn = document.getElementById('navMarketBtn');
+if (navMarketBtn) {
+    navMarketBtn.addEventListener('click', () => {
+        profileScreen.classList.remove('active');
+        marketScreen.classList.add('active');
+    });
+}
+
 // =====================================================================
 // СОСТОЯНИЕ ФИЛЬТРОВ И ДАННЫХ
 // =====================================================================
