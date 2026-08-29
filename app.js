@@ -343,14 +343,10 @@ function renderGrid(listings) {
         card.className = 'nft-card';
 
         const bg = item.backdrop_color || '#333';
-        const badge = item.symbol_icon
-            ? `<img class="nft-badge-img" src="${item.symbol_icon}" alt="">`
-            : '';
         const image = item.model_icon || item.collection_image || '';
 
         card.innerHTML = `
             <div class="nft-image-container" style="background-color: ${bg};">
-                <div class="nft-badge">${badge}</div>
                 ${image ? `<img src="${image}" class="nft-img" alt="${item.collection_name}">` : ''}
             </div>
             <div class="nft-info">
