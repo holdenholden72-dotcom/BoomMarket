@@ -1039,6 +1039,14 @@ body {
 .listing-detail-fee,
 .listing-fee-note {
     text-align: center;
+}
+
+#confirmCreateListingBtn {
+    width: 100%;
+    margin-top: 12px;
+    text-align: center;
+}
+    text-align: center;
     color: #8e8e93;
     font-size: 12px;
     margin: 12px 0;
