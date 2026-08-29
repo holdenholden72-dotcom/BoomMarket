@@ -595,6 +595,14 @@ if (confirmWithdrawBtn) {
             alert('Сумма должна быть от 0.5 до 100000, максимум с одним знаком после запятой (например: 0.5, 1.4, 10.7, 10)');
             return;
         }
+
+        if (!authToken) {
+            alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_URL}/api/withdraw`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
