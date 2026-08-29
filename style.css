@@ -39,7 +39,7 @@ body {
 
 .user-profile {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 10px;
 }
 
@@ -60,6 +60,7 @@ body {
     gap: 4px;
     font-size: 12px;
     font-weight: 600;
+    margin-top: -6px;
 }
 
 .balance .balance-num {
