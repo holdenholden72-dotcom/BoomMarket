@@ -1000,7 +1000,8 @@ body {
     margin-left: 12px;
 }
 
-.listing-detail-fee {
+.listing-detail-fee,
+.listing-fee-note {
     text-align: center;
     color: #8e8e93;
     font-size: 12px;
