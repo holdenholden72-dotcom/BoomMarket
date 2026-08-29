@@ -914,3 +914,27 @@ body {
     object-fit: contain;
     display: block;
 }
+
+/* Форма выставления NFT на продажу */
+.modal-content.listing-form {
+    max-width: 360px;
+    text-align: left;
+}
+
+.listing-field-label {
+    display: block;
+    font-size: 12px;
+    color: #8e8e93;
+    margin: 12px 0 6px;
+}
+
+.listing-select {
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: space-between;
+}
+
+.listing-select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

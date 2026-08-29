@@ -607,3 +607,172 @@ if (closeWithdrawModalBtn && withdrawModal) {
         withdrawModal.style.display = 'none';
     });
 }
+
+// === БЛОК ВЫСТАВЛЕНИЯ NFT НА ПРОДАЖУ ===
+const createListingModal = document.getElementById('createListingModal');
+const addListingBtn = document.getElementById('addListingBtn');
+const closeCreateListingModalBtn = document.getElementById('closeCreateListingModal');
+const listingCollectionSelect = document.getElementById('listingCollectionSelect');
+const listingModelSelect = document.getElementById('listingModelSelect');
+const listingBackdropSelect = document.getElementById('listingBackdropSelect');
+const listingSymbolSelect = document.getElementById('listingSymbolSelect');
+const listingGiftNumberInput = document.getElementById('listingGiftNumber');
+const listingPriceInput = document.getElementById('listingPrice');
+const confirmCreateListingBtn = document.getElementById('confirmCreateListingBtn');
+
+// Полные трейты (с id!) для ВЫБРАННОЙ в форме коллекции — отдельный кэш от
+// traitsCache фильтров маркета, потому что здесь нужны именно id для отправки на сервер.
+let listingTraitsCache = { models: [], backdrops: [], symbols: [] };
+
+function fillListingSelect(selectEl, items, placeholder, labelFn) {
+    selectEl.innerHTML = `<option value="">${placeholder}</option>`;
+    items.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.id;
+        opt.textContent = labelFn(item);
+        selectEl.appendChild(opt);
+    });
+    selectEl.disabled = items.length === 0;
+}
+
+function resetListingForm() {
+    listingCollectionSelect.value = '';
+    listingModelSelect.innerHTML = '<option value="">Сначала выберите коллекцию</option>';
+    listingBackdropSelect.innerHTML = '<option value="">Сначала выберите коллекцию</option>';
+    listingSymbolSelect.innerHTML = '<option value="">Сначала выберите коллекцию</option>';
+    listingModelSelect.disabled = true;
+    listingBackdropSelect.disabled = true;
+    listingSymbolSelect.disabled = true;
+    listingGiftNumberInput.value = '';
+    listingPriceInput.value = '';
+    listingTraitsCache = { models: [], backdrops: [], symbols: [] };
+}
+
+async function populateListingCollectionSelect() {
+    // Коллекции уже загружены маркетом в collectionsCache при старте —
+    // переиспользуем, чтобы не дёргать сервер второй раз.
+    listingCollectionSelect.innerHTML = '<option value="">Выберите коллекцию</option>';
+    collectionsCache.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.name;
+        listingCollectionSelect.appendChild(opt);
+    });
+}
+
+if (addListingBtn && createListingModal) {
+    addListingBtn.addEventListener('click', async () => {
+        if (!authToken) {
+            alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+            return;
+        }
+        resetListingForm();
+        await populateListingCollectionSelect();
+        createListingModal.style.display = 'flex';
+    });
+}
+
+if (closeCreateListingModalBtn && createListingModal) {
+    closeCreateListingModalBtn.addEventListener('click', () => {
+        createListingModal.style.display = 'none';
+    });
+}
+
+// При выборе коллекции — подгружаем её реальные модели/фоны/символы (с id)
+// через /api/collections/:id/filters и заполняем остальные select'ы.
+listingCollectionSelect.addEventListener('change', async () => {
+    const collectionId = listingCollectionSelect.value;
+
+    if (!collectionId) {
+        listingModelSelect.innerHTML = '<option value="">Сначала выберите коллекцию</option>';
+        listingBackdropSelect.innerHTML = '<option value="">Сначала выберите коллекцию</option>';
+        listingSymbolSelect.innerHTML = '<option value="">Сначала выберите коллекцию</option>';
+        listingModelSelect.disabled = true;
+        listingBackdropSelect.disabled = true;
+        listingSymbolSelect.disabled = true;
+        return;
+    }
+
+    listingModelSelect.innerHTML = '<option value="">Загрузка...</option>';
+    listingBackdropSelect.innerHTML = '<option value="">Загрузка...</option>';
+    listingSymbolSelect.innerHTML = '<option value="">Загрузка...</option>';
+
+    try {
+        const res = await fetch(`${API_URL}/api/collections/${collectionId}/filters`);
+        const data = await res.json();
+
+        if (!data.ok) throw new Error(data.error || 'Не удалось загрузить трейты');
+
+        listingTraitsCache = data.filters;
+
+        fillListingSelect(listingModelSelect, listingTraitsCache.models, 'Без модели', m =>
+            m.rarity_permille != null ? `${m.name} (${m.rarity_permille}%)` : m.name);
+        fillListingSelect(listingBackdropSelect, listingTraitsCache.backdrops, 'Без фона', b =>
+            b.rarity_permille != null ? `${b.name} (${b.rarity_permille}%)` : b.name);
+        fillListingSelect(listingSymbolSelect, listingTraitsCache.symbols, 'Без символа', s =>
+            s.rarity_permille != null ? `${s.name} (${s.rarity_permille}%)` : s.name);
+    } catch (e) {
+        console.error('Не удалось загрузить трейты коллекции:', e);
+        listingModelSelect.innerHTML = '<option value="">Ошибка загрузки</option>';
+        listingBackdropSelect.innerHTML = '<option value="">Ошибка загрузки</option>';
+        listingSymbolSelect.innerHTML = '<option value="">Ошибка загрузки</option>';
+    }
+});
+
+if (confirmCreateListingBtn) {
+    confirmCreateListingBtn.addEventListener('click', async () => {
+        const collectionId = parseInt(listingCollectionSelect.value, 10);
+        const modelId = listingModelSelect.value ? parseInt(listingModelSelect.value, 10) : null;
+        const backdropId = listingBackdropSelect.value ? parseInt(listingBackdropSelect.value, 10) : null;
+        const symbolId = listingSymbolSelect.value ? parseInt(listingSymbolSelect.value, 10) : null;
+        const giftNumber = parseInt(listingGiftNumberInput.value, 10);
+        const price = parseFloat(listingPriceInput.value);
+
+        if (!collectionId) {
+            alert('Выберите коллекцию');
+            return;
+        }
+        if (!giftNumber || giftNumber <= 0) {
+            alert('Укажите корректный номер подарка');
+            return;
+        }
+        if (!price || price <= 0) {
+            alert('Укажите корректную цену');
+            return;
+        }
+        if (!authToken) {
+            alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_URL}/api/listings`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`,
+                },
+                body: JSON.stringify({ collectionId, modelId, backdropId, symbolId, giftNumber, price }),
+            });
+
+            const data = await res.json();
+
+            if (!data.ok) {
+                alert(data.error || 'Не удалось выставить лот');
+                return;
+            }
+
+            alert('NFT выставлен на продажу!');
+            createListingModal.style.display = 'none';
+            resetListingForm();
+
+            // Возвращаемся на маркет и обновляем список — новый лот должен появиться сразу.
+            profileScreen.classList.remove('active');
+            marketScreen.classList.add('active');
+            await loadListings();
+        } catch (e) {
+            alert('Ошибка соединения с сервером');
+            console.error(e);
+        }
+    });
+}
