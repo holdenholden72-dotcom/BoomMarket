@@ -120,9 +120,15 @@ function getOptionsForFilterType(type) {
 function renderFilterPickerList() {
     const search = filterPickerSearch.value.trim().toLowerCase();
     const allOptions = getOptionsForFilterType(openFilterType);
-    const visibleOptions = search
+    let visibleOptions = search
         ? allOptions.filter(o => o.label.toLowerCase().includes(search))
         : allOptions;
+
+    // Выбранные — наверх списка, порядок внутри каждой группы (выбрано/не выбрано)
+    // сохраняем как был (алфавитный, как отдаёт бэкенд) — сортировка стабильная.
+    visibleOptions = visibleOptions
+        .slice()
+        .sort((a, b) => (draftSelection.has(b.value) ? 1 : 0) - (draftSelection.has(a.value) ? 1 : 0));
 
     filterPickerList.innerHTML = '';
 
@@ -145,6 +151,10 @@ function renderFilterPickerList() {
             thumbHtml = `<img class="filter-picker-thumb" src="${opt.image}" alt="" loading="lazy">`;
         } else {
             thumbHtml = `<span class="filter-picker-thumb is-placeholder">?</span>`;
+        }
+
+        if (draftSelection.has(opt.value)) {
+            li.classList.add('is-selected');
         }
 
         const rarityHtml = (opt.rarity !== undefined && opt.rarity !== null)
@@ -170,7 +180,8 @@ function renderFilterPickerList() {
             } else {
                 draftSelection.delete(opt.value);
             }
-            updateSelectAllCheckbox(visibleOptions);
+            // Перерисовываем список целиком — выбранный пункт переезжает наверх/обратно.
+            renderFilterPickerList();
         });
 
         filterPickerList.appendChild(li);
