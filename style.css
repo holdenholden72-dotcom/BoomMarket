@@ -470,27 +470,33 @@ body {
     font-size: 18px;
 }
 .wallet-container {
-    flex-shrink: 0;
+    flex-shrink: 1;
+    min-width: 0;
     margin-right: 6px;
-    max-width: 150px;
-}
-
-.wallet-container [class*="ton-connect"] button,
-.wallet-container button {
-    max-width: 100%;
+    max-width: 160px;
+    overflow: hidden;
+    display: flex;
+    justify-content: flex-end;
 }
 
 .wallet-btn {
     background: #1c1c1e;
     border: none;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
+    width: auto;
+    height: auto;
+    min-width: 0;
+    max-width: 100%;
+    border-radius: 18px;
     color: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    overflow: hidden;
+}
+
+.wallet-btn * {
+    max-width: 100%;
 }
 /* Модальное окно кошелька */
 .wallet-modal {
