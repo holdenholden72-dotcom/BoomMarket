@@ -483,9 +483,46 @@ searchInput.addEventListener('input', (e) => {
     searchDebounceTimer = setTimeout(loadListings, 300);
 });
 
-sortTriggerBtn.addEventListener('click', () => {
-    sortModal.classList.toggle('active');
+const closeSortModalBtn = document.getElementById('closeSortModal');
+const sortList = document.getElementById('sortList');
+const sortResetBtn = document.getElementById('sortReset');
+const sortApplyBtn = document.getElementById('sortApply');
+const sortRows = Array.from(sortList.querySelectorAll('.filter-picker-row'));
+
+// Черновой выбор сортировки — применяется только по кнопке "Показать результаты",
+// отменяется при закрытии крестиком (как и в filterPickerModal).
+// Сортировка по смыслу может быть только одна, поэтому выбор нового варианта
+// снимает предыдущий — но визуально это те же квадратики-чекбоксы, что и в фильтрах.
+let draftSort = activeFilters.sort;
+
+function renderSortList() {
+    sortRows.forEach(row => {
+        const checkbox = row.querySelector('input[type="checkbox"]');
+        const isChecked = row.getAttribute('data-sort') === draftSort;
+        checkbox.checked = isChecked;
+        row.classList.toggle('is-selected', isChecked);
+    });
+}
+
+sortRows.forEach(row => {
+    row.addEventListener('click', (e) => {
+        const value = row.getAttribute('data-sort');
+        draftSort = (draftSort === value) ? null : value;
+        renderSortList();
+    });
 });
+
+sortTriggerBtn.addEventListener('click', () => {
+    draftSort = activeFilters.sort;
+    renderSortList();
+    sortModal.classList.add('active');
+});
+
+if (closeSortModalBtn) {
+    closeSortModalBtn.addEventListener('click', () => {
+        sortModal.classList.remove('active');
+    });
+}
 
 sortModal.addEventListener('click', (e) => {
     if (e.target === sortModal) {
@@ -493,15 +530,20 @@ sortModal.addEventListener('click', (e) => {
     }
 });
 
-document.querySelectorAll('.sort-content li').forEach(li => {
-    li.addEventListener('click', () => {
-        document.querySelectorAll('.sort-content li').forEach(el => el.classList.remove('active'));
-        li.classList.add('active');
-        activeFilters.sort = li.getAttribute('data-sort');
+if (sortResetBtn) {
+    sortResetBtn.addEventListener('click', () => {
+        draftSort = null;
+        renderSortList();
+    });
+}
+
+if (sortApplyBtn) {
+    sortApplyBtn.addEventListener('click', () => {
+        activeFilters.sort = draftSort;
         sortModal.classList.remove('active');
         loadListings();
     });
-});
+}
 
 // =====================================================================
 // ИНИЦИАЛИЗАЦИЯ МАРКЕТА

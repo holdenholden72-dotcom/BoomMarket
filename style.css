@@ -405,46 +405,6 @@ body {
     color: #fff;
 }
 
-/* Модальное окно сортировки */
-.sort-modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.6);
-    z-index: 100;
-    align-items: flex-end;
-}
-
-.sort-modal.active {
-    display: flex;
-}
-
-.sort-content {
-    background: #1c1c1e;
-    width: 100%;
-    border-radius: 20px 20px 0 0;
-    padding: 20px;
-}
-
-.sort-content h3 {
-    margin-bottom: 15px;
-    font-size: 16px;
-}
-
-.sort-content ul {
-    list-style: none;
-}
-
-.sort-content li {
-    padding: 12px 0;
-    border-bottom: 1px solid #2c2c2e;
-    font-size: 14px;
-    cursor: pointer;
-}
-
 /* Нижняя навигация */
 .bottom-nav {
     position: fixed;
@@ -649,25 +609,6 @@ body {
     justify-content: center;
     color: #fff;
     font-size: 12px;
-}
-/* Базовый вид точки (серая по умолчанию) */
-.sort-content li .sort-dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: #777777; /* Серый цвет для невыбранных */
-    margin-right: 10px;
-    transition: background-color 0.2s ease;
-}
-
-/* Когда пункт выбран (добавляем класс active на li) */
-.sort-content li.active .sort-dot {
-    background-color: #ffd700; /* Желтый цвет для выбранного */
-}
-
-.sort-content li.active {
-    color: #ffd700; /* Можно сделать и текст желтоватым для красоты */
 }
 /* Стили для модального окна вывода */
 .modal {
