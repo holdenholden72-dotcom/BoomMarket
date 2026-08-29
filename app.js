@@ -705,11 +705,11 @@ listingCollectionSelect.addEventListener('change', async () => {
 
         listingTraitsCache = data.filters;
 
-        fillListingSelect(listingModelSelect, listingTraitsCache.models, 'Без модели', m =>
+        fillListingSelect(listingModelSelect, listingTraitsCache.models, 'Выберите модель', m =>
             m.rarity_permille != null ? `${m.name} (${m.rarity_permille}%)` : m.name);
-        fillListingSelect(listingBackdropSelect, listingTraitsCache.backdrops, 'Без фона', b =>
+        fillListingSelect(listingBackdropSelect, listingTraitsCache.backdrops, 'Выберите фон', b =>
             b.rarity_permille != null ? `${b.name} (${b.rarity_permille}%)` : b.name);
-        fillListingSelect(listingSymbolSelect, listingTraitsCache.symbols, 'Без символа', s =>
+        fillListingSelect(listingSymbolSelect, listingTraitsCache.symbols, 'Выберите символ', s =>
             s.rarity_permille != null ? `${s.name} (${s.rarity_permille}%)` : s.name);
     } catch (e) {
         console.error('Не удалось загрузить трейты коллекции:', e);
@@ -722,14 +722,26 @@ listingCollectionSelect.addEventListener('change', async () => {
 if (confirmCreateListingBtn) {
     confirmCreateListingBtn.addEventListener('click', async () => {
         const collectionId = parseInt(listingCollectionSelect.value, 10);
-        const modelId = listingModelSelect.value ? parseInt(listingModelSelect.value, 10) : null;
-        const backdropId = listingBackdropSelect.value ? parseInt(listingBackdropSelect.value, 10) : null;
-        const symbolId = listingSymbolSelect.value ? parseInt(listingSymbolSelect.value, 10) : null;
+        const modelId = parseInt(listingModelSelect.value, 10);
+        const backdropId = parseInt(listingBackdropSelect.value, 10);
+        const symbolId = parseInt(listingSymbolSelect.value, 10);
         const giftNumber = parseInt(listingGiftNumberInput.value, 10);
         const price = parseFloat(listingPriceInput.value);
 
         if (!collectionId) {
             alert('Выберите коллекцию');
+            return;
+        }
+        if (!modelId) {
+            alert('Выберите модель');
+            return;
+        }
+        if (!backdropId) {
+            alert('Выберите фон');
+            return;
+        }
+        if (!symbolId) {
+            alert('Выберите символ');
             return;
         }
         if (!giftNumber || giftNumber <= 0) {
