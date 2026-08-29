@@ -572,6 +572,17 @@ if (tg) {
 }
 
 // === БЛОК ВЫВОДА СРЕДСТВ ===
+
+// Проверяет, что сумма — "круглое" число от 0.1 до 100000 с не более чем
+// одним знаком после запятой (0.2, 1.4, 10.7, 10 — можно; 1.76, 9.87 — нельзя).
+function isValidAmount(amount) {
+    if (isNaN(amount) || !isFinite(amount)) return false;
+    if (amount < 0.1 || amount > 100000) return false;
+    // Приводим к десятым и сравниваем — так надёжнее плавающей точки.
+    const tenths = Math.round(amount * 10);
+    return Math.abs(tenths - amount * 10) < 1e-6 || Math.abs(tenths / 10 - amount) < 1e-9;
+}
+
 const withdrawModal = document.getElementById('withdrawModal');
 const confirmWithdrawBtn = document.getElementById('confirmWithdrawBtn');
 const withdrawAmountInput = document.getElementById('withdrawAmount');
@@ -580,8 +591,8 @@ if (confirmWithdrawBtn) {
     confirmWithdrawBtn.addEventListener('click', async () => {
         const amount = parseFloat(withdrawAmountInput.value);
 
-        if (isNaN(amount) || amount < 0.5) {
-            alert('Минимальная сумма для вывода: 0.5!');
+        if (!isValidAmount(amount)) {
+            alert('Сумма должна быть от 0.1 до 100000, максимум с одним знаком после запятой (например: 0.2, 1.4, 10.7, 10)');
             return;
         }
 
@@ -651,8 +662,8 @@ if (confirmDepositBtn && depositAmountInput) {
     confirmDepositBtn.addEventListener('click', async () => {
         const amount = parseFloat(depositAmountInput.value);
 
-        if (isNaN(amount) || amount < 0.01) {
-            alert('Минимальная сумма для пополнения: 0.01');
+        if (!isValidAmount(amount)) {
+            alert('Сумма должна быть от 0.1 до 100000, максимум с одним знаком после запятой (например: 0.2, 1.4, 10.7, 10)');
             return;
         }
 
