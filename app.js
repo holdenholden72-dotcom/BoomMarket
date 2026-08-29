@@ -93,7 +93,7 @@ function getOptionsForFilterType(type) {
         return traitsCache.models.map(m => ({
             value: m.name,
             label: m.name,
-            image: m.icon_url,
+            image: m.image_url,
             rarity: m.rarity_permille,
         }));
     }
@@ -102,6 +102,7 @@ function getOptionsForFilterType(type) {
             value: b.name,
             label: b.name,
             colorHex: b.color_hex,
+            image: b.image_url,
             rarity: b.rarity_permille,
         }));
     }
@@ -141,7 +142,7 @@ function renderFilterPickerList() {
         if (opt.colorHex) {
             thumbHtml = `<span class="filter-picker-thumb is-color" style="background:${opt.colorHex}"></span>`;
         } else if (opt.image) {
-            thumbHtml = `<img class="filter-picker-thumb" src="${opt.image}" alt="">`;
+            thumbHtml = `<img class="filter-picker-thumb" src="${opt.image}" alt="" loading="lazy">`;
         } else {
             thumbHtml = `<span class="filter-picker-thumb is-placeholder">?</span>`;
         }
