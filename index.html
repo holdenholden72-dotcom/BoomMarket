@@ -275,6 +275,42 @@
         </div>
     </div>
 
+    <!-- Модальное окно детального просмотра лота (открывается при клике на 🛒) -->
+    <div id="listingDetailModal" class="modal" style="display: none;">
+        <div class="modal-content listing-detail-content">
+            <button class="close-modal" id="closeListingDetail">&times;</button>
+
+            <div class="listing-detail-image-wrap" id="listingDetailImageWrap">
+                <img id="listingDetailImage" class="listing-detail-image" src="" alt="">
+            </div>
+            <div class="listing-detail-title" id="listingDetailTitle"></div>
+            <div class="listing-detail-number" id="listingDetailNumber"></div>
+
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Коллекция</span>
+                <span class="listing-detail-value" id="listingDetailCollection"></span>
+            </div>
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Модель</span>
+                <span class="listing-detail-value" id="listingDetailModel"></span>
+            </div>
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Фон</span>
+                <span class="listing-detail-value" id="listingDetailBackdrop"></span>
+            </div>
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Символ</span>
+                <span class="listing-detail-value" id="listingDetailSymbol"></span>
+            </div>
+
+            <div class="listing-detail-fee">Комиссия маркетплейса: 1.5%</div>
+
+            <button class="action-btn listing-detail-buy" id="listingDetailBuyBtn">
+                Купить · 💎 <span id="listingDetailPrice"></span>
+            </button>
+        </div>
+    </div>
+
     <!-- Скрипт подключаем один раз в самом конце -->
     <script src="app.js"></script>
 </body>

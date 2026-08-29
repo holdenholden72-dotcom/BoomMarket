@@ -332,6 +332,7 @@ async function loadListings() {
 
 function renderGrid(listings) {
     grid.innerHTML = '';
+    listingsById.clear();
 
     if (!listings || listings.length === 0) {
         grid.innerHTML = `<div class="empty-state">Пока нет активных лотов по выбранным фильтрам</div>`;
@@ -339,6 +340,8 @@ function renderGrid(listings) {
     }
 
     listings.forEach(item => {
+        listingsById.set(String(item.id), item);
+
         const card = document.createElement('div');
         card.className = 'nft-card';
 
@@ -362,47 +365,103 @@ function renderGrid(listings) {
     });
 }
 
-// Покупка — один обработчик на всю сетку (карточки перерисовываются целиком
-// при каждом обновлении, поэтому вешаем слушатель на сам grid, а не на кнопки).
-grid.addEventListener('click', async (e) => {
+// Кэш текущих загруженных лотов по id — чтобы открыть детальную карточку
+// без повторного запроса к серверу, у нас уже есть все данные из /api/listings.
+const listingsById = new Map();
+
+// === Детальная карточка лота ===
+const listingDetailModal = document.getElementById('listingDetailModal');
+const closeListingDetailBtn = document.getElementById('closeListingDetail');
+const listingDetailImageWrap = document.getElementById('listingDetailImageWrap');
+const listingDetailImage = document.getElementById('listingDetailImage');
+const listingDetailTitle = document.getElementById('listingDetailTitle');
+const listingDetailNumber = document.getElementById('listingDetailNumber');
+const listingDetailCollection = document.getElementById('listingDetailCollection');
+const listingDetailModel = document.getElementById('listingDetailModel');
+const listingDetailBackdrop = document.getElementById('listingDetailBackdrop');
+const listingDetailSymbol = document.getElementById('listingDetailSymbol');
+const listingDetailPrice = document.getElementById('listingDetailPrice');
+const listingDetailBuyBtn = document.getElementById('listingDetailBuyBtn');
+
+let currentDetailListingId = null;
+
+function traitLabel(name, rarity) {
+    if (!name) return '—';
+    return rarity != null ? `${name} (${rarity}%)` : name;
+}
+
+function openListingDetail(item) {
+    currentDetailListingId = item.id;
+
+    const image = item.model_icon || item.collection_image || '';
+    listingDetailImageWrap.style.backgroundColor = item.backdrop_color || '#333';
+    listingDetailImage.src = image;
+    listingDetailTitle.textContent = item.collection_name;
+    listingDetailNumber.textContent = `#${item.gift_number}`;
+    listingDetailCollection.textContent = item.collection_name;
+    listingDetailModel.textContent = traitLabel(item.model_name, item.model_rarity);
+    listingDetailBackdrop.textContent = traitLabel(item.backdrop_name, item.backdrop_rarity);
+    listingDetailSymbol.textContent = traitLabel(item.symbol_name, item.symbol_rarity);
+    listingDetailPrice.textContent = item.price;
+
+    listingDetailModal.style.display = 'flex';
+}
+
+grid.addEventListener('click', (e) => {
     const btn = e.target.closest('.cart-btn');
     if (!btn) return;
 
-    const listingId = btn.dataset.listingId;
-    if (!listingId) return;
+    const item = listingsById.get(btn.dataset.listingId);
+    if (!item) return;
 
-    if (!authToken) {
-        alert('Не удалось подтвердить личность. Попробуйте перезайти.');
-        return;
-    }
+    openListingDetail(item);
+});
 
-    if (!confirm('Купить этот NFT?')) return;
+if (closeListingDetailBtn && listingDetailModal) {
+    closeListingDetailBtn.addEventListener('click', () => {
+        listingDetailModal.style.display = 'none';
+        currentDetailListingId = null;
+    });
+}
 
-    btn.disabled = true;
+if (listingDetailBuyBtn) {
+    listingDetailBuyBtn.addEventListener('click', async () => {
+        if (!currentDetailListingId) return;
 
-    try {
-        const res = await fetch(`${API_URL}/api/listings/${listingId}/buy`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${authToken}` },
-        });
-
-        const data = await res.json();
-
-        if (!data.ok) {
-            alert(data.error || 'Не удалось купить лот');
-            btn.disabled = false;
+        if (!authToken) {
+            alert('Не удалось подтвердить личность. Попробуйте перезайти.');
             return;
         }
 
-        updateBalanceUI(data.balance);
-        alert('Покупка успешна!');
-        await loadListings();
-    } catch (err) {
-        alert('Ошибка соединения с сервером');
-        console.error(err);
-        btn.disabled = false;
-    }
-});
+        listingDetailBuyBtn.disabled = true;
+
+        try {
+            const res = await fetch(`${API_URL}/api/listings/${currentDetailListingId}/buy`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${authToken}` },
+            });
+
+            const data = await res.json();
+
+            if (!data.ok) {
+                alert(data.error || 'Не удалось купить лот');
+                listingDetailBuyBtn.disabled = false;
+                return;
+            }
+
+            updateBalanceUI(data.balance);
+            alert('Покупка успешна!');
+            listingDetailModal.style.display = 'none';
+            currentDetailListingId = null;
+            await loadListings();
+        } catch (err) {
+            alert('Ошибка соединения с сервером');
+            console.error(err);
+        } finally {
+            listingDetailBuyBtn.disabled = false;
+        }
+    });
+}
 
 // =====================================================================
 // ПОИСК И СОРТИРОВКА
