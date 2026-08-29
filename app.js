@@ -354,13 +354,55 @@ function renderGrid(listings) {
                 <div class="nft-number">#${item.gift_number}</div>
                 <div class="nft-bottom">
                     <div class="nft-price">💎 ${item.price}</div>
-                    <button class="cart-btn">🛒</button>
+                    <button class="cart-btn" data-listing-id="${item.id}">🛒</button>
                 </div>
             </div>
         `;
         grid.appendChild(card);
     });
 }
+
+// Покупка — один обработчик на всю сетку (карточки перерисовываются целиком
+// при каждом обновлении, поэтому вешаем слушатель на сам grid, а не на кнопки).
+grid.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.cart-btn');
+    if (!btn) return;
+
+    const listingId = btn.dataset.listingId;
+    if (!listingId) return;
+
+    if (!authToken) {
+        alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+        return;
+    }
+
+    if (!confirm('Купить этот NFT?')) return;
+
+    btn.disabled = true;
+
+    try {
+        const res = await fetch(`${API_URL}/api/listings/${listingId}/buy`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${authToken}` },
+        });
+
+        const data = await res.json();
+
+        if (!data.ok) {
+            alert(data.error || 'Не удалось купить лот');
+            btn.disabled = false;
+            return;
+        }
+
+        updateBalanceUI(data.balance);
+        alert('Покупка успешна!');
+        await loadListings();
+    } catch (err) {
+        alert('Ошибка соединения с сервером');
+        console.error(err);
+        btn.disabled = false;
+    }
+});
 
 // =====================================================================
 // ПОИСК И СОРТИРОВКА
