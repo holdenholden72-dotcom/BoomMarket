@@ -53,22 +53,22 @@ body {
 }
 .balance {
     background: #1c1c1e;
-    padding: 3px 8px 3px 6px;
+    padding: 4px 9px 4px 7px;
     border-radius: 18px;
     display: flex;
     align-items: center;
     gap: 4px;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
-    margin-top: -6px;
+    margin-top: -3px;
 }
 
 .balance .balance-num {
-    font-size: 13px;
+    font-size: 14px;
 }
 
 .balance .diamond-icon {
-    font-size: 12px;
+    font-size: 13px;
 }
 
 .add-btn {
