@@ -385,9 +385,8 @@ const listingDetailBuyBtn = document.getElementById('listingDetailBuyBtn');
 
 let currentDetailListingId = null;
 
-function traitLabel(name, rarity) {
-    if (!name) return '—';
-    return rarity != null ? `${name} (${rarity}%)` : name;
+function traitLabel(name) {
+    return name || '—';
 }
 
 function openListingDetail(item) {
@@ -399,9 +398,9 @@ function openListingDetail(item) {
     listingDetailTitle.textContent = item.collection_name;
     listingDetailNumber.textContent = `#${item.gift_number}`;
     listingDetailCollection.textContent = item.collection_name;
-    listingDetailModel.textContent = traitLabel(item.model_name, item.model_rarity);
-    listingDetailBackdrop.textContent = traitLabel(item.backdrop_name, item.backdrop_rarity);
-    listingDetailSymbol.textContent = traitLabel(item.symbol_name, item.symbol_rarity);
+    listingDetailModel.textContent = traitLabel(item.model_name);
+    listingDetailBackdrop.textContent = traitLabel(item.backdrop_name);
+    listingDetailSymbol.textContent = traitLabel(item.symbol_name);
     listingDetailPrice.textContent = item.price;
 
     listingDetailModal.style.display = 'flex';
