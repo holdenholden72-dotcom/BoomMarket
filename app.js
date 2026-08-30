@@ -1998,7 +1998,6 @@ const listingModelSelect = document.getElementById('listingModelSelect');
 const listingBackdropSelect = document.getElementById('listingBackdropSelect');
 const listingSymbolSelect = document.getElementById('listingSymbolSelect');
 const listingGiftNumberInput = document.getElementById('listingGiftNumber');
-const listingPriceInput = document.getElementById('listingPrice');
 const confirmCreateListingBtn = document.getElementById('confirmCreateListingBtn');
 
 // Полные трейты (с id!) для ВЫБРАННОЙ в форме коллекции — отдельный кэш от
@@ -2025,7 +2024,6 @@ function resetListingForm() {
     listingBackdropSelect.disabled = true;
     listingSymbolSelect.disabled = true;
     listingGiftNumberInput.value = '';
-    listingPriceInput.value = '';
     listingTraitsCache = { models: [], backdrops: [], symbols: [] };
 }
 
@@ -2107,7 +2105,6 @@ if (confirmCreateListingBtn) {
         const backdropId = parseInt(listingBackdropSelect.value, 10);
         const symbolId = parseInt(listingSymbolSelect.value, 10);
         const giftNumber = parseInt(listingGiftNumberInput.value, 10);
-        const price = parseFloat(listingPriceInput.value);
 
         if (!collectionId) {
             alert('Выберите коллекцию');
@@ -2129,39 +2126,35 @@ if (confirmCreateListingBtn) {
             alert('Укажите корректный номер подарка');
             return;
         }
-        if (!price || price <= 0) {
-            alert('Укажите корректную цену');
-            return;
-        }
         if (!authToken) {
             alert('Не удалось подтвердить личность. Попробуйте перезайти.');
             return;
         }
 
         try {
-            const res = await fetch(`${API_URL}/api/listings`, {
+            const res = await fetch(`${API_URL}/api/inventory/add`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${authToken}`,
                 },
-                body: JSON.stringify({ collectionId, modelId, backdropId, symbolId, giftNumber, price }),
+                body: JSON.stringify({ collectionId, modelId, backdropId, symbolId, giftNumber }),
             });
 
             const data = await res.json();
 
             if (!data.ok) {
-                alert(data.error || 'Не удалось выставить лот');
+                alert(data.error || 'Не удалось добавить NFT');
                 return;
             }
 
-            alert('NFT выставлен на продажу!');
+            alert('NFT добавлен в Хранилище!');
             createListingModal.style.display = 'none';
             resetListingForm();
 
-            // Возвращаемся на маркет и обновляем список — новый лот должен появиться сразу.
-            showScreen('market');
-            await loadListings();
+            // Открываем Хранилище и обновляем список — новый подарок должен появиться сразу.
+            showScreen('storage');
+            await loadInventory();
         } catch (e) {
             alert('Ошибка соединения с сервером');
             console.error(e);
