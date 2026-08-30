@@ -1609,3 +1609,484 @@ body {
     font-weight: 600;
     margin-bottom: 10px;
 }
+
+/* =====================================================================
+   ИГРА "СЛОТЫ"
+   ===================================================================== */
+
+.slots-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Заметная кнопка правил в шапке — золотая обводка, чтобы бросалась в глаза */
+.slots-rules-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 215, 0, 0.12);
+    border: 1px solid rgba(255, 215, 0, 0.55);
+    color: #ffd700;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 7px 14px 7px 10px;
+    border-radius: 20px;
+    cursor: pointer;
+}
+
+.slots-rules-btn:active {
+    background: rgba(255, 215, 0, 0.22);
+    transform: scale(0.96);
+}
+
+.slots-rules-btn-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ffd700;
+    color: #1a1a1a;
+    font-size: 12px;
+    font-weight: 900;
+    font-style: italic;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.slots-content {
+    padding: 4px 16px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.slots-title {
+    font-size: 22px;
+    font-weight: 800;
+    margin: 4px 0 14px;
+    letter-spacing: 0.3px;
+}
+
+.slots-balance-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #1c1c1e;
+    border: 1px solid #2c2c2e;
+    padding: 6px 16px;
+    border-radius: 20px;
+    margin-bottom: 18px;
+    font-size: 13px;
+}
+
+.slots-balance-label {
+    color: #8e8e93;
+}
+
+.slots-balance-value {
+    font-weight: 700;
+    color: #ffd700;
+}
+
+/* Корпус автомата */
+.slots-machine {
+    position: relative;
+    width: 100%;
+    max-width: 340px;
+    background: linear-gradient(160deg, #2b2345 0%, #1c1531 55%, #14101f 100%);
+    border: 1px solid rgba(255, 215, 0, 0.35);
+    border-radius: 24px;
+    padding: 22px 16px 18px;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 12px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.04);
+    transition: box-shadow 0.3s ease;
+}
+
+.slots-machine.slots-win-flash {
+    animation: slotsWinFlash 0.9s ease;
+}
+
+@keyframes slotsWinFlash {
+    0% { box-shadow: 0 0 0 1px rgba(255,215,0,0.9), 0 0 40px 8px rgba(255,215,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08); }
+    100% { box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 12px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.04); }
+}
+
+.slots-machine-lights {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 4px;
+    margin-bottom: 14px;
+}
+
+.slots-machine-lights span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ffd700;
+    opacity: 0.25;
+    animation: slotsLightBlink 1.6s ease-in-out infinite;
+    box-shadow: 0 0 6px rgba(255, 215, 0, 0.6);
+}
+
+.slots-machine-lights span:nth-child(2) { animation-delay: 0.15s; }
+.slots-machine-lights span:nth-child(3) { animation-delay: 0.3s; }
+.slots-machine-lights span:nth-child(4) { animation-delay: 0.45s; }
+.slots-machine-lights span:nth-child(5) { animation-delay: 0.6s; }
+.slots-machine-lights span:nth-child(6) { animation-delay: 0.75s; }
+
+.slots-machine.is-spinning .slots-machine-lights span {
+    animation-duration: 0.5s;
+}
+
+@keyframes slotsLightBlink {
+    0%, 100% { opacity: 0.25; }
+    50% { opacity: 1; }
+}
+
+.slots-reels {
+    position: relative;
+    display: flex;
+    gap: 8px;
+    background: #0f0f0f;
+    border-radius: 16px;
+    padding: 8px;
+    box-shadow: inset 0 3px 10px rgba(0, 0, 0, 0.6);
+}
+
+.slot-reel-window {
+    flex: 1;
+    height: 92px;
+    overflow: hidden;
+    position: relative;
+    background: linear-gradient(180deg, #050505 0%, #161616 20%, #1e1e1e 50%, #161616 80%, #050505 100%);
+    border-radius: 12px;
+    border: 1px solid #2c2c2e;
+}
+
+.slot-reel-window::before,
+.slot-reel-window::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 28px;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.slot-reel-window::before {
+    top: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0.85), rgba(0,0,0,0));
+}
+
+.slot-reel-window::after {
+    bottom: 0;
+    background: linear-gradient(0deg, rgba(0,0,0,0.85), rgba(0,0,0,0));
+}
+
+.slot-reel-strip {
+    display: flex;
+    flex-direction: column;
+    will-change: transform;
+}
+
+.slot-symbol {
+    height: 92px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 46px;
+    line-height: 1;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+}
+
+.slot-reel-strip.slot-reel-landed .slot-symbol:last-child {
+    animation: slotSymbolLand 0.26s ease;
+}
+
+@keyframes slotSymbolLand {
+    0% { transform: scale(1.18); }
+    100% { transform: scale(1); }
+}
+
+/* Линия выплаты — золотая полоса поперёк центра барабанов */
+.slots-payline {
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    top: 50%;
+    height: 2px;
+    transform: translateY(-1px);
+    background: linear-gradient(90deg, rgba(255,215,0,0), rgba(255,215,0,0.85) 15%, rgba(255,215,0,0.85) 85%, rgba(255,215,0,0));
+    z-index: 3;
+    pointer-events: none;
+}
+
+.slots-result {
+    min-height: 20px;
+    margin: 16px 0 4px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #8e8e93;
+    text-align: center;
+}
+
+.slots-result.is-win {
+    color: #ffd700;
+    animation: slotsResultPulse 0.5s ease;
+}
+
+.slots-result.is-lose {
+    color: #ff453a;
+}
+
+@keyframes slotsResultPulse {
+    0% { transform: scale(0.9); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Панель ставки */
+.slots-bet-panel {
+    width: 100%;
+    max-width: 340px;
+    margin-top: 14px;
+}
+
+.slots-bet-label {
+    font-size: 12px;
+    color: #8e8e93;
+    margin-bottom: 8px;
+}
+
+.slots-bet-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.slots-bet-step-btn {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    border: 1px solid #2c2c2e;
+    background: #1c1c1e;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.slots-bet-step-btn:active {
+    background: #2c2c2e;
+    transform: scale(0.94);
+}
+
+.slots-bet-step-btn:disabled {
+    opacity: 0.4;
+}
+
+.slots-bet-input-wrap {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.slots-bet-input-wrap input {
+    width: 100%;
+    background: #1c1c1e;
+    border: 1px solid #2c2c2e;
+    border-radius: 12px;
+    padding: 11px 34px 11px 14px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.slots-bet-input-wrap input:disabled {
+    opacity: 0.5;
+}
+
+.slots-bet-diamond {
+    position: absolute;
+    right: 12px;
+    font-size: 14px;
+    pointer-events: none;
+}
+
+.slots-bet-quick {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.slots-bet-quick-btn {
+    background: #1c1c1e;
+    border: 1px solid #2c2c2e;
+    color: #b8b8bd;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 8px 0;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.slots-bet-quick-btn:active {
+    background: #2c2c2e;
+    color: #fff;
+}
+
+.slots-bet-quick-btn:disabled {
+    opacity: 0.4;
+}
+
+/* Кнопка "Крутить" — крупная, золотой градиент, с пульсацией в покое */
+.slots-spin-btn {
+    width: 100%;
+    max-width: 340px;
+    margin-top: 18px;
+    padding: 16px 0;
+    border: none;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #ffe066 0%, #ffd700 45%, #ff9f0a 100%);
+    color: #1a1a1a;
+    font-size: 17px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(255, 165, 0, 0.35);
+    animation: slotsSpinBtnPulse 2.2s ease-in-out infinite;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 54px;
+}
+
+.slots-spin-btn:active {
+    transform: scale(0.97);
+}
+
+.slots-spin-btn:disabled {
+    cursor: default;
+    animation: none;
+    opacity: 0.85;
+}
+
+@keyframes slotsSpinBtnPulse {
+    0%, 100% { box-shadow: 0 8px 20px rgba(255, 165, 0, 0.35); }
+    50% { box-shadow: 0 8px 28px rgba(255, 165, 0, 0.65); }
+}
+
+/* Спиннер вместо текста, пока идёт вращение */
+.slots-spin-btn.is-spinning .slots-spin-btn-text::after {
+    content: '';
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 3px solid rgba(26, 26, 26, 0.25);
+    border-top-color: #1a1a1a;
+    animation: slotsSpinnerRotate 0.7s linear infinite;
+}
+
+@keyframes slotsSpinnerRotate {
+    to { transform: rotate(360deg); }
+}
+
+/* Модалка правил */
+.slots-rules-content {
+    max-width: 340px;
+    text-align: left;
+}
+
+.slots-rules-content h2 {
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 19px;
+}
+
+.slots-rules-desc {
+    font-size: 13px;
+    color: #b8b8bd;
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+
+.slots-rules-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.slots-rules-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #1c1c1e;
+    border: 1px solid #2c2c2e;
+    border-radius: 12px;
+    padding: 10px 14px;
+}
+
+.slots-rules-row.is-top {
+    border-color: rgba(255, 215, 0, 0.5);
+    background: linear-gradient(135deg, rgba(255,215,0,0.14) 0%, #1c1c1e 70%);
+}
+
+.slots-rules-icon {
+    font-size: 24px;
+    width: 30px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.slots-rules-name {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.slots-rules-mult {
+    font-size: 14px;
+    font-weight: 800;
+    color: #ffd700;
+}
+
+.slots-rules-bets {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.slots-rules-bet-item {
+    flex: 1;
+    background: #1c1c1e;
+    border-radius: 12px;
+    padding: 10px 12px;
+    text-align: center;
+}
+
+.slots-rules-bet-item span {
+    display: block;
+    font-size: 11px;
+    color: #8e8e93;
+    margin-bottom: 4px;
+}
+
+.slots-rules-bet-item b {
+    font-size: 14px;
+}
+
+.slots-rules-close-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #ffe066 0%, #ffd700 45%, #ff9f0a 100%);
+    color: #1a1a1a;
+    font-weight: 800;
+    padding: 13px 0;
+}

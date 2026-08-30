@@ -13,12 +13,14 @@ const historyScreen = document.getElementById('historyScreen');
 const ordersScreen = document.getElementById('ordersScreen');
 const storageScreen = document.getElementById('storageScreen');
 const tradeScreen = document.getElementById('tradeScreen');
+const slotsScreen = document.getElementById('slotsScreen');
 const openProfileBtn = document.getElementById('openProfileBtn');
 const backToMarketBtn = document.getElementById('backToMarketBtn');
 const backToProfileFromHistoryBtn = document.getElementById('backToProfileFromHistoryBtn');
 const backToProfileFromOrdersBtn = document.getElementById('backToProfileFromOrdersBtn');
 const backToProfileFromStorageBtn = document.getElementById('backToProfileFromStorageBtn');
 const backToProfileFromTradeBtn = document.getElementById('backToProfileFromTradeBtn');
+const backToProfileFromSlotsBtn = document.getElementById('backToProfileFromSlotsBtn');
 
 const screensByName = {
     market: marketScreen,
@@ -27,6 +29,7 @@ const screensByName = {
     orders: ordersScreen,
     storage: storageScreen,
     trade: tradeScreen,
+    slots: slotsScreen,
 };
 
 /** Показывает один экран из screensByName, скрывая остальные, и подсвечивает
@@ -134,6 +137,12 @@ if (backToProfileFromTradeBtn) {
     });
 }
 
+if (backToProfileFromSlotsBtn) {
+    backToProfileFromSlotsBtn.addEventListener('click', () => {
+        showScreen('profile');
+    });
+}
+
 // Нижняя навигация встречается на нескольких экранах (профиль, история) —
 // делегируем клики по data-nav вместо привязки к id конкретной кнопки.
 document.querySelectorAll('.bottom-nav .nav-item[data-nav]').forEach(btn => {
@@ -154,9 +163,14 @@ if (ordersStatCard) {
     });
 }
 
-// Игровой хаб в профиле — пока чисто визуальный, сами игры ещё не подключены.
+// Игровой хаб в профиле — "Слоты" ведут в реальную игру, остальные плитки
+// (Coinflip, Кости, Рулетка) пока чисто визуальные заглушки.
 document.querySelectorAll('.game-tile').forEach(tile => {
     tile.addEventListener('click', () => {
+        if (tile.getAttribute('data-game') === 'slots') {
+            showScreen('slots');
+            return;
+        }
         alert('Эта игра скоро появится!');
     });
 });
@@ -2918,3 +2932,244 @@ if (closeTradeDetailModalBtn && tradeDetailModal) {
         currentTradeDetailId = null;
     });
 }
+
+// =====================================================================
+// ИГРА "СЛОТЫ"
+// =====================================================================
+
+// Символы барабана: эмодзи для отображения + множитель, который платится
+// за 3 одинаковых на линии. Порядок влияет только на то, как символы
+// перемешиваются в декоративной ленте барабана перед остановкой.
+const SLOTS_SYMBOLS = {
+    cherry: { emoji: '🍒', multiplier: 2 },
+    lemon: { emoji: '🍋', multiplier: 2 },
+    seven: { emoji: '7️⃣', multiplier: 2.5 },
+    diamond: { emoji: '💎', multiplier: 3 },
+};
+const SLOTS_SYMBOL_IDS = Object.keys(SLOTS_SYMBOLS);
+const SLOTS_MIN_BET = 0.3;
+const SLOTS_MAX_BET = 10000;
+const SLOTS_REEL_SYMBOL_HEIGHT = 92; // px, должно совпадать с высотой .slot-reel-window в CSS
+
+const slotsScreenEl = document.getElementById('slotsScreen');
+const slotsBetInput = document.getElementById('slotsBetInput');
+const slotsBetMinusBtn = document.getElementById('slotsBetMinusBtn');
+const slotsBetPlusBtn = document.getElementById('slotsBetPlusBtn');
+const slotsSpinBtn = document.getElementById('slotsSpinBtn');
+const slotsResultEl = document.getElementById('slotsResult');
+const slotsMachineEl = document.querySelector('.slots-machine');
+const slotReelStrips = [
+    document.getElementById('slotReel0'),
+    document.getElementById('slotReel1'),
+    document.getElementById('slotReel2'),
+];
+const openSlotsRulesBtn = document.getElementById('openSlotsRulesBtn');
+const slotsRulesModal = document.getElementById('slotsRulesModal');
+const closeSlotsRulesModal = document.getElementById('closeSlotsRulesModal');
+const closeSlotsRulesModalBtn = document.getElementById('closeSlotsRulesModalBtn');
+
+let slotsIsSpinning = false;
+
+// === Правила игры — открываются большой заметной кнопкой "i" в шапке ===
+function openSlotsRules() {
+    if (slotsRulesModal) slotsRulesModal.style.display = 'flex';
+}
+function closeSlotsRules() {
+    if (slotsRulesModal) slotsRulesModal.style.display = 'none';
+}
+if (openSlotsRulesBtn) openSlotsRulesBtn.addEventListener('click', openSlotsRules);
+if (closeSlotsRulesModal) closeSlotsRulesModal.addEventListener('click', closeSlotsRules);
+if (closeSlotsRulesModalBtn) closeSlotsRulesModalBtn.addEventListener('click', closeSlotsRules);
+if (slotsRulesModal) {
+    slotsRulesModal.addEventListener('click', (e) => {
+        if (e.target === slotsRulesModal) closeSlotsRules();
+    });
+}
+
+// === Управление ставкой ===
+function getCurrentBalanceNumber() {
+    const el = document.querySelector('.user-balance');
+    const value = el ? parseFloat(el.textContent) : NaN;
+    return isNaN(value) ? SLOTS_MAX_BET : value;
+}
+
+function clampBet(value) {
+    if (isNaN(value)) return SLOTS_MIN_BET;
+    let v = Math.max(SLOTS_MIN_BET, Math.min(SLOTS_MAX_BET, value));
+    v = Math.round(v * 10) / 10; // не более одного знака после запятой
+    return v;
+}
+
+function setBetValue(value) {
+    if (slotsBetInput) slotsBetInput.value = clampBet(value);
+}
+
+if (slotsBetInput) {
+    slotsBetInput.addEventListener('change', () => {
+        setBetValue(parseFloat(slotsBetInput.value));
+    });
+}
+if (slotsBetMinusBtn) {
+    slotsBetMinusBtn.addEventListener('click', () => {
+        setBetValue(parseFloat(slotsBetInput.value) - 0.1);
+    });
+}
+if (slotsBetPlusBtn) {
+    slotsBetPlusBtn.addEventListener('click', () => {
+        setBetValue(parseFloat(slotsBetInput.value) + 0.1);
+    });
+}
+document.querySelectorAll('.slots-bet-quick-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const mode = btn.getAttribute('data-bet-mode');
+        const current = parseFloat(slotsBetInput.value) || SLOTS_MIN_BET;
+        if (mode === 'min') setBetValue(SLOTS_MIN_BET);
+        if (mode === 'half') setBetValue(current / 2);
+        if (mode === 'double') setBetValue(current * 2);
+        if (mode === 'max') setBetValue(Math.min(getCurrentBalanceNumber(), SLOTS_MAX_BET));
+    });
+});
+
+// === Барабаны: строим случайную ленту символов и прокручиваем её CSS-переходом
+// до финального символа, который прислал сервер. Барабаны останавливаются
+// не одновременно — так это выглядит как настоящий игровой автомат. ===
+function buildReelStrip(stripEl, finalSymbolId, extraSpins) {
+    stripEl.innerHTML = '';
+    stripEl.style.transition = 'none';
+    stripEl.style.transform = 'translateY(0)';
+
+    const totalSteps = extraSpins; // сколько символов "проедет" лента перед остановкой
+    for (let i = 0; i < totalSteps; i++) {
+        const randomId = SLOTS_SYMBOL_IDS[Math.floor(Math.random() * SLOTS_SYMBOL_IDS.length)];
+        stripEl.appendChild(makeSlotSymbolEl(randomId));
+    }
+    stripEl.appendChild(makeSlotSymbolEl(finalSymbolId)); // последний — результат с сервера
+    return totalSteps; // индекс финального символа в ленте == totalSteps
+}
+
+function makeSlotSymbolEl(symbolId) {
+    const div = document.createElement('div');
+    div.className = 'slot-symbol';
+    div.textContent = SLOTS_SYMBOLS[symbolId].emoji;
+    return div;
+}
+
+function spinReelToResult(stripEl, finalSymbolId, durationMs, delayMs) {
+    return new Promise(resolve => {
+        const extraSpins = 18 + Math.floor(Math.random() * 6); // 18-23 "оборота" перед остановкой
+        const finalIndex = buildReelStrip(stripEl, finalSymbolId, extraSpins);
+
+        // Небольшая задержка перед стартом конкретного барабана — вместе с разной
+        // длительностью это и создаёт эффект "поочерёдной" остановки барабанов.
+        setTimeout(() => {
+            // force reflow, чтобы translateY(0) точно применился до начала transition
+            void stripEl.offsetHeight;
+            stripEl.style.transition = `transform ${durationMs}ms cubic-bezier(0.12, 0.65, 0.1, 1)`;
+            stripEl.style.transform = `translateY(-${finalIndex * SLOTS_REEL_SYMBOL_HEIGHT}px)`;
+
+            const onEnd = () => {
+                stripEl.removeEventListener('transitionend', onEnd);
+                stripEl.classList.add('slot-reel-landed');
+                setTimeout(() => stripEl.classList.remove('slot-reel-landed'), 260);
+                resolve();
+            };
+            stripEl.addEventListener('transitionend', onEnd);
+        }, delayMs);
+    });
+}
+
+function setSlotsSpinningUI(isSpinning) {
+    slotsIsSpinning = isSpinning;
+    if (slotsSpinBtn) {
+        slotsSpinBtn.disabled = isSpinning;
+        slotsSpinBtn.classList.toggle('is-spinning', isSpinning);
+        slotsSpinBtn.querySelector('.slots-spin-btn-text').textContent = isSpinning ? '' : 'КРУТИТЬ';
+    }
+    if (slotsBetMinusBtn) slotsBetMinusBtn.disabled = isSpinning;
+    if (slotsBetPlusBtn) slotsBetPlusBtn.disabled = isSpinning;
+    if (slotsBetInput) slotsBetInput.disabled = isSpinning;
+    document.querySelectorAll('.slots-bet-quick-btn').forEach(btn => { btn.disabled = isSpinning; });
+    if (slotsMachineEl) slotsMachineEl.classList.toggle('is-spinning', isSpinning);
+}
+
+async function handleSlotsSpin() {
+    if (slotsIsSpinning) return;
+
+    const bet = clampBet(parseFloat(slotsBetInput.value));
+    setBetValue(bet);
+
+    if (!authToken) {
+        alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+        return;
+    }
+
+    setSlotsSpinningUI(true);
+    slotsResultEl.className = 'slots-result';
+    slotsResultEl.textContent = 'Крутим барабаны...';
+
+    try {
+        const res = await fetch(`${API_URL}/api/games/slots/spin`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`,
+            },
+            body: JSON.stringify({ bet }),
+        });
+        const data = await res.json();
+
+        if (!data.ok) {
+            slotsResultEl.className = 'slots-result';
+            slotsResultEl.textContent = data.error || 'Не удалось запустить игру';
+            setSlotsSpinningUI(false);
+            return;
+        }
+
+        // Барабаны останавливаются по очереди слева направо — разная
+        // длительность + небольшая задержка старта у каждого следующего.
+        await Promise.all([
+            spinReelToResult(slotReelStrips[0], data.reels[0], 1500, 0),
+            spinReelToResult(slotReelStrips[1], data.reels[1], 1900, 180),
+            spinReelToResult(slotReelStrips[2], data.reels[2], 2300, 360),
+        ]);
+
+        if (typeof data.balance === 'number') {
+            updateBalanceUI(data.balance);
+        }
+
+        if (data.win) {
+            slotsResultEl.className = 'slots-result is-win';
+            slotsResultEl.textContent = `Выигрыш! x${data.multiplier} — +${data.winAmount} 💎`;
+            if (slotsMachineEl) {
+                slotsMachineEl.classList.add('slots-win-flash');
+                setTimeout(() => slotsMachineEl.classList.remove('slots-win-flash'), 900);
+            }
+        } else {
+            slotsResultEl.className = 'slots-result is-lose';
+            slotsResultEl.textContent = 'Не повезло — попробуйте ещё раз';
+        }
+
+        setSlotsSpinningUI(false);
+    } catch (e) {
+        console.error(e);
+        slotsResultEl.className = 'slots-result';
+        slotsResultEl.textContent = 'Ошибка соединения с сервером';
+        setSlotsSpinningUI(false);
+    }
+}
+
+if (slotsSpinBtn) {
+    slotsSpinBtn.addEventListener('click', handleSlotsSpin);
+}
+
+// При первом открытии экрана показываем барабаны с нейтральными символами,
+// а не пустыми — иначе автомат выглядит "сломанным" до первого спина.
+function initSlotsReelsIdle() {
+    slotReelStrips.forEach((stripEl, i) => {
+        if (!stripEl || stripEl.childNodes.length) return;
+        stripEl.style.transition = 'none';
+        stripEl.appendChild(makeSlotSymbolEl(SLOTS_SYMBOL_IDS[i % SLOTS_SYMBOL_IDS.length]));
+        stripEl.style.transform = 'translateY(0)';
+    });
+}
+initSlotsReelsIdle();
