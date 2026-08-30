@@ -435,6 +435,17 @@
                     <div class="section-title trade-subtitle" id="tradeTheirItemsTitle">ПРЕДМЕТЫ ПОЛУЧАТЕЛЯ</div>
                     <ul class="history-list trade-pick-list" id="tradeTheirItemsList"></ul>
 
+                    <div class="section-title trade-subtitle">ДОПЛАТА TON (НЕОБЯЗАТЕЛЬНО)</div>
+                    <div class="trade-topup-row">
+                        <div class="trade-topup-direction" id="tradeTopupDirection">
+                            <button type="button" class="trade-topup-dir-btn active" data-topup-payer="none">Без доплаты</button>
+                            <button type="button" class="trade-topup-dir-btn" data-topup-payer="initiator">Я доплачиваю</button>
+                            <button type="button" class="trade-topup-dir-btn" data-topup-payer="recipient">Прошу доплату</button>
+                        </div>
+                        <input type="number" id="tradeTopupAmount" placeholder="0.0" min="0.1" step="0.1" style="display:none;">
+                    </div>
+                    <div class="trade-fee-note">Комиссия площадки за трейд: 0.05 TON (спишется с вас сейчас, вернётся, если обмен не состоится)</div>
+
                     <button class="action-btn" id="tradeSubmitBtn">Предложить обмен</button>
                 </div>
             </div>
@@ -479,6 +490,8 @@
             <h2>Обмен</h2>
 
             <div class="trade-detail-meta" id="tradeDetailMeta"></div>
+
+            <div class="trade-topup-note" id="tradeDetailTopupNote" style="display:none;"></div>
 
             <div class="section-title trade-subtitle" id="tradeDetailGiveTitle">ВЫ ОТДАЁТЕ</div>
             <ul class="history-list" id="tradeDetailGiveList"></ul>

@@ -855,6 +855,10 @@ const historyTypeLabels = {
     sell: 'Продажа NFT',
     trade_in: 'Получено в обмене',
     trade_out: 'Отдано в обмене',
+    trade_fee: 'Комиссия за обмен',
+    trade_fee_refund: 'Возврат резерва обмена',
+    trade_topup_in: 'Доплата в обмене (получено)',
+    trade_topup_out: 'Доплата в обмене (отдано)',
 };
 
 const historyTypeIcons = {
@@ -2342,10 +2346,13 @@ const tradeMyItemsList = document.getElementById('tradeMyItemsList');
 const tradeTheirItemsTitle = document.getElementById('tradeTheirItemsTitle');
 const tradeTheirItemsList = document.getElementById('tradeTheirItemsList');
 const tradeSubmitBtn = document.getElementById('tradeSubmitBtn');
+const tradeTopupDirection = document.getElementById('tradeTopupDirection');
+const tradeTopupAmount = document.getElementById('tradeTopupAmount');
 
 const tradeDetailModal = document.getElementById('tradeDetailModal');
 const closeTradeDetailModalBtn = document.getElementById('closeTradeDetailModal');
 const tradeDetailMeta = document.getElementById('tradeDetailMeta');
+const tradeDetailTopupNote = document.getElementById('tradeDetailTopupNote');
 const tradeDetailGiveList = document.getElementById('tradeDetailGiveList');
 const tradeDetailGetList = document.getElementById('tradeDetailGetList');
 const tradeDetailActions = document.getElementById('tradeDetailActions');
@@ -2353,6 +2360,7 @@ const tradeDetailActions = document.getElementById('tradeDetailActions');
 let tradeTargetUser = null;
 const tradeMySelected = new Set();
 const tradeTheirSelected = new Set();
+let tradeTopupPayer = 'none'; // 'none' | 'initiator' | 'recipient'
 const tradeIncomingCache = new Map();
 const tradeMineCache = new Map();
 let currentTradeDetailId = null;
@@ -2371,11 +2379,36 @@ function resetTradeNewPanel() {
     tradeTargetUser = null;
     tradeMySelected.clear();
     tradeTheirSelected.clear();
+    tradeTopupPayer = 'none';
     if (tradeRecipientInput) tradeRecipientInput.value = '';
     if (tradeFoundUsers) tradeFoundUsers.innerHTML = '';
     if (tradeSelectionArea) tradeSelectionArea.style.display = 'none';
     if (tradeMyItemsList) tradeMyItemsList.innerHTML = '';
     if (tradeTheirItemsList) tradeTheirItemsList.innerHTML = '';
+    if (tradeTopupAmount) {
+        tradeTopupAmount.value = '';
+        tradeTopupAmount.style.display = 'none';
+    }
+    if (tradeTopupDirection) {
+        tradeTopupDirection.querySelectorAll('.trade-topup-dir-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.topupPayer === 'none');
+        });
+    }
+}
+
+if (tradeTopupDirection) {
+    tradeTopupDirection.addEventListener('click', (e) => {
+        const btn = e.target.closest('.trade-topup-dir-btn');
+        if (!btn) return;
+        tradeTopupPayer = btn.dataset.topupPayer;
+        tradeTopupDirection.querySelectorAll('.trade-topup-dir-btn').forEach(b => {
+            b.classList.toggle('active', b === btn);
+        });
+        if (tradeTopupAmount) {
+            tradeTopupAmount.style.display = tradeTopupPayer === 'none' ? 'none' : '';
+            if (tradeTopupPayer === 'none') tradeTopupAmount.value = '';
+        }
+    });
 }
 
 if (tradeTabs) {
@@ -2545,24 +2578,46 @@ if (tradeSubmitBtn) {
             return;
         }
 
+        // Доплата TON — необязательная, но если направление выбрано, сумма обязательна.
+        let tonAmount = null;
+        if (tradeTopupPayer !== 'none') {
+            const parsed = parseFloat(tradeTopupAmount ? tradeTopupAmount.value : '');
+            if (!isFinite(parsed) || parsed <= 0) {
+                alert('Укажите сумму доплаты в TON');
+                return;
+            }
+            tonAmount = parsed;
+        }
+
         tradeSubmitBtn.disabled = true;
         try {
+            const body = {
+                recipientTgId: tradeTargetUser.tg_id,
+                myItemIds: Array.from(tradeMySelected),
+                theirItemIds: Array.from(tradeTheirSelected),
+            };
+            if (tonAmount !== null) {
+                body.tonAmount = tonAmount;
+                body.tonPayer = tradeTopupPayer; // 'initiator' | 'recipient'
+            }
+
             const res = await fetch(`${API_URL}/api/trades`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${authToken}`,
                 },
-                body: JSON.stringify({
-                    recipientTgId: tradeTargetUser.tg_id,
-                    myItemIds: Array.from(tradeMySelected),
-                    theirItemIds: Array.from(tradeTheirSelected),
-                }),
+                body: JSON.stringify(body),
             });
             const data = await res.json();
             if (!data.ok) {
                 alert(data.error || 'Не удалось создать предложение обмена');
                 return;
+            }
+            // Комиссия 0.05 TON (и доплата, если её вносит инициатор) уже
+            // списаны сервером при создании трейда — обновляем баланс на экране.
+            if (typeof data.balance === 'number') {
+                updateBalanceUI(data.balance);
             }
             alert('Предложение обмена отправлено!');
             resetTradeNewPanel();
@@ -2598,6 +2653,13 @@ function renderTradeSummaryRow(trade) {
     const thumbImage = thumbSource ? (thumbSource.model_image || thumbSource.collection_image) : '';
     const bg = thumbSource ? (thumbSource.backdrop_color || '#333') : '#333';
 
+    const isInitiator = trade.initiator_tg_id === currentTgId;
+    let topupText = '';
+    if (trade.ton_amount > 0 && trade.ton_payer) {
+        const iAmPayer = (trade.ton_payer === 'initiator' && isInitiator) || (trade.ton_payer === 'recipient' && !isInitiator);
+        topupText = iAmPayer ? ` · доплата −${trade.ton_amount} TON` : ` · доплата +${trade.ton_amount} TON`;
+    }
+
     const li = document.createElement('li');
     li.className = 'history-row has-gift';
     li.dataset.tradeId = trade.id;
@@ -2607,7 +2669,7 @@ function renderTradeSummaryRow(trade) {
         </div>
         <div class="history-info">
             <div class="history-name">@${other ? (other.username || other.first_name || other.tg_id) : '—'}</div>
-            <div class="history-meta">Отдаёте ${give.length} · получаете ${get.length}</div>
+            <div class="history-meta">Отдаёте ${give.length} · получаете ${get.length}${topupText}</div>
             <div class="history-meta">${formatHistoryDate(trade.created_at)}</div>
         </div>
         <span class="trade-status-badge is-${trade.status}">${tradeStatusLabels[trade.status] || trade.status}</span>
@@ -2714,8 +2776,24 @@ function openTradeDetail(trade) {
     const other = tradeCounterparty(trade);
     const give = tradeItemsIGive(trade);
     const get = tradeItemsIGet(trade);
+    const isInitiator = trade.initiator_tg_id === currentTgId;
+    const isRecipient = trade.recipient_tg_id === currentTgId;
 
     tradeDetailMeta.textContent = `Обмен с @${other ? (other.username || other.first_name || other.tg_id) : '—'} · ${tradeStatusLabels[trade.status] || trade.status}`;
+
+    // Доплата TON — показываем, только если она есть, и формулируем с точки
+    // зрения текущего пользователя (я доплачиваю / мне доплачивают).
+    if (tradeDetailTopupNote) {
+        if (trade.ton_amount > 0 && trade.ton_payer) {
+            const iAmPayer = (trade.ton_payer === 'initiator' && isInitiator) || (trade.ton_payer === 'recipient' && isRecipient);
+            tradeDetailTopupNote.textContent = iAmPayer
+                ? `Вы доплачиваете ${trade.ton_amount} TON`
+                : `Вам доплачивают ${trade.ton_amount} TON`;
+            tradeDetailTopupNote.style.display = '';
+        } else {
+            tradeDetailTopupNote.style.display = 'none';
+        }
+    }
 
     tradeDetailGiveList.innerHTML = '';
     give.forEach(item => tradeDetailGiveList.appendChild(renderTradeItemRow(item)));
@@ -2724,13 +2802,13 @@ function openTradeDetail(trade) {
     get.forEach(item => tradeDetailGetList.appendChild(renderTradeItemRow(item)));
 
     tradeDetailActions.innerHTML = '';
-    const isRecipient = trade.recipient_tg_id === currentTgId;
-    const isInitiator = trade.initiator_tg_id === currentTgId;
 
     if (trade.status === 'pending' && isRecipient) {
         const acceptBtn = document.createElement('button');
         acceptBtn.className = 'action-btn';
-        acceptBtn.textContent = 'Принять';
+        acceptBtn.textContent = (trade.ton_amount > 0 && trade.ton_payer === 'recipient')
+            ? `Принять и доплатить ${trade.ton_amount} TON`
+            : 'Принять';
         acceptBtn.addEventListener('click', () => resolveTrade(trade.id, 'accept'));
 
         const declineBtn = document.createElement('button');
@@ -2766,6 +2844,11 @@ async function resolveTrade(tradeId, action) {
         if (!data.ok) {
             alert(data.error || 'Не удалось выполнить действие');
             return;
+        }
+        // Комиссия/доплата TON могли списаться или вернуться на баланс —
+        // сервер отдаёт актуальный баланс сразу в ответе.
+        if (typeof data.balance === 'number') {
+            updateBalanceUI(data.balance);
         }
         tradeDetailModal.style.display = 'none';
         currentTradeDetailId = null;

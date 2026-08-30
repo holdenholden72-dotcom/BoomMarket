@@ -1488,3 +1488,62 @@ body {
     background: #2c2c2e;
     color: #ff453a;
 }
+
+.trade-topup-row {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.trade-topup-direction {
+    display: flex;
+    gap: 6px;
+    background: #1c1c1e;
+    border-radius: 12px;
+    padding: 4px;
+}
+
+.trade-topup-dir-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    color: #8e8e93;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 10px 2px;
+    border-radius: 9px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.trade-topup-dir-btn.active {
+    background: #2c2c2e;
+    color: #ffd700;
+}
+
+#tradeTopupAmount {
+    width: 100%;
+    background: #1c1c1e;
+    border: 1px solid #2c2c2e;
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: #fff;
+    font-size: 15px;
+    box-sizing: border-box;
+}
+
+.trade-fee-note {
+    margin-top: 10px;
+    font-size: 11px;
+    color: #8e8e93;
+    line-height: 1.4;
+}
+
+.trade-topup-note {
+    text-align: center;
+    color: #ffd700;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
