@@ -257,12 +257,16 @@
             <div class="orders-tabs" id="ordersTabs">
                 <button class="orders-tab active" data-orders-tab="active">Активные</button>
                 <button class="orders-tab" data-orders-tab="history">История</button>
+                <button class="orders-tab" data-orders-tab="offers">Предложения</button>
             </div>
 
             <ul class="history-list" id="ordersActiveList">
                 <!-- Строки генерируются через JS -->
             </ul>
             <ul class="history-list" id="ordersHistoryList" style="display:none;">
+                <!-- Строки генерируются через JS -->
+            </ul>
+            <ul class="history-list" id="ordersOffersList" style="display:none;">
                 <!-- Строки генерируются через JS -->
             </ul>
 
@@ -514,16 +518,6 @@
             <div class="listing-detail-row">
                 <span class="listing-detail-label">Символ</span>
                 <span class="listing-detail-value" id="listingDetailSymbol"></span>
-            </div>
-
-            <!-- Показывается вместо кнопки "Купить", когда лот принадлежит текущему
-                 пользователю — список активных ордеров (предложений), которые
-                 подходят под этот лот, с возможностью продать напрямую по цене ордера. -->
-            <div class="listing-offers" id="listingOffers" style="display:none;">
-                <div class="listing-offers-title">Предложения покупателей</div>
-                <ul class="listing-offers-list" id="listingOffersList">
-                    <!-- Строки генерируются через JS -->
-                </ul>
             </div>
 
             <button class="action-btn listing-detail-buy" id="listingDetailBuyBtn">

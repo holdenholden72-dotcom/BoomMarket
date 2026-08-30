@@ -41,6 +41,7 @@ function showScreen(name) {
     if (name === 'orders') {
         loadActiveOrders();
         loadOrderHistory();
+        loadMyOffers();
     }
 }
 
@@ -435,8 +436,6 @@ const listingDetailBackdrop = document.getElementById('listingDetailBackdrop');
 const listingDetailSymbol = document.getElementById('listingDetailSymbol');
 const listingDetailPrice = document.getElementById('listingDetailPrice');
 const listingDetailBuyBtn = document.getElementById('listingDetailBuyBtn');
-const listingOffers = document.getElementById('listingOffers');
-const listingOffersList = document.getElementById('listingOffersList');
 
 let currentDetailListingId = null;
 
@@ -444,55 +443,7 @@ function traitLabel(name) {
     return name || '—';
 }
 
-function timeAgoLabel(isoString) {
-    const diffMs = Date.now() - new Date(isoString.replace(' ', 'T') + 'Z').getTime();
-    const minutes = Math.floor(diffMs / 60000);
-    if (minutes < 1) return 'только что';
-    if (minutes < 60) return `${minutes} мин назад`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours} ч назад`;
-    const days = Math.floor(hours / 24);
-    return `${days} дн назад`;
-}
-
-function renderListingOffers(offers) {
-    listingOffersList.innerHTML = '';
-
-    if (!offers || offers.length === 0) {
-        listingOffersList.innerHTML = `<li class="listing-offers-empty">Пока нет предложений на этот лот</li>`;
-        return;
-    }
-
-    offers.forEach(offer => {
-        const li = document.createElement('li');
-        li.className = 'offer-row';
-        li.innerHTML = `
-            <div class="offer-row-info">
-                <div class="offer-row-price">💎 ${offer.max_price}</div>
-                <div class="offer-row-time">${timeAgoLabel(offer.created_at)}</div>
-            </div>
-            <button class="offer-accept-btn" data-order-id="${offer.id}">Продать</button>
-        `;
-        listingOffersList.appendChild(li);
-    });
-}
-
-async function loadListingOffers(listingId) {
-    listingOffersList.innerHTML = `<li class="listing-offers-empty">Загрузка...</li>`;
-    try {
-        const res = await fetch(`${API_URL}/api/listings/${listingId}/offers`, {
-            headers: { 'Authorization': `Bearer ${authToken}` },
-        });
-        const data = await res.json();
-        if (!data.ok) throw new Error(data.error || 'Не удалось загрузить предложения');
-        renderListingOffers(data.offers);
-    } catch (e) {
-        console.error('Не удалось загрузить предложения по лоту:', e);
-        listingOffersList.innerHTML = `<li class="listing-offers-empty">Не удалось загрузить предложения</li>`;
-    }
-}
-
-async function openListingDetail(item) {
+function openListingDetail(item) {
     currentDetailListingId = item.id;
 
     const image = item.model_icon || item.collection_image || '';
@@ -506,24 +457,22 @@ async function openListingDetail(item) {
     listingDetailSymbol.textContent = traitLabel(item.symbol_name);
     listingDetailPrice.textContent = item.price;
 
-    // Свой лот — вместо кнопки "Купить" показываем предложения покупателей
-    // (активные ордера на этот трейт), чтобы владелец мог продать напрямую.
-    const isOwnListing = currentTgId != null && item.owner_tg_id === currentTgId;
-    listingDetailBuyBtn.style.display = isOwnListing ? 'none' : '';
-    listingOffers.style.display = isOwnListing ? '' : 'none';
-
     listingDetailModal.style.display = 'flex';
-
-    if (isOwnListing && authToken) {
-        await loadListingOffers(item.id);
-    }
 }
 
 grid.addEventListener('click', (e) => {
     const cartBtn = e.target.closest('.cart-btn');
     if (cartBtn) {
         const item = listingsById.get(cartBtn.dataset.listingId);
-        if (item) openListingDetail(item);
+        if (!item) return;
+
+        // Свой лот купить нельзя — говорим об этом сразу, не открывая карточку.
+        if (currentTgId != null && item.owner_tg_id === currentTgId) {
+            alert('Это ваш лот — вы не можете купить собственный товар. Предложения на него смотрите во вкладке «Ордеры».');
+            return;
+        }
+
+        openListingDetail(item);
         return;
     }
 
@@ -546,53 +495,6 @@ if (closeListingDetailBtn && listingDetailModal) {
     closeListingDetailBtn.addEventListener('click', () => {
         listingDetailModal.style.display = 'none';
         currentDetailListingId = null;
-    });
-}
-
-// Клик по "Продать" в списке предложений (только на своём лоте).
-if (listingOffersList) {
-    listingOffersList.addEventListener('click', async (e) => {
-        const btn = e.target.closest('.offer-accept-btn');
-        if (!btn || !currentDetailListingId) return;
-
-        const orderId = btn.dataset.orderId;
-        if (!authToken) {
-            alert('Не удалось подтвердить личность. Попробуйте перезайти.');
-            return;
-        }
-
-        if (!confirm('Продать этот лот по цене предложения?')) return;
-
-        btn.disabled = true;
-
-        try {
-            const res = await fetch(`${API_URL}/api/listings/${currentDetailListingId}/accept-offer`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`,
-                },
-                body: JSON.stringify({ orderId }),
-            });
-
-            const data = await res.json();
-
-            if (!data.ok) {
-                alert(data.error || 'Не удалось продать лот');
-                btn.disabled = false;
-                return;
-            }
-
-            updateBalanceUI(data.balance);
-            alert('Лот продан!');
-            listingDetailModal.style.display = 'none';
-            currentDetailListingId = null;
-            await loadListings();
-        } catch (err) {
-            alert('Ошибка соединения с сервером');
-            console.error(err);
-            btn.disabled = false;
-        }
     });
 }
 
@@ -809,10 +711,12 @@ if (closeHistoryDetailBtn && historyDetailModal) {
 
 const ordersActiveList = document.getElementById('ordersActiveList');
 const ordersHistoryList = document.getElementById('ordersHistoryList');
+const ordersOffersList = document.getElementById('ordersOffersList');
 const ordersTabs = document.getElementById('ordersTabs');
 
 const ordersActiveById = new Map();
 const ordersHistoryById = new Map();
+const myOffersById = new Map();
 
 const orderStatusLabels = {
     active: 'Активен',
@@ -918,7 +822,112 @@ async function loadOrderHistory() {
     }
 }
 
-// === Переключение вкладок "Активные" / "История" ===
+// === Предложения покупателей по МОИМ активным лотам ===
+function renderMyOffers(offers) {
+    ordersOffersList.innerHTML = '';
+    myOffersById.clear();
+
+    if (!offers || offers.length === 0) {
+        ordersOffersList.innerHTML = `<div class="empty-state">Пока нет предложений на ваши лоты</div>`;
+        return;
+    }
+
+    offers.forEach(offer => {
+        myOffersById.set(String(offer.order_id), offer);
+
+        const image = offer.model_icon || offer.collection_image || '';
+        const bg = offer.backdrop_color || '#333';
+
+        const li = document.createElement('li');
+        li.className = 'history-row has-gift';
+
+        li.innerHTML = `
+            <div class="history-thumb" style="background-color:${bg};">
+                ${image ? `<img src="${image}" alt="">` : ''}
+            </div>
+            <div class="history-info">
+                <div class="history-name">${offer.collection_name} #${offer.gift_number}</div>
+                <div class="history-meta">Ваша цена: 💎 ${offer.listing_price}</div>
+                <div class="history-meta">${formatHistoryDate(offer.offer_created_at)}</div>
+            </div>
+            <div class="order-row-price">
+                <span>💎 ${offer.max_price}</span>
+                <button class="offer-accept-btn" data-order-id="${offer.order_id}" data-listing-id="${offer.listing_id}">Продать</button>
+            </div>
+        `;
+
+        ordersOffersList.appendChild(li);
+    });
+}
+
+async function loadMyOffers() {
+    if (!ordersOffersList) return;
+    if (!authToken) {
+        ordersOffersList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
+        return;
+    }
+    ordersOffersList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    try {
+        const res = await fetch(`${API_URL}/api/my-offers`, { headers: { 'Authorization': `Bearer ${authToken}` } });
+        const data = await res.json();
+        if (!data.ok) {
+            ordersOffersList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить предложения'}</div>`;
+            return;
+        }
+        renderMyOffers(data.offers);
+    } catch (e) {
+        ordersOffersList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        console.error(e);
+    }
+}
+
+if (ordersOffersList) {
+    ordersOffersList.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.offer-accept-btn');
+        if (!btn) return;
+
+        const listingId = btn.dataset.listingId;
+        const orderId = btn.dataset.orderId;
+
+        if (!authToken) {
+            alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+            return;
+        }
+        if (!confirm('Продать этот лот по цене предложения?')) return;
+
+        btn.disabled = true;
+
+        try {
+            const res = await fetch(`${API_URL}/api/listings/${listingId}/accept-offer`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`,
+                },
+                body: JSON.stringify({ orderId }),
+            });
+
+            const data = await res.json();
+
+            if (!data.ok) {
+                alert(data.error || 'Не удалось продать лот');
+                btn.disabled = false;
+                return;
+            }
+
+            updateBalanceUI(data.balance);
+            alert('Лот продан!');
+            await loadMyOffers();
+            await loadListings();
+        } catch (err) {
+            alert('Ошибка соединения с сервером');
+            console.error(err);
+            btn.disabled = false;
+        }
+    });
+}
+
+// === Переключение вкладок "Активные" / "История" / "Предложения" ===
 if (ordersTabs) {
     ordersTabs.addEventListener('click', (e) => {
         const btn = e.target.closest('.orders-tab');
@@ -928,6 +937,7 @@ if (ordersTabs) {
         ordersTabs.querySelectorAll('.orders-tab').forEach(t => t.classList.toggle('active', t === btn));
         ordersActiveList.style.display = tab === 'active' ? '' : 'none';
         ordersHistoryList.style.display = tab === 'history' ? '' : 'none';
+        ordersOffersList.style.display = tab === 'offers' ? '' : 'none';
     });
 }
 

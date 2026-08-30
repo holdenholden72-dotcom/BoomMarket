@@ -1017,79 +1017,6 @@ body {
     text-align: center;
 }
 
-/* Блок предложений покупателей на своём лоте (замещает кнопку "Купить") */
-.listing-offers {
-    margin: 4px 0 14px;
-}
-
-.listing-offers-title {
-    font-size: 12px;
-    color: #8e8e93;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 8px;
-}
-
-.listing-offers-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.listing-offers-empty {
-    text-align: center;
-    color: #8e8e93;
-    font-size: 13px;
-    padding: 16px 0;
-}
-
-.offer-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #1c1c1e;
-    border: 1px solid rgba(255, 215, 0, 0.25);
-    border-radius: 12px;
-    padding: 10px 12px;
-}
-
-.offer-row-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.offer-row-price {
-    font-size: 15px;
-    font-weight: 700;
-    color: #ffd700;
-}
-
-.offer-row-time {
-    font-size: 11px;
-    color: #8e8e93;
-}
-
-.offer-accept-btn {
-    background: linear-gradient(135deg, #ffe066 0%, #ffd700 45%, #ff9f0a 100%);
-    color: #1c1c1e;
-    border: none;
-    border-radius: 10px;
-    padding: 9px 16px;
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.offer-accept-btn:active {
-    transform: scale(0.96);
-}
-
-.offer-accept-btn:disabled {
-    opacity: 0.6;
-    cursor: default;
-}
-
 .listing-detail-buy {
     width: 100%;
     background: #1c1c1e;
@@ -1251,7 +1178,7 @@ body {
 
 .orders-tabs {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     background: #1c1c1e;
     border-radius: 12px;
     padding: 4px;
@@ -1263,11 +1190,12 @@ body {
     background: none;
     border: none;
     color: #8e8e93;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
-    padding: 10px 0;
+    padding: 10px 2px;
     border-radius: 9px;
     cursor: pointer;
+    white-space: nowrap;
 }
 
 .orders-tab.active {
@@ -1324,4 +1252,24 @@ body {
     padding: 6px 10px;
     border-radius: 8px;
     cursor: pointer;
+}
+
+.offer-accept-btn {
+    background: linear-gradient(135deg, #ffe066 0%, #ffd700 45%, #ff9f0a 100%);
+    color: #1c1c1e;
+    border: none;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.offer-accept-btn:active {
+    transform: scale(0.96);
+}
+
+.offer-accept-btn:disabled {
+    opacity: 0.6;
+    cursor: default;
 }
