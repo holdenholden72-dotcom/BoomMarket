@@ -594,7 +594,11 @@ function traitLabel(name) {
 function openListingDetail(item, opts = {}) {
     currentDetailListingId = item.id;
 
-    const image = item.model_icon || item.collection_image || '';
+    // Разные ручки бэкенда называют картинку модели по-разному
+    // (model_icon у листингов маркета/инвентаря, model_image у деталей
+    // трейда) — берём что есть, иначе раньше подставлялась общая картинка
+    // коллекции вместо реальной картинки подарка.
+    const image = item.model_icon || item.model_image || item.collection_image || '';
     listingDetailImageWrap.style.backgroundColor = item.backdrop_color || '#333';
     listingDetailImage.src = image;
     listingDetailTitle.textContent = item.collection_name;
