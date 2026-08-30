@@ -2001,6 +2001,9 @@ body {
 /* Модалка правил */
 .slots-rules-content {
     max-width: 340px;
+    max-height: 82vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     text-align: left;
 }
 
