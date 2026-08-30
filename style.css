@@ -2372,6 +2372,16 @@ body {
     letter-spacing: 0.3px;
 }
 
+#bomberRulesModal .slots-rules-desc {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #d1d1d6;
+}
+
+#bomberRulesModal .slots-rules-content h2 {
+    font-size: 21px;
+}
+
 .bomber-risk-low { color: #34c759; font-weight: 700; }
 .bomber-risk-mid { color: #ffd700; font-weight: 700; }
 .bomber-risk-high { color: #ff9f0a; font-weight: 700; }
