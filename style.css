@@ -1243,6 +1243,15 @@ body {
     color: #ff453a;
 }
 
+/* Кнопка "Создать ордер" в карточке быстрого ордера (по кнопке 🧾) —
+   переопределяем цвет .listing-detail-buy (золотой, как у "Купить"),
+   чтобы действие визуально не путалось с покупкой. */
+.quick-order-confirm-btn {
+    background: #1c1c1e;
+    color: #0a84ff;
+    border: 2px solid #0a84ff;
+}
+
 .order-row-cancel {
     background: #2c2c2e;
     color: #ff453a;

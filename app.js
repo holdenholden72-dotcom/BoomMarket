@@ -480,16 +480,119 @@ grid.addEventListener('click', (e) => {
     if (orderBtn) {
         const item = listingsById.get(orderBtn.dataset.listingId);
         if (item) {
-            openCreateOrderModal({
-                collectionId: item.collection_id,
-                modelId: item.model_id,
-                backdropId: item.backdrop_id,
-                symbolId: item.symbol_id,
-            });
+            openQuickOrderModal(item);
         }
         return;
     }
 });
+
+// === Быстрое создание ордера на трейт конкретного айтема (кнопка 🧾) ===
+// Оформлена как карточка покупки (картинка + трейты), но вместо "Купить"
+// тут поле для своей цены — ордер создаётся на любой айтем с такими же
+// моделью/фоном/символом, а не именно на этот экземпляр.
+const quickOrderModal = document.getElementById('quickOrderModal');
+const closeQuickOrderModalBtn = document.getElementById('closeQuickOrderModal');
+const quickOrderImageWrap = document.getElementById('quickOrderImageWrap');
+const quickOrderImage = document.getElementById('quickOrderImage');
+const quickOrderTitle = document.getElementById('quickOrderTitle');
+const quickOrderNumber = document.getElementById('quickOrderNumber');
+const quickOrderCollection = document.getElementById('quickOrderCollection');
+const quickOrderModel = document.getElementById('quickOrderModel');
+const quickOrderBackdrop = document.getElementById('quickOrderBackdrop');
+const quickOrderSymbol = document.getElementById('quickOrderSymbol');
+const quickOrderPriceInput = document.getElementById('quickOrderPrice');
+const quickOrderConfirmBtn = document.getElementById('quickOrderConfirmBtn');
+
+let quickOrderPreset = null;
+
+function openQuickOrderModal(item) {
+    if (!authToken) {
+        alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+        return;
+    }
+
+    quickOrderPreset = {
+        collectionId: item.collection_id,
+        modelId: item.model_id,
+        backdropId: item.backdrop_id,
+        symbolId: item.symbol_id,
+    };
+
+    const image = item.model_icon || item.collection_image || '';
+    quickOrderImageWrap.style.backgroundColor = item.backdrop_color || '#333';
+    quickOrderImage.src = image;
+    quickOrderTitle.textContent = item.collection_name;
+    quickOrderNumber.textContent = `по трейтам как у #${item.gift_number}`;
+    quickOrderCollection.textContent = item.collection_name;
+    quickOrderModel.textContent = traitLabel(item.model_name);
+    quickOrderBackdrop.textContent = traitLabel(item.backdrop_name);
+    quickOrderSymbol.textContent = traitLabel(item.symbol_name);
+    quickOrderPriceInput.value = '';
+
+    quickOrderModal.style.display = 'flex';
+}
+
+if (closeQuickOrderModalBtn && quickOrderModal) {
+    closeQuickOrderModalBtn.addEventListener('click', () => {
+        quickOrderModal.style.display = 'none';
+        quickOrderPreset = null;
+    });
+}
+
+if (quickOrderConfirmBtn) {
+    quickOrderConfirmBtn.addEventListener('click', async () => {
+        if (!quickOrderPreset) return;
+
+        const maxPrice = parseFloat(quickOrderPriceInput.value);
+        if (!maxPrice || maxPrice <= 0) {
+            alert('Укажите корректную цену');
+            return;
+        }
+        if (!authToken) {
+            alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+            return;
+        }
+
+        quickOrderConfirmBtn.disabled = true;
+
+        try {
+            const res = await fetch(`${API_URL}/api/orders`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`,
+                },
+                body: JSON.stringify({
+                    collectionId: quickOrderPreset.collectionId,
+                    modelId: quickOrderPreset.modelId,
+                    backdropId: quickOrderPreset.backdropId,
+                    symbolId: quickOrderPreset.symbolId,
+                    maxPrice,
+                }),
+            });
+
+            const data = await res.json();
+
+            if (!data.ok) {
+                alert(data.error || 'Не удалось создать ордер');
+                return;
+            }
+
+            updateBalanceUI(data.balance);
+            alert('Ордер создан!');
+            quickOrderModal.style.display = 'none';
+            quickOrderPreset = null;
+            quickOrderPriceInput.value = '';
+
+            await loadActiveOrders();
+        } catch (e) {
+            alert('Ошибка соединения с сервером');
+            console.error(e);
+        } finally {
+            quickOrderConfirmBtn.disabled = false;
+        }
+    });
+}
 
 if (closeListingDetailBtn && listingDetailModal) {
     closeListingDetailBtn.addEventListener('click', () => {

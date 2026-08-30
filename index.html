@@ -444,6 +444,46 @@
         </div>
     </div>
 
+    <!-- Модальное окно быстрого создания ордера на трейт конкретного айтема
+         (открывается по кнопке 🧾 на карточке лота). Оформлена как карточка
+         покупки — с картинкой и трейтами айтема, только вместо кнопки "Купить"
+         тут поле для своей цены и кнопка "Создать ордер". -->
+    <div id="quickOrderModal" class="modal" style="display: none;">
+        <div class="modal-content listing-detail-content">
+            <button class="close-modal listing-detail-close" id="closeQuickOrderModal">&times;</button>
+
+            <div class="listing-detail-image-wrap" id="quickOrderImageWrap">
+                <img id="quickOrderImage" class="listing-detail-image" src="" alt="">
+            </div>
+            <div class="listing-detail-title" id="quickOrderTitle"></div>
+            <div class="listing-detail-number" id="quickOrderNumber"></div>
+
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Коллекция</span>
+                <span class="listing-detail-value" id="quickOrderCollection"></span>
+            </div>
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Модель</span>
+                <span class="listing-detail-value" id="quickOrderModel"></span>
+            </div>
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Фон</span>
+                <span class="listing-detail-value" id="quickOrderBackdrop"></span>
+            </div>
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Символ</span>
+                <span class="listing-detail-value" id="quickOrderSymbol"></span>
+            </div>
+
+            <div class="withdraw-input-box">
+                <input type="number" id="quickOrderPrice" placeholder="Ваша цена 💎" min="0.1" step="0.1">
+            </div>
+            <div class="listing-fee-note">Сумма спишется с баланса сразу и вернётся, если вы отмените ордер. Подойдёт любой айтем с такими же моделью/фоном/символом.</div>
+
+            <button class="action-btn listing-detail-buy quick-order-confirm-btn" id="quickOrderConfirmBtn">Создать ордер</button>
+        </div>
+    </div>
+
     <!-- Модальное окно детального просмотра ордера (открывается при клике на аватарку в истории ордеров) -->
     <div id="orderDetailModal" class="modal" style="display: none;">
         <div class="modal-content listing-detail-content">
