@@ -2173,3 +2173,205 @@ body {
     display: inline-block;
     flex-shrink: 0;
 }
+
+/* =====================================================================
+   ИГРА "БОМБЕР" (мины, поле 7x7)
+   ===================================================================== */
+
+.bomber-content {
+    padding-bottom: 28px;
+}
+
+.bomber-bombs-panel {
+    width: 100%;
+    max-width: 340px;
+    margin-bottom: 16px;
+}
+
+.bomber-bombs-label {
+    font-size: 12px;
+    color: #8e8e93;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.bomber-bombs-options {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.bomber-bombs-btn {
+    background: #1c1c1e;
+    border: 1px solid #2c2c2e;
+    color: #b8b8bd;
+    font-size: 16px;
+    font-weight: 800;
+    padding: 10px 0;
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+.bomber-bombs-btn.is-active {
+    background: rgba(255, 69, 58, 0.15);
+    border-color: #ff453a;
+    color: #ff6961;
+}
+
+.bomber-bombs-btn:disabled {
+    opacity: 0.45;
+}
+
+.bomber-stats-row {
+    width: 100%;
+    max-width: 340px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.bomber-stat-box {
+    background: #1c1c1e;
+    border: 1px solid #2c2c2e;
+    border-radius: 12px;
+    padding: 8px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.bomber-stat-label {
+    font-size: 10px;
+    color: #8e8e93;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.bomber-stat-value {
+    font-size: 15px;
+    font-weight: 800;
+    color: #ffd700;
+}
+
+/* Поле 7x7 */
+.bomber-field {
+    width: 100%;
+    max-width: 340px;
+    aspect-ratio: 1 / 1;
+    display: grid;
+    grid-template-columns: repeat(var(--bomber-cols, 7), 1fr);
+    gap: 5px;
+    background: #0f0f0f;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    border-radius: 16px;
+    padding: 8px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 20px rgba(0,0,0,0.4);
+}
+
+.bomber-cell {
+    background: linear-gradient(160deg, #2c2c2e 0%, #1c1c1e 100%);
+    border: 1px solid #333;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: transform 0.12s ease, background 0.2s ease;
+}
+
+.bomber-cell:not(:disabled):active {
+    transform: scale(0.9);
+}
+
+.bomber-cell:disabled {
+    cursor: default;
+}
+
+.bomber-cell.is-safe {
+    background: linear-gradient(160deg, #234a2b 0%, #16301c 100%);
+    border-color: rgba(52, 199, 89, 0.55);
+    animation: bomberCellReveal 0.25s ease;
+}
+
+.bomber-cell.is-bomb {
+    background: linear-gradient(160deg, #4a2323 0%, #301616 100%);
+    border-color: rgba(255, 69, 58, 0.6);
+}
+
+.bomber-cell.is-bomb.is-hit {
+    background: linear-gradient(160deg, #7a1f1f 0%, #4a1010 100%);
+    border-color: #ff453a;
+    animation: bomberHitFlash 0.5s ease;
+}
+
+@keyframes bomberCellReveal {
+    0% { transform: scale(0.7); opacity: 0.4; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes bomberHitFlash {
+    0% { box-shadow: 0 0 0 4px rgba(255, 69, 58, 0.6); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 69, 58, 0); }
+}
+
+.bomber-actions {
+    width: 100%;
+    max-width: 340px;
+}
+
+.bomber-cashout-btn {
+    background: linear-gradient(135deg, #4ee08a 0%, #34c759 45%, #16a34a 100%);
+    box-shadow: 0 8px 20px rgba(52, 199, 89, 0.35);
+}
+
+@keyframes bomberCashoutBtnPulse {
+    0%, 100% { box-shadow: 0 8px 20px rgba(52, 199, 89, 0.35); }
+    50% { box-shadow: 0 8px 28px rgba(52, 199, 89, 0.65); }
+}
+
+.bomber-cashout-btn {
+    animation: bomberCashoutBtnPulse 1.6s ease-in-out infinite;
+}
+
+/* Таблица рисков в модалке правил */
+.bomber-rules-table {
+    width: 100%;
+    margin: 14px 0;
+    border: 1px solid #2c2c2e;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.bomber-rules-row {
+    display: grid;
+    grid-template-columns: 0.6fr 1.3fr 1fr;
+    padding: 10px 12px;
+    font-size: 13px;
+    border-bottom: 1px solid #2c2c2e;
+}
+
+.bomber-rules-row:last-child {
+    border-bottom: none;
+}
+
+.bomber-rules-head {
+    background: #1c1c1e;
+    color: #8e8e93;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.bomber-risk-low { color: #34c759; font-weight: 700; }
+.bomber-risk-mid { color: #ffd700; font-weight: 700; }
+.bomber-risk-high { color: #ff9f0a; font-weight: 700; }
+.bomber-risk-extreme { color: #ff453a; font-weight: 700; }
+
+.bomber-rules-note {
+    font-size: 12px !important;
+    color: #8e8e93 !important;
+}

@@ -15,6 +15,7 @@ const storageScreen = document.getElementById('storageScreen');
 const tradeScreen = document.getElementById('tradeScreen');
 const slotsScreen = document.getElementById('slotsScreen');
 const rouletteScreen = document.getElementById('rouletteScreen');
+const bomberScreen = document.getElementById('bomberScreen');
 const openProfileBtn = document.getElementById('openProfileBtn');
 const backToMarketBtn = document.getElementById('backToMarketBtn');
 const backToProfileFromHistoryBtn = document.getElementById('backToProfileFromHistoryBtn');
@@ -23,6 +24,7 @@ const backToProfileFromStorageBtn = document.getElementById('backToProfileFromSt
 const backToProfileFromTradeBtn = document.getElementById('backToProfileFromTradeBtn');
 const backToProfileFromSlotsBtn = document.getElementById('backToProfileFromSlotsBtn');
 const backToProfileFromRouletteBtn = document.getElementById('backToProfileFromRouletteBtn');
+const backToProfileFromBomberBtn = document.getElementById('backToProfileFromBomberBtn');
 
 const screensByName = {
     market: marketScreen,
@@ -33,6 +35,7 @@ const screensByName = {
     trade: tradeScreen,
     slots: slotsScreen,
     roulette: rouletteScreen,
+    bomber: bomberScreen,
 };
 
 /** Показывает один экран из screensByName, скрывая остальные, и подсвечивает
@@ -152,6 +155,12 @@ if (backToProfileFromRouletteBtn) {
     });
 }
 
+if (backToProfileFromBomberBtn) {
+    backToProfileFromBomberBtn.addEventListener('click', () => {
+        showScreen('profile');
+    });
+}
+
 // Нижняя навигация встречается на нескольких экранах (профиль, история) —
 // делегируем клики по data-nav вместо привязки к id конкретной кнопки.
 document.querySelectorAll('.bottom-nav .nav-item[data-nav]').forEach(btn => {
@@ -183,6 +192,11 @@ document.querySelectorAll('.game-tile').forEach(tile => {
         }
         if (game === 'roulette') {
             showScreen('roulette');
+            return;
+        }
+        if (game === 'bomber') {
+            showScreen('bomber');
+            bomberSyncActiveGame();
             return;
         }
         alert('Эта игра скоро появится!');
@@ -3413,4 +3427,390 @@ async function handleRouletteSpin() {
 
 if (rouletteSpinBtn) {
     rouletteSpinBtn.addEventListener('click', handleRouletteSpin);
+}
+
+// =====================================================================
+// ИГРА "БОМБЕР" (мины, поле 7x7)
+// =====================================================================
+// Расчёт множителя (для отображения "следующего" множителя до ответа
+// сервера) продублирован здесь по той же честной формуле, что и на
+// бэкенде — но итоговый результат каждой ячейки и правильный множитель
+// всегда приходят с сервера, клиент их не подделывает.
+const BOMBER_GRID_SIZE = 49; // 7x7
+const BOMBER_GRID_COLS = 7;
+const BOMBER_ALLOWED_BOMBS = [4, 6, 8, 10];
+const BOMBER_MIN_BET = 0.3;
+const BOMBER_MAX_BET = 1000;
+const BOMBER_HOUSE_EDGE = 0.05;
+
+function bomberFairMultiplierLocal(bombs, picks) {
+    let mult = 1;
+    for (let i = 0; i < picks; i++) {
+        mult *= (BOMBER_GRID_SIZE - i) / (BOMBER_GRID_SIZE - bombs - i);
+    }
+    return mult;
+}
+function bomberMultiplierLocal(bombs, picks) {
+    if (picks <= 0) return 1;
+    return bomberFairMultiplierLocal(bombs, picks) * (1 - BOMBER_HOUSE_EDGE);
+}
+
+const bomberFieldEl = document.getElementById('bomberField');
+const bomberResultEl = document.getElementById('bomberResult');
+const bomberBombsOptionsEl = document.getElementById('bomberBombsOptions');
+const bomberMultiplierValueEl = document.getElementById('bomberMultiplierValue');
+const bomberPotentialWinValueEl = document.getElementById('bomberPotentialWinValue');
+const bomberNextMultiplierValueEl = document.getElementById('bomberNextMultiplierValue');
+const bomberBetInput = document.getElementById('bomberBetInput');
+const bomberBetMinusBtn = document.getElementById('bomberBetMinusBtn');
+const bomberBetPlusBtn = document.getElementById('bomberBetPlusBtn');
+const bomberBetPanel = document.getElementById('bomberBetPanel');
+const bomberStartBtn = document.getElementById('bomberStartBtn');
+const bomberCashoutBtn = document.getElementById('bomberCashoutBtn');
+const openBomberRulesBtn = document.getElementById('openBomberRulesBtn');
+const bomberRulesModal = document.getElementById('bomberRulesModal');
+const closeBomberRulesModal = document.getElementById('closeBomberRulesModal');
+const closeBomberRulesModalBtn = document.getElementById('closeBomberRulesModalBtn');
+
+let bomberSelectedBombs = 6;
+let bomberGameActive = false;
+let bomberBusy = false; // idle-guard пока идёт запрос к серверу
+
+// === Правила ===
+function openBomberRules() {
+    if (bomberRulesModal) bomberRulesModal.style.display = 'flex';
+}
+function closeBomberRules() {
+    if (bomberRulesModal) bomberRulesModal.style.display = 'none';
+}
+if (openBomberRulesBtn) openBomberRulesBtn.addEventListener('click', openBomberRules);
+if (closeBomberRulesModal) closeBomberRulesModal.addEventListener('click', closeBomberRules);
+if (closeBomberRulesModalBtn) closeBomberRulesModalBtn.addEventListener('click', closeBomberRules);
+if (bomberRulesModal) {
+    bomberRulesModal.addEventListener('click', (e) => {
+        if (e.target === bomberRulesModal) closeBomberRules();
+    });
+}
+
+// === Ставка (логика идентична слотам/рулетке) ===
+function getBomberBalanceNumber() {
+    const el = document.querySelector('.user-balance');
+    const value = el ? parseFloat(el.textContent) : NaN;
+    return isNaN(value) ? BOMBER_MAX_BET : value;
+}
+function clampBomberBet(value) {
+    if (isNaN(value)) return BOMBER_MIN_BET;
+    let v = Math.max(BOMBER_MIN_BET, Math.min(BOMBER_MAX_BET, value));
+    v = Math.round(v * 10) / 10;
+    return v;
+}
+function setBomberBetValue(value) {
+    if (bomberBetInput) bomberBetInput.value = clampBomberBet(value);
+}
+if (bomberBetInput) {
+    bomberBetInput.addEventListener('change', () => {
+        setBomberBetValue(parseFloat(bomberBetInput.value));
+    });
+}
+if (bomberBetMinusBtn) {
+    bomberBetMinusBtn.addEventListener('click', () => {
+        setBomberBetValue(parseFloat(bomberBetInput.value) - 0.1);
+    });
+}
+if (bomberBetPlusBtn) {
+    bomberBetPlusBtn.addEventListener('click', () => {
+        setBomberBetValue(parseFloat(bomberBetInput.value) + 0.1);
+    });
+}
+document.querySelectorAll('.bomber-bet-quick-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const mode = btn.getAttribute('data-bet-mode');
+        const current = parseFloat(bomberBetInput.value) || BOMBER_MIN_BET;
+        if (mode === 'min') setBomberBetValue(BOMBER_MIN_BET);
+        if (mode === 'half') setBomberBetValue(current / 2);
+        if (mode === 'double') setBomberBetValue(current * 2);
+        if (mode === 'max') setBomberBetValue(Math.min(getBomberBalanceNumber(), BOMBER_MAX_BET));
+    });
+});
+
+// === Выбор количества бомб — только пока раунд не начат ===
+if (bomberBombsOptionsEl) {
+    bomberBombsOptionsEl.querySelectorAll('.bomber-bombs-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (bomberGameActive || bomberBusy) return;
+            const bombs = parseInt(btn.getAttribute('data-bombs'), 10);
+            if (!BOMBER_ALLOWED_BOMBS.includes(bombs)) return;
+            bomberSelectedBombs = bombs;
+            bomberBombsOptionsEl.querySelectorAll('.bomber-bombs-btn').forEach(b => {
+                b.classList.toggle('is-active', b === btn);
+            });
+            bomberUpdateStatsDisplay(0);
+        });
+    });
+}
+
+// === Отрисовка пустого поля 7x7 ===
+function bomberBuildField() {
+    if (!bomberFieldEl) return;
+    bomberFieldEl.innerHTML = '';
+    bomberFieldEl.style.setProperty('--bomber-cols', BOMBER_GRID_COLS);
+    for (let i = 0; i < BOMBER_GRID_SIZE; i++) {
+        const cellBtn = document.createElement('button');
+        cellBtn.type = 'button';
+        cellBtn.className = 'bomber-cell';
+        cellBtn.setAttribute('data-cell', String(i));
+        cellBtn.disabled = true;
+        cellBtn.addEventListener('click', () => bomberHandleCellClick(i, cellBtn));
+        bomberFieldEl.appendChild(cellBtn);
+    }
+}
+bomberBuildField();
+
+function bomberSetFieldInteractive(interactive) {
+    if (!bomberFieldEl) return;
+    bomberFieldEl.querySelectorAll('.bomber-cell').forEach(btn => {
+        if (interactive) {
+            if (!btn.classList.contains('is-safe') && !btn.classList.contains('is-bomb')) {
+                btn.disabled = false;
+            }
+        } else {
+            btn.disabled = true;
+        }
+    });
+}
+
+function bomberResetField() {
+    if (!bomberFieldEl) return;
+    bomberFieldEl.querySelectorAll('.bomber-cell').forEach(btn => {
+        btn.className = 'bomber-cell';
+        btn.disabled = true;
+        btn.textContent = '';
+    });
+}
+
+function bomberUpdateStatsDisplay(picks) {
+    const multiplier = bomberMultiplierLocal(bomberSelectedBombs, picks);
+    const nextMultiplier = bomberMultiplierLocal(bomberSelectedBombs, picks + 1);
+    const bet = clampBomberBet(parseFloat(bomberBetInput.value)) || BOMBER_MIN_BET;
+    if (bomberMultiplierValueEl) bomberMultiplierValueEl.textContent = `x${multiplier.toFixed(2)}`;
+    if (bomberPotentialWinValueEl) bomberPotentialWinValueEl.textContent = `${(bet * multiplier).toFixed(2)} 💎`;
+    if (bomberNextMultiplierValueEl) {
+        bomberNextMultiplierValueEl.textContent = picks < (BOMBER_GRID_SIZE - bomberSelectedBombs)
+            ? `x${nextMultiplier.toFixed(2)}`
+            : '—';
+    }
+}
+
+function bomberSetControlsForActiveGame(active) {
+    bomberGameActive = active;
+    if (bomberBetInput) bomberBetInput.disabled = active;
+    if (bomberBetMinusBtn) bomberBetMinusBtn.disabled = active;
+    if (bomberBetPlusBtn) bomberBetPlusBtn.disabled = active;
+    document.querySelectorAll('.bomber-bet-quick-btn').forEach(btn => { btn.disabled = active; });
+    if (bomberBombsOptionsEl) {
+        bomberBombsOptionsEl.querySelectorAll('.bomber-bombs-btn').forEach(btn => { btn.disabled = active; });
+    }
+    if (bomberBetPanel) bomberBetPanel.style.opacity = active ? '0.5' : '1';
+    if (bomberStartBtn) bomberStartBtn.style.display = active ? 'none' : '';
+    if (bomberCashoutBtn) bomberCashoutBtn.style.display = active ? '' : 'none';
+}
+
+async function bomberStartGame() {
+    if (bomberBusy || bomberGameActive) return;
+    if (!authToken) {
+        alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+        return;
+    }
+    const bet = clampBomberBet(parseFloat(bomberBetInput.value));
+    setBomberBetValue(bet);
+
+    bomberBusy = true;
+    if (bomberStartBtn) bomberStartBtn.disabled = true;
+    bomberResultEl.className = 'slots-result';
+    bomberResultEl.textContent = 'Расставляем бомбы...';
+
+    try {
+        const res = await fetch(`${API_URL}/api/games/bomber/start`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+            body: JSON.stringify({ bet, bombs: bomberSelectedBombs }),
+        });
+        const data = await res.json();
+
+        if (!data.ok) {
+            bomberResultEl.textContent = data.error || 'Не удалось начать игру';
+            bomberBusy = false;
+            if (bomberStartBtn) bomberStartBtn.disabled = false;
+            return;
+        }
+
+        if (typeof data.balance === 'number') updateBalanceUI(data.balance);
+
+        bomberResetField();
+        bomberSetControlsForActiveGame(true);
+        bomberSetFieldInteractive(true);
+        bomberUpdateStatsDisplay(0);
+        bomberResultEl.className = 'slots-result';
+        bomberResultEl.textContent = `Поле заминировано (${bomberSelectedBombs} бомб) — открывайте ячейки!`;
+    } catch (e) {
+        console.error(e);
+        bomberResultEl.textContent = 'Ошибка соединения с сервером';
+    } finally {
+        bomberBusy = false;
+        if (bomberStartBtn) bomberStartBtn.disabled = false;
+    }
+}
+
+function bomberRevealBombsOnField(bombCells, hitCell) {
+    if (!bomberFieldEl) return;
+    bombCells.forEach(idx => {
+        const cellBtn = bomberFieldEl.querySelector(`.bomber-cell[data-cell="${idx}"]`);
+        if (!cellBtn) return;
+        cellBtn.classList.add('is-bomb');
+        if (idx === hitCell) cellBtn.classList.add('is-hit');
+        cellBtn.textContent = '💣';
+        cellBtn.disabled = true;
+    });
+}
+
+async function bomberHandleCellClick(cellIndex, cellBtn) {
+    if (bomberBusy || !bomberGameActive) return;
+    if (cellBtn.disabled) return;
+
+    bomberBusy = true;
+    bomberSetFieldInteractive(false);
+
+    try {
+        const res = await fetch(`${API_URL}/api/games/bomber/reveal`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+            body: JSON.stringify({ cell: cellIndex }),
+        });
+        const data = await res.json();
+
+        if (!data.ok) {
+            bomberResultEl.textContent = data.error || 'Не удалось открыть ячейку';
+            bomberSetFieldInteractive(true);
+            bomberBusy = false;
+            return;
+        }
+
+        if (data.win === false) {
+            // Подрыв — раунд окончен проигрышем.
+            cellBtn.classList.add('is-bomb', 'is-hit');
+            cellBtn.textContent = '💥';
+            bomberRevealBombsOnField(data.bombs, data.hitCell);
+            bomberResultEl.className = 'slots-result is-lose';
+            bomberResultEl.textContent = `💥 Бум! Вы наткнулись на бомбу — ставка ${data.betAmount} 💎 сгорела`;
+            bomberSetControlsForActiveGame(false);
+            bomberUpdateStatsDisplay(0);
+            bomberBusy = false;
+            return;
+        }
+
+        if (data.cleared) {
+            // Все безопасные ячейки открыты — автоматический максимальный выигрыш.
+            cellBtn.classList.add('is-safe');
+            cellBtn.textContent = '💎';
+            if (typeof data.balance === 'number') updateBalanceUI(data.balance);
+            bomberResultEl.className = 'slots-result is-win';
+            bomberResultEl.textContent = `🎉 Поле зачищено! x${data.multiplier} — +${data.winAmount} 💎`;
+            bomberSetControlsForActiveGame(false);
+            bomberUpdateStatsDisplay(0);
+            bomberBusy = false;
+            return;
+        }
+
+        // Безопасная ячейка — раунд продолжается.
+        cellBtn.classList.add('is-safe');
+        cellBtn.textContent = '💎';
+        bomberUpdateStatsDisplay(data.game.picks);
+        bomberResultEl.className = 'slots-result';
+        bomberResultEl.textContent = `Безопасно! Открыто ${data.game.picks} из ${data.game.safeCellsTotal} — можно продолжать или забрать выигрыш`;
+        bomberSetFieldInteractive(true);
+    } catch (e) {
+        console.error(e);
+        bomberResultEl.textContent = 'Ошибка соединения с сервером';
+        bomberSetFieldInteractive(true);
+    } finally {
+        bomberBusy = false;
+    }
+}
+
+async function bomberCashout() {
+    if (bomberBusy || !bomberGameActive) return;
+    if (!authToken) {
+        alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+        return;
+    }
+
+    bomberBusy = true;
+    bomberSetFieldInteractive(false);
+    if (bomberCashoutBtn) bomberCashoutBtn.disabled = true;
+
+    try {
+        const res = await fetch(`${API_URL}/api/games/bomber/cashout`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        });
+        const data = await res.json();
+
+        if (!data.ok) {
+            bomberResultEl.textContent = data.error || 'Не удалось забрать выигрыш';
+            bomberSetFieldInteractive(true);
+            return;
+        }
+
+        if (typeof data.balance === 'number') updateBalanceUI(data.balance);
+        bomberResultEl.className = 'slots-result is-win';
+        bomberResultEl.textContent = `✅ Забрано! x${data.multiplier} — +${data.winAmount} 💎`;
+        bomberSetControlsForActiveGame(false);
+        bomberUpdateStatsDisplay(0);
+    } catch (e) {
+        console.error(e);
+        bomberResultEl.textContent = 'Ошибка соединения с сервером';
+        bomberSetFieldInteractive(true);
+    } finally {
+        bomberBusy = false;
+        if (bomberCashoutBtn) bomberCashoutBtn.disabled = false;
+    }
+}
+
+if (bomberStartBtn) bomberStartBtn.addEventListener('click', bomberStartGame);
+if (bomberCashoutBtn) bomberCashoutBtn.addEventListener('click', bomberCashout);
+
+// === Восстановление активного раунда, если пользователь ушёл с экрана
+// и вернулся (например, свернул мини-приложение) не завершив игру ===
+async function bomberSyncActiveGame() {
+    if (!authToken || bomberGameActive) return;
+    try {
+        const res = await fetch(`${API_URL}/api/games/bomber/state`, {
+            headers: { 'Authorization': `Bearer ${authToken}` },
+        });
+        const data = await res.json();
+        if (!data.ok || !data.game) return;
+
+        bomberSelectedBombs = data.game.bombs;
+        if (bomberBombsOptionsEl) {
+            bomberBombsOptionsEl.querySelectorAll('.bomber-bombs-btn').forEach(b => {
+                b.classList.toggle('is-active', parseInt(b.getAttribute('data-bombs'), 10) === bomberSelectedBombs);
+            });
+        }
+        setBomberBetValue(data.game.bet);
+        bomberResetField();
+        data.game.revealed.forEach(idx => {
+            const cellBtn = bomberFieldEl.querySelector(`.bomber-cell[data-cell="${idx}"]`);
+            if (cellBtn) {
+                cellBtn.classList.add('is-safe');
+                cellBtn.textContent = '💎';
+            }
+        });
+        bomberSetControlsForActiveGame(true);
+        bomberSetFieldInteractive(true);
+        bomberUpdateStatsDisplay(data.game.picks);
+        bomberResultEl.className = 'slots-result';
+        bomberResultEl.textContent = `Раунд продолжается — открыто ${data.game.picks} из ${data.game.safeCellsTotal}`;
+    } catch (e) {
+        console.error(e);
+    }
 }

@@ -224,6 +224,10 @@
                     <span class="game-tile-icon">🎰</span>
                     <span class="game-tile-name">Слоты</span>
                 </button>
+                <button class="game-tile" data-game="bomber">
+                    <span class="game-tile-icon">💣</span>
+                    <span class="game-tile-name">Бомбер</span>
+                </button>
             </div>
 
                <!-- Нижняя навигация -->
@@ -651,6 +655,151 @@
             </div>
 
             <button class="action-btn slots-rules-close-btn" id="closeRouletteRulesModalBtn">Понятно</button>
+        </div>
+    </div>
+
+    <!-- ЭКРАН: ИГРА "БОМБЕР" (мины, поле 7x7) -->
+    <div id="bomberScreen" class="screen">
+        <header class="profile-header slots-header">
+            <button class="back-btn" id="backToProfileFromBomberBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Назад
+            </button>
+            <button class="slots-rules-btn" id="openBomberRulesBtn">
+                <span class="slots-rules-btn-icon">i</span>
+                Правила
+            </button>
+        </header>
+
+        <div class="slots-content bomber-content">
+            <div class="slots-title">💣 Бомбер</div>
+
+            <div class="slots-balance-pill">
+                <span class="slots-balance-label">Баланс</span>
+                <span class="slots-balance-value"><span id="bomberBalanceValue" class="user-balance">0</span> 💎</span>
+            </div>
+
+            <!-- Выбор количества бомб — доступно только до старта раунда -->
+            <div class="bomber-bombs-panel">
+                <div class="bomber-bombs-label">Количество бомб</div>
+                <div class="bomber-bombs-options" id="bomberBombsOptions">
+                    <button class="bomber-bombs-btn" data-bombs="4" type="button">4</button>
+                    <button class="bomber-bombs-btn is-active" data-bombs="6" type="button">6</button>
+                    <button class="bomber-bombs-btn" data-bombs="8" type="button">8</button>
+                    <button class="bomber-bombs-btn" data-bombs="10" type="button">10</button>
+                </div>
+            </div>
+
+            <!-- Текущий множитель / потенциальный выигрыш -->
+            <div class="bomber-stats-row">
+                <div class="bomber-stat-box">
+                    <span class="bomber-stat-label">Множитель</span>
+                    <span class="bomber-stat-value" id="bomberMultiplierValue">x1.00</span>
+                </div>
+                <div class="bomber-stat-box">
+                    <span class="bomber-stat-label">Выигрыш</span>
+                    <span class="bomber-stat-value" id="bomberPotentialWinValue">0.00 💎</span>
+                </div>
+                <div class="bomber-stat-box">
+                    <span class="bomber-stat-label">Следующая</span>
+                    <span class="bomber-stat-value" id="bomberNextMultiplierValue">—</span>
+                </div>
+            </div>
+
+            <!-- Поле 7x7 -->
+            <div class="bomber-field" id="bomberField"></div>
+
+            <div class="slots-result" id="bomberResult">Выберите количество бомб, сделайте ставку и нажмите «Начать игру»</div>
+
+            <div class="slots-bet-panel" id="bomberBetPanel">
+                <div class="slots-bet-label">Ставка</div>
+                <div class="slots-bet-controls">
+                    <button class="slots-bet-step-btn" id="bomberBetMinusBtn" type="button">−</button>
+                    <div class="slots-bet-input-wrap">
+                        <input type="number" id="bomberBetInput" value="0.3" min="0.3" max="1000" step="0.1" inputmode="decimal">
+                        <span class="slots-bet-diamond">💎</span>
+                    </div>
+                    <button class="slots-bet-step-btn" id="bomberBetPlusBtn" type="button">+</button>
+                </div>
+                <div class="slots-bet-quick">
+                    <button class="slots-bet-quick-btn bomber-bet-quick-btn" data-bet-mode="min" type="button">MIN</button>
+                    <button class="slots-bet-quick-btn bomber-bet-quick-btn" data-bet-mode="half" type="button">1/2</button>
+                    <button class="slots-bet-quick-btn bomber-bet-quick-btn" data-bet-mode="double" type="button">x2</button>
+                    <button class="slots-bet-quick-btn bomber-bet-quick-btn" data-bet-mode="max" type="button">MAX</button>
+                </div>
+            </div>
+
+            <div class="bomber-actions">
+                <button class="slots-spin-btn bomber-start-btn" id="bomberStartBtn" type="button">
+                    <span class="slots-spin-btn-text">НАЧАТЬ ИГРУ</span>
+                </button>
+                <button class="slots-spin-btn bomber-cashout-btn" id="bomberCashoutBtn" type="button" style="display:none;">
+                    <span class="slots-spin-btn-text">ЗАБРАТЬ ВЫИГРЫШ</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно правил игры "Бомбер" -->
+    <div id="bomberRulesModal" class="modal" style="display: none;">
+        <div class="modal-content slots-rules-content">
+            <button class="close-modal" id="closeBomberRulesModal">&times;</button>
+            <h2>Правила игры «Бомбер»</h2>
+            <p class="slots-rules-desc">
+                Поле — 7×7 (49 ячеек). Перед стартом выберите количество бомб (4, 6, 8 или 10)
+                и сделайте ставку, затем нажмите «Начать игру» — бомбы будут расставлены случайно
+                и скрыты от вас.
+            </p>
+            <p class="slots-rules-desc">
+                Открывайте ячейки по одной. Каждая безопасная ячейка увеличивает множитель
+                выигрыша — чем больше бомб выбрано и чем больше ячеек открыто, тем выше
+                множитель и тем выше риск. В любой момент после первой открытой ячейки можно
+                нажать «Забрать выигрыш» — ставка × текущий множитель зачислится на баланс.
+            </p>
+            <p class="slots-rules-desc">
+                Если открыта ячейка с бомбой — раунд проигран, ставка сгорает, и открываются
+                все бомбы на поле. Если открыты все безопасные ячейки без единого подрыва —
+                выигрыш засчитывается автоматически по максимальному множителю раунда.
+            </p>
+
+            <div class="bomber-rules-table">
+                <div class="bomber-rules-row bomber-rules-head">
+                    <span>Бомб</span>
+                    <span>Безопасных ячеек</span>
+                    <span>Риск</span>
+                </div>
+                <div class="bomber-rules-row">
+                    <span>4</span><span>45 из 49</span><span class="bomber-risk-low">Низкий</span>
+                </div>
+                <div class="bomber-rules-row">
+                    <span>6</span><span>43 из 49</span><span class="bomber-risk-mid">Средний</span>
+                </div>
+                <div class="bomber-rules-row">
+                    <span>8</span><span>41 из 49</span><span class="bomber-risk-high">Высокий</span>
+                </div>
+                <div class="bomber-rules-row">
+                    <span>10</span><span>39 из 49</span><span class="bomber-risk-extreme">Экстремальный</span>
+                </div>
+            </div>
+
+            <p class="slots-rules-desc bomber-rules-note">
+                Множитель считается по честной формуле теории вероятностей (шанс вытащить
+                подряд именно столько безопасных ячеек из оставшихся на поле) за вычетом
+                комиссии площадки 5%.
+            </p>
+
+            <div class="slots-rules-bets">
+                <div class="slots-rules-bet-item">
+                    <span>Мин. ставка</span>
+                    <b>0.3 💎</b>
+                </div>
+                <div class="slots-rules-bet-item">
+                    <span>Макс. ставка</span>
+                    <b>1 000 💎</b>
+                </div>
+            </div>
+
+            <button class="action-btn slots-rules-close-btn" id="closeBomberRulesModalBtn">Понятно</button>
         </div>
     </div>
 
