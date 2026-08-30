@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Telegram NFT Market</title>
-    <link rel="stylesheet" href="style.css?v=5">
+    <link rel="stylesheet" href="style.css?v=6">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 </head>
@@ -46,80 +46,115 @@
             </div>
         </div>
 
-        <!-- Модальное окно сортировки (3 полоски) -->
-        <div class="filter-modal" id="sortModal">
-            <div class="filter-picker-content">
-                <div class="filter-picker-header">
-                    <h3>Сортировка</h3>
-                    <button class="close-modal-btn" id="closeSortModal">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                    </button>
-                </div>
-                <ul class="filter-picker-list" id="sortList">
-                    <li class="filter-picker-row" data-sort="time_asc">
-                        <input type="checkbox">
-                        <span class="filter-picker-name">Время размещения (По возрастанию)</span>
-                    </li>
-                    <li class="filter-picker-row" data-sort="time_desc">
-                        <input type="checkbox">
-                        <span class="filter-picker-name">Время размещения (По убыванию)</span>
-                    </li>
-                    <li class="filter-picker-row" data-sort="price_asc">
-                        <input type="checkbox">
-                        <span class="filter-picker-name">Цена (По возрастанию)</span>
-                    </li>
-                    <li class="filter-picker-row" data-sort="price_desc">
-                        <input type="checkbox">
-                        <span class="filter-picker-name">Цена (По убыванию)</span>
-                    </li>
-                    <li class="filter-picker-row" data-sort="num_asc">
-                        <input type="checkbox">
-                        <span class="filter-picker-name">Номер подарка (По возрастанию)</span>
-                    </li>
-                    <li class="filter-picker-row" data-sort="num_desc">
-                        <input type="checkbox">
-                        <span class="filter-picker-name">Номер подарка (По убыванию)</span>
-                    </li>
-                </ul>
-                <div class="filter-picker-footer">
-                    <button class="filter-picker-reset" id="sortReset">Сбросить</button>
-                    <button class="filter-picker-apply" id="sortApply">Показать результаты</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Общая модалка мультивыбора: переиспользуется для NFT / Модель / Фон / Символ,
-             содержимое списка каждый раз заполняется в app.js под конкретный фильтр -->
-        <div class="filter-modal" id="filterPickerModal">
-            <div class="filter-picker-content">
-                <div class="filter-picker-header">
-                    <h3 id="filterPickerTitle">Коллекция</h3>
-                    <button class="close-modal-btn" id="closeFilterPicker">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                    </button>
-                </div>
-                <div class="filter-picker-search">
-                    <span class="search-icon">🔍</span>
-                    <input type="text" id="filterPickerSearch" placeholder="Поиск">
-                </div>
-                <label class="filter-picker-select-all">
-                    <input type="checkbox" id="filterPickerSelectAll">
-                    <span>Выбрать все</span>
-                </label>
-                <ul class="filter-picker-list" id="filterPickerList">
-                    <!-- Строки чекбоксов генерируются через JS -->
-                </ul>
-                <div class="filter-picker-footer">
-                    <button class="filter-picker-reset" id="filterPickerReset">Сбросить</button>
-                    <button class="filter-picker-apply" id="filterPickerApply">Показать результаты</button>
-                </div>
-            </div>
-        </div>
-
         <!-- Сетка товаров (Маркет) -->
         <main class="market-grid" id="marketGrid">
             <!-- Карточки генерируются через JS -->
         </main>
+    </div>
+
+    <!-- Модальное окно сортировки (Маркет) -->
+    <div class="filter-modal" id="sortModal">
+        <div class="filter-picker-content">
+            <div class="filter-picker-header">
+                <h3>Сортировка</h3>
+                <button class="close-modal-btn" id="closeSortModal">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <ul class="filter-picker-list" id="sortList">
+                <li class="filter-picker-row" data-sort="time_asc">
+                    <input type="checkbox">
+                    <span class="filter-picker-name">Время размещения (По возрастанию)</span>
+                </li>
+                <li class="filter-picker-row" data-sort="time_desc">
+                    <input type="checkbox">
+                    <span class="filter-picker-name">Время размещения (По убыванию)</span>
+                </li>
+                <li class="filter-picker-row" data-sort="price_asc">
+                    <input type="checkbox">
+                    <span class="filter-picker-name">Цена (По возрастанию)</span>
+                </li>
+                <li class="filter-picker-row" data-sort="price_desc">
+                    <input type="checkbox">
+                    <span class="filter-picker-name">Цена (По убыванию)</span>
+                </li>
+                <li class="filter-picker-row" data-sort="num_asc">
+                    <input type="checkbox">
+                    <span class="filter-picker-name">Номер подарка (По возрастанию)</span>
+                </li>
+                <li class="filter-picker-row" data-sort="num_desc">
+                    <input type="checkbox">
+                    <span class="filter-picker-name">Номер подарка (По убыванию)</span>
+                </li>
+            </ul>
+            <div class="filter-picker-footer">
+                <button class="filter-picker-reset" id="sortReset">Сбросить</button>
+                <button class="filter-picker-apply" id="sortApply">Показать результаты</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно сортировки для Хранилища -->
+    <div class="filter-modal" id="storageSortModal">
+        <div class="filter-picker-content">
+            <div class="filter-picker-header">
+                <h3>Сортировка</h3>
+                <button class="close-modal-btn" id="closeStorageSortModal">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <ul class="filter-picker-list" id="storageSortList">
+                <li class="filter-picker-row" data-sort="date_desc">
+                    <input type="checkbox">
+                    <span class="filter-picker-name">Дата получения (Сначала новые)</span>
+                </li>
+                <li class="filter-picker-row" data-sort="date_asc">
+                    <input type="checkbox">
+                    <span class="filter-picker-name">Дата получения (Сначала старые)</span>
+                </li>
+                <li class="filter-picker-row" data-sort="num_asc">
+                    <input type="checkbox">
+                    <span class="filter-picker-name">Номер подарка (По возрастанию)</span>
+                </li>
+                <li class="filter-picker-row" data-sort="num_desc">
+                    <input type="checkbox">
+                    <span class="filter-picker-name">Номер подарка (По убыванию)</span>
+                </li>
+            </ul>
+            <div class="filter-picker-footer">
+                <button class="filter-picker-reset" id="storageSortReset">Сбросить</button>
+                <button class="filter-picker-apply" id="storageSortApply">Показать результаты</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Общая модалка мультивыбора: переиспользуется для NFT / Модель / Фон / Символ на
+         обоих экранах (Маркет и Хранилище) — содержимое списка каждый раз заполняется
+         в app.js под конкретный фильтр и контекст. -->
+    <div class="filter-modal" id="filterPickerModal">
+        <div class="filter-picker-content">
+            <div class="filter-picker-header">
+                <h3 id="filterPickerTitle">Коллекция</h3>
+                <button class="close-modal-btn" id="closeFilterPicker">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="filter-picker-search">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="filterPickerSearch" placeholder="Поиск">
+            </div>
+            <label class="filter-picker-select-all">
+                <input type="checkbox" id="filterPickerSelectAll">
+                <span>Выбрать все</span>
+            </label>
+            <ul class="filter-picker-list" id="filterPickerList">
+                <!-- Строки чекбоксов генерируются через JS -->
+            </ul>
+            <div class="filter-picker-footer">
+                <button class="filter-picker-reset" id="filterPickerReset">Сбросить</button>
+                <button class="filter-picker-apply" id="filterPickerApply">Показать результаты</button>
+            </div>
+        </div>
     </div>
 
     <!-- ЭКРАН 2: ПРОФИЛЬ -->
@@ -308,6 +343,24 @@
 
         <div class="profile-content">
             <div class="section-title">ХРАНИЛИЩЕ</div>
+
+            <!-- Поиск и фильтры (аналогично Маркету) -->
+            <div class="filter-section">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="storageSearchInput" placeholder="Поиск по названию NFT">
+                </div>
+
+                <div class="filter-scroll">
+                    <button class="sort-trigger-btn" id="storageSortTriggerBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
+                    </button>
+                    <button class="filter-pill" id="storageFilterNftBtn" data-filter-type="collection">NFT</button>
+                    <button class="filter-pill" id="storageFilterModelBtn" data-filter-type="model">Модель</button>
+                    <button class="filter-pill" id="storageFilterBgBtn" data-filter-type="backdrop">Фон</button>
+                    <button class="filter-pill" id="storageFilterSymbolBtn" data-filter-type="symbol">Символ</button>
+                </div>
+            </div>
 
             <main class="market-grid" id="storageGrid">
                 <!-- Карточки генерируются через JS (см. loadInventory/renderStorageGrid в app.js) -->
@@ -689,6 +742,6 @@
     </div>
 
     <!-- Скрипт подключаем один раз в самом конце -->
-    <script src="app.js?v=5"></script>
+    <script src="app.js?v=6"></script>
 </body>
 </html>

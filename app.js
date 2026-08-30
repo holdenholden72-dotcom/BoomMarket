@@ -100,6 +100,18 @@ const activeFilters = {
 
 let currentSearch = '';
 
+// То же самое, но для экрана "Хранилище" — фильтруется локально по уже
+// загруженному инвентарю пользователя, без похода на сервер.
+const storageActiveFilters = {
+    collectionIds: [],
+    models: [],
+    backdrops: [],
+    symbols: [],
+    sort: null,
+};
+
+let currentStorageSearch = '';
+
 // Кэш справочников с сервера
 let collectionsCache = [];       // [{id, name, image_url}]
 let traitsCache = { models: [], backdrops: [], symbols: [] }; // зависит от выбранных коллекций
@@ -124,6 +136,13 @@ const filterButtons = {
     symbol: document.getElementById('filterSymbolBtn'),
 };
 
+const storageFilterButtons = {
+    collection: document.getElementById('storageFilterNftBtn'),
+    model: document.getElementById('storageFilterModelBtn'),
+    backdrop: document.getElementById('storageFilterBgBtn'),
+    symbol: document.getElementById('storageFilterSymbolBtn'),
+};
+
 const filterTitles = {
     collection: 'Коллекция',
     model: 'Модель',
@@ -138,12 +157,14 @@ const filterStateKeys = {
     symbol: 'symbols',
 };
 
-// Текущий открытый фильтр и его временный (черновой) выбор — применяется
-// только по кнопке "Показать результаты", отменяется при закрытии крестиком.
+// Текущий открытый фильтр, его контекст ('market' или 'storage') и временный
+// (черновой) выбор — применяется только по кнопке "Показать результаты",
+// отменяется при закрытии крестиком.
 let openFilterType = null;
+let openFilterContext = 'market';
 let draftSelection = new Set();
 
-/** Возвращает список опций {value, label, image, colorHex, rarity} для указанного типа фильтра. */
+/** Возвращает список опций {value, label, image, colorHex, rarity} для указанного типа фильтра (Маркет). */
 function getOptionsForFilterType(type) {
     if (type === 'collection') {
         return collectionsCache.map(c => ({
@@ -180,9 +201,53 @@ function getOptionsForFilterType(type) {
     return [];
 }
 
+/** Опции для фильтров Хранилища — считаются на лету из уже загруженного
+ * инвентаря пользователя (без похода на сервер), сужаются по выбранным
+ * коллекциям, если тип фильтра не сама коллекция (как и в Маркете). */
+function getStorageOptionsForFilterType(type) {
+    let items = allInventoryItems;
+    if (type !== 'collection' && storageActiveFilters.collectionIds.length) {
+        items = items.filter(i => storageActiveFilters.collectionIds.includes(String(i.collection_id)));
+    }
+
+    const map = new Map();
+    if (type === 'collection') {
+        items.forEach(i => {
+            if (!map.has(i.collection_id)) {
+                map.set(i.collection_id, { value: String(i.collection_id), label: i.collection_name, image: i.collection_image });
+            }
+        });
+    } else if (type === 'model') {
+        items.forEach(i => {
+            if (i.model_name && !map.has(i.model_name)) {
+                map.set(i.model_name, { value: i.model_name, label: i.model_name, image: i.model_icon, rarity: i.model_rarity });
+            }
+        });
+    } else if (type === 'backdrop') {
+        items.forEach(i => {
+            if (i.backdrop_name && !map.has(i.backdrop_name)) {
+                map.set(i.backdrop_name, { value: i.backdrop_name, label: i.backdrop_name, colorHex: i.backdrop_color, rarity: i.backdrop_rarity });
+            }
+        });
+    } else if (type === 'symbol') {
+        items.forEach(i => {
+            if (i.symbol_name && !map.has(i.symbol_name)) {
+                map.set(i.symbol_name, { value: i.symbol_name, label: i.symbol_name, image: i.symbol_icon, rarity: i.symbol_rarity });
+            }
+        });
+    }
+    return [...map.values()];
+}
+
+/** Опции для текущего открытого фильтра — с учётом того, какой экран (Маркет/Хранилище)
+ * его открыл. */
+function getOptionsForCurrentContext(type) {
+    return openFilterContext === 'storage' ? getStorageOptionsForFilterType(type) : getOptionsForFilterType(type);
+}
+
 function renderFilterPickerList() {
     const search = filterPickerSearch.value.trim().toLowerCase();
-    const allOptions = getOptionsForFilterType(openFilterType);
+    const allOptions = getOptionsForCurrentContext(openFilterType);
     let visibleOptions = search
         ? allOptions.filter(o => o.label.toLowerCase().includes(search))
         : allOptions;
@@ -264,9 +329,11 @@ function updateSelectAllCheckbox(visibleOptions) {
     filterPickerSelectAll.indeterminate = selectedCount > 0 && selectedCount < visibleOptions.length;
 }
 
-function openFilterPicker(type) {
+function openFilterPicker(type, context = 'market') {
     openFilterType = type;
-    draftSelection = new Set(activeFilters[filterStateKeys[type]]);
+    openFilterContext = context;
+    const filters = context === 'storage' ? storageActiveFilters : activeFilters;
+    draftSelection = new Set(filters[filterStateKeys[type]]);
     filterPickerTitle.textContent = filterTitles[type];
     filterPickerSearch.value = '';
     renderFilterPickerList();
@@ -279,7 +346,11 @@ function closeFilterPickerModal() {
 }
 
 Object.entries(filterButtons).forEach(([type, btn]) => {
-    if (btn) btn.addEventListener('click', () => openFilterPicker(type));
+    if (btn) btn.addEventListener('click', () => openFilterPicker(type, 'market'));
+});
+
+Object.entries(storageFilterButtons).forEach(([type, btn]) => {
+    if (btn) btn.addEventListener('click', () => openFilterPicker(type, 'storage'));
 });
 
 closeFilterPicker.addEventListener('click', closeFilterPickerModal);
@@ -292,7 +363,7 @@ filterPickerSearch.addEventListener('input', renderFilterPickerList);
 
 filterPickerSelectAll.addEventListener('change', () => {
     const search = filterPickerSearch.value.trim().toLowerCase();
-    const allOptions = getOptionsForFilterType(openFilterType);
+    const allOptions = getOptionsForCurrentContext(openFilterType);
     const visibleOptions = search
         ? allOptions.filter(o => o.label.toLowerCase().includes(search))
         : allOptions;
@@ -312,10 +383,20 @@ filterPickerReset.addEventListener('click', () => {
 
 filterPickerApply.addEventListener('click', async () => {
     const type = openFilterType;
+    const context = openFilterContext;
     const key = filterStateKeys[type];
+
+    if (context === 'storage') {
+        storageActiveFilters[key] = [...draftSelection];
+        updateFilterPillUI(type, 'storage');
+        closeFilterPickerModal();
+        applyStorageFilters();
+        return;
+    }
+
     activeFilters[key] = [...draftSelection];
 
-    updateFilterPillUI(type);
+    updateFilterPillUI(type, 'market');
     closeFilterPickerModal();
 
     // Если поменяли выбор коллекций (NFT) — модели/фоны/символы нужно
@@ -327,12 +408,13 @@ filterPickerApply.addEventListener('click', async () => {
     await loadListings();
 });
 
-function updateFilterPillUI(type) {
-    const btn = filterButtons[type];
+function updateFilterPillUI(type, context = 'market') {
+    const btn = context === 'storage' ? storageFilterButtons[type] : filterButtons[type];
     if (!btn) return;
 
+    const filters = context === 'storage' ? storageActiveFilters : activeFilters;
     const key = filterStateKeys[type];
-    const count = activeFilters[key].length;
+    const count = filters[key].length;
 
     btn.innerHTML = filterTitles[type] === 'Коллекция' ? 'NFT' : filterTitles[type];
     if (count > 0) {
@@ -1417,6 +1499,82 @@ if (sortApplyBtn) {
     });
 }
 
+// === То же самое для экрана "Хранилище" (поиск + сортировка) ===
+
+const storageSearchInput = document.getElementById('storageSearchInput');
+let storageSearchDebounceTimer = null;
+if (storageSearchInput) {
+    storageSearchInput.addEventListener('input', (e) => {
+        currentStorageSearch = e.target.value;
+        clearTimeout(storageSearchDebounceTimer);
+        storageSearchDebounceTimer = setTimeout(applyStorageFilters, 300);
+    });
+}
+
+const storageSortTriggerBtn = document.getElementById('storageSortTriggerBtn');
+const storageSortModal = document.getElementById('storageSortModal');
+const closeStorageSortModalBtn = document.getElementById('closeStorageSortModal');
+const storageSortList = document.getElementById('storageSortList');
+const storageSortResetBtn = document.getElementById('storageSortReset');
+const storageSortApplyBtn = document.getElementById('storageSortApply');
+const storageSortRows = storageSortList ? Array.from(storageSortList.querySelectorAll('.filter-picker-row')) : [];
+
+let draftStorageSort = storageActiveFilters.sort;
+
+function renderStorageSortList() {
+    storageSortRows.forEach(row => {
+        const checkbox = row.querySelector('input[type="checkbox"]');
+        const isChecked = row.getAttribute('data-sort') === draftStorageSort;
+        checkbox.checked = isChecked;
+        row.classList.toggle('is-selected', isChecked);
+    });
+}
+
+storageSortRows.forEach(row => {
+    row.addEventListener('click', () => {
+        const value = row.getAttribute('data-sort');
+        draftStorageSort = (draftStorageSort === value) ? null : value;
+        renderStorageSortList();
+    });
+});
+
+if (storageSortTriggerBtn && storageSortModal) {
+    storageSortTriggerBtn.addEventListener('click', () => {
+        draftStorageSort = storageActiveFilters.sort;
+        renderStorageSortList();
+        storageSortModal.classList.add('active');
+    });
+}
+
+if (closeStorageSortModalBtn && storageSortModal) {
+    closeStorageSortModalBtn.addEventListener('click', () => {
+        storageSortModal.classList.remove('active');
+    });
+}
+
+if (storageSortModal) {
+    storageSortModal.addEventListener('click', (e) => {
+        if (e.target === storageSortModal) {
+            storageSortModal.classList.remove('active');
+        }
+    });
+}
+
+if (storageSortResetBtn) {
+    storageSortResetBtn.addEventListener('click', () => {
+        draftStorageSort = null;
+        renderStorageSortList();
+    });
+}
+
+if (storageSortApplyBtn) {
+    storageSortApplyBtn.addEventListener('click', () => {
+        storageActiveFilters.sort = draftStorageSort;
+        storageSortModal.classList.remove('active');
+        applyStorageFilters();
+    });
+}
+
 // =====================================================================
 // ИНИЦИАЛИЗАЦИЯ МАРКЕТА
 // =====================================================================
@@ -1829,6 +1987,11 @@ if (confirmCreateListingBtn) {
 const storageGrid = document.getElementById('storageGrid');
 const storageItemsById = new Map();
 
+// Полный, неотфильтрованный список товаров пользователя с сервера —
+// фильтры/поиск/сортировка Хранилища применяются к нему локально, без
+// повторных запросов (в отличие от Маркета, где это делает бэкенд).
+let allInventoryItems = [];
+
 async function loadInventory() {
     if (!authToken) {
         storageGrid.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
@@ -1840,19 +2003,63 @@ async function loadInventory() {
             headers: { 'Authorization': `Bearer ${authToken}` },
         });
         const data = await res.json();
-        if (data.ok) renderStorageGrid(data.items);
+        if (data.ok) {
+            allInventoryItems = data.items || [];
+            applyStorageFilters();
+        }
     } catch (e) {
         console.error('Не удалось загрузить хранилище:', e);
         storageGrid.innerHTML = `<div class="empty-state">Не удалось загрузить хранилище. Проверьте соединение.</div>`;
     }
 }
 
-function renderStorageGrid(items) {
+/** Применяет текущие фильтры/поиск/сортировку Хранилища к полному списку
+ * инвентаря и перерисовывает сетку. */
+function applyStorageFilters() {
+    let items = allInventoryItems;
+
+    if (storageActiveFilters.collectionIds.length) {
+        items = items.filter(i => storageActiveFilters.collectionIds.includes(String(i.collection_id)));
+    }
+    if (storageActiveFilters.models.length) {
+        items = items.filter(i => storageActiveFilters.models.includes(i.model_name));
+    }
+    if (storageActiveFilters.backdrops.length) {
+        items = items.filter(i => storageActiveFilters.backdrops.includes(i.backdrop_name));
+    }
+    if (storageActiveFilters.symbols.length) {
+        items = items.filter(i => storageActiveFilters.symbols.includes(i.symbol_name));
+    }
+    if (currentStorageSearch.trim()) {
+        const q = currentStorageSearch.trim().toLowerCase();
+        items = items.filter(i =>
+            (i.collection_name || '').toLowerCase().includes(q) ||
+            String(i.gift_number).includes(q)
+        );
+    }
+
+    items = items.slice();
+    if (storageActiveFilters.sort === 'num_asc') {
+        items.sort((a, b) => a.gift_number - b.gift_number);
+    } else if (storageActiveFilters.sort === 'num_desc') {
+        items.sort((a, b) => b.gift_number - a.gift_number);
+    } else if (storageActiveFilters.sort === 'date_asc') {
+        items.sort((a, b) => new Date(a.sold_at || a.created_at) - new Date(b.sold_at || b.created_at));
+    } else if (storageActiveFilters.sort === 'date_desc') {
+        items.sort((a, b) => new Date(b.sold_at || b.created_at) - new Date(a.sold_at || a.created_at));
+    }
+
+    renderStorageGrid(items, allInventoryItems.length === 0);
+}
+
+function renderStorageGrid(items, isTrulyEmpty) {
     storageGrid.innerHTML = '';
     storageItemsById.clear();
 
     if (!items || items.length === 0) {
-        storageGrid.innerHTML = `<div class="empty-state">Пока пусто — купленные подарки и снятые с продажи лоты появятся здесь</div>`;
+        storageGrid.innerHTML = isTrulyEmpty
+            ? `<div class="empty-state">Пока пусто — купленные подарки и снятые с продажи лоты появятся здесь</div>`
+            : `<div class="empty-state">Ничего не найдено по выбранным фильтрам</div>`;
         return;
     }
 
