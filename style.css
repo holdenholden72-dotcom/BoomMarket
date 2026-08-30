@@ -444,7 +444,13 @@ button:focus-visible, input:focus-visible, .game-tile:focus-visible {
 
 /* Стили экрана профиля */
 .profile-header {
-    padding: 12px 16px;
+    padding: 14px 16px 10px;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: linear-gradient(180deg, rgba(15,15,15,0.97) 0%, rgba(15,15,15,0.88) 75%, rgba(15,15,15,0) 100%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 .back-btn {
@@ -1080,32 +1086,38 @@ button:focus-visible, input:focus-visible, .game-tile:focus-visible {
 
 /* Кнопки-пилюли фильтров (заменяют старые <select>) */
 .filter-pill {
-    background: #1c1c1e;
-    border: none;
+    background: var(--surface);
+    border: 1px solid var(--surface-border);
     color: #fff;
     padding: 8px 12px;
-    border-radius: 10px;
+    border-radius: var(--r-sm);
     font-size: 13px;
     cursor: pointer;
     white-space: nowrap;
     display: flex;
     align-items: center;
     gap: 6px;
+    transition: background 0.15s ease, transform 0.1s ease, border-color 0.15s ease;
+}
+
+.filter-pill:active {
+    transform: scale(0.96);
 }
 
 .filter-pill.has-selection {
-    background: #2b2345;
+    background: rgba(157, 123, 255, 0.14);
+    border-color: rgba(157, 123, 255, 0.35);
     color: #d9c8ff;
 }
 
 .filter-pill .pill-count {
-    background: #ffd700;
-    color: #000;
+    background: var(--gold-grad);
+    color: #1a1a1a;
     font-weight: 700;
     font-size: 11px;
     min-width: 16px;
     height: 16px;
-    border-radius: 8px;
+    border-radius: var(--r-sm);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1330,9 +1342,10 @@ button:focus-visible, input:focus-visible, .game-tile:focus-visible {
 .listing-detail-image-wrap {
     width: 100%;
     height: 220px;
-    border-radius: 16px;
+    border-radius: var(--r-lg);
     overflow: hidden;
-    background: #333;
+    background: linear-gradient(160deg, #232325 0%, #19191b 100%);
+    border: 1px solid var(--surface-border);
 }
 
 .listing-detail-image {
@@ -1350,7 +1363,7 @@ button:focus-visible, input:focus-visible, .game-tile:focus-visible {
 
 .listing-detail-number {
     font-size: 13px;
-    color: #8e8e93;
+    color: var(--text-secondary);
     margin-bottom: 14px;
 }
 
@@ -1358,8 +1371,9 @@ button:focus-visible, input:focus-visible, .game-tile:focus-visible {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: #1c1c1e;
-    border-radius: 12px;
+    background: var(--surface);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--r-md);
     padding: 12px 14px;
     margin-bottom: 8px;
     font-size: 14px;
@@ -1455,18 +1469,29 @@ button:focus-visible, input:focus-visible, .game-tile:focus-visible {
 .history-list {
     list-style: none;
     padding-bottom: 90px; /* место под фиксированную нижнюю навигацию */
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .history-row {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 0;
-    border-bottom: 1px solid #2c2c2e;
+    padding: 12px;
+    background: var(--surface);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--r-md);
+    transition: background 0.15s ease, transform 0.1s ease;
 }
 
 .history-row.has-gift {
     cursor: pointer;
+}
+
+.history-row.has-gift:active {
+    background: var(--surface-2);
+    transform: scale(0.98);
 }
 
 .trade-item-row {
@@ -1476,10 +1501,11 @@ button:focus-visible, input:focus-visible, .game-tile:focus-visible {
 .history-thumb {
     width: 48px;
     height: 48px;
-    border-radius: 12px;
+    border-radius: var(--r-sm);
     flex-shrink: 0;
     overflow: hidden;
-    background: #2c2c2e;
+    background: var(--surface-2);
+    border: 1px solid var(--surface-border);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1578,29 +1604,31 @@ button:focus-visible, input:focus-visible, .game-tile:focus-visible {
 
 .orders-tabs {
     display: flex;
-    gap: 6px;
-    background: #1c1c1e;
-    border-radius: 12px;
+    gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--r-md);
     padding: 4px;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
 }
 
 .orders-tab {
     flex: 1;
     background: none;
     border: none;
-    color: #8e8e93;
+    color: var(--text-secondary);
     font-size: 12px;
     font-weight: 600;
     padding: 10px 2px;
-    border-radius: 9px;
+    border-radius: var(--r-sm);
     cursor: pointer;
     white-space: nowrap;
+    transition: background 0.15s ease, color 0.15s ease;
 }
 
 .orders-tab.active {
-    background: #2c2c2e;
-    color: #fff;
+    background: var(--surface-2);
+    color: var(--gold);
 }
 
 .order-row-price {
@@ -1696,13 +1724,18 @@ button:focus-visible, input:focus-visible, .game-tile:focus-visible {
 
 .trade-search-row input {
     flex: 1;
-    background: #1c1c1e;
-    border: none;
-    border-radius: 12px;
+    background: var(--surface);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--r-md);
     padding: 12px 14px;
     color: #fff;
     font-size: 14px;
     outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.trade-search-row input:focus {
+    border-color: rgba(255, 215, 0, 0.4);
 }
 
 .trade-find-btn {
@@ -1710,7 +1743,7 @@ button:focus-visible, input:focus-visible, .game-tile:focus-visible {
     flex-direction: row;
     padding: 0 18px;
     font-size: 13px;
-    border-radius: 12px;
+    border-radius: var(--r-md);
 }
 
 .trade-found-list {
@@ -1721,18 +1754,24 @@ button:focus-visible, input:focus-visible, .game-tile:focus-visible {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 0;
-    border-bottom: 1px solid #2c2c2e;
+    padding: 10px 8px;
+    border-radius: var(--r-sm);
     cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.trade-found-row:active {
+    background: var(--surface);
 }
 
 .trade-found-avatar {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: #2c2c2e;
+    background: var(--surface-2);
     object-fit: cover;
     flex-shrink: 0;
+    border: 1px solid var(--surface-border);
 }
 
 .trade-found-name {
@@ -1745,12 +1784,13 @@ button:focus-visible, input:focus-visible, .game-tile:focus-visible {
     display: flex;
     align-items: center;
     gap: 10px;
-    background: #1c1c1e;
-    border-radius: 12px;
+    background: var(--surface);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--r-md);
     padding: 10px 12px;
     margin: 6px 0 14px;
     font-size: 13px;
-    color: #8e8e93;
+    color: var(--text-secondary);
 }
 
 .trade-selected-user b {
@@ -1763,15 +1803,23 @@ button:focus-visible, input:focus-visible, .game-tile:focus-visible {
 
 .trade-pick-list {
     padding-bottom: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .trade-pick-row {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 0;
-    border-bottom: 1px solid #2c2c2e;
+    padding: 10px 8px;
+    border-radius: var(--r-sm);
     cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.trade-pick-row:active {
+    background: var(--surface);
 }
 
 .trade-pick-row input[type="checkbox"] {
@@ -1830,9 +1878,10 @@ button:focus-visible, input:focus-visible, .game-tile:focus-visible {
 
 .trade-topup-direction {
     display: flex;
-    gap: 6px;
-    background: #1c1c1e;
-    border-radius: 12px;
+    gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--r-md);
     padding: 4px;
 }
 
@@ -1840,18 +1889,19 @@ button:focus-visible, input:focus-visible, .game-tile:focus-visible {
     flex: 1;
     background: none;
     border: none;
-    color: #8e8e93;
+    color: var(--text-secondary);
     font-size: 11px;
     font-weight: 600;
     padding: 10px 2px;
-    border-radius: 9px;
+    border-radius: var(--r-sm);
     cursor: pointer;
     white-space: nowrap;
+    transition: background 0.15s ease, color 0.15s ease;
 }
 
 .trade-topup-dir-btn.active {
-    background: #2c2c2e;
-    color: #ffd700;
+    background: var(--surface-2);
+    color: var(--gold);
 }
 
 #tradeTopupAmount {
