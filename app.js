@@ -36,6 +36,11 @@ let currentScreenName = 'market';
 function showScreen(name) {
     currentScreenName = name;
 
+    // Баланс мог измениться где угодно (сделка, обмен, депозит) — при каждом
+    // переключении экрана принудительно сверяем его с сервером, а не полагаемся
+    // только на то, что кто-то не забыл вызвать updateBalanceUI в нужном месте.
+    refreshBalance();
+
     Object.values(screensByName).forEach(screen => {
         if (screen) screen.classList.remove('active');
     });
@@ -85,8 +90,17 @@ const MARKET_POLL_INTERVAL_MS = 5000;
 setInterval(() => {
     if (currentScreenName === 'market' && document.visibilityState === 'visible') {
         loadListings();
+        refreshBalance();
     }
 }, MARKET_POLL_INTERVAL_MS);
+
+// На случай, если Telegram просто "разбудил" уже открытое мини-приложение
+// (свернули/развернули), а не выполнил полную перезагрузку — досверяем баланс.
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        refreshBalance();
+    }
+});
 
 openProfileBtn.addEventListener('click', () => {
     showScreen('profile');
@@ -1740,6 +1754,26 @@ function updateBalanceUI(balance) {
     });
 }
 
+// Принудительно перечитывает актуальный баланс с сервера и обновляет UI.
+// Используется там, где локально посчитанному/пришедшему в ответе балансу
+// нельзя доверять на 100% (например, после отмены/принятия/отклонения
+// трейда — там баланс не единственное, что меняется, и полагаться только
+// на поле balance в ответе конкретного эндпоинта рискованно).
+async function refreshBalance() {
+    if (!authToken) return;
+    try {
+        const res = await fetch(`${API_URL}/api/balance`, {
+            headers: { 'Authorization': `Bearer ${authToken}` },
+        });
+        const data = await res.json();
+        if (data.ok && typeof data.balance === 'number') {
+            updateBalanceUI(data.balance);
+        }
+    } catch (e) {
+        console.error('Не удалось обновить баланс:', e);
+    }
+}
+
 function showAuthError(message) {
     console.error('Ошибка авторизации:', message);
 }
@@ -2615,13 +2649,14 @@ if (tradeSubmitBtn) {
                 return;
             }
             // Комиссия 0.05 TON (и доплата, если её вносит инициатор) уже
-            // списаны сервером при создании трейда — обновляем баланс на экране.
+            // списаны сервером при создании трейда — обновляем баланс на экране,
+            // а следом сверяем с сервером на всякий случай.
             if (typeof data.balance === 'number') {
                 updateBalanceUI(data.balance);
             }
             alert('Предложение обмена отправлено!');
             resetTradeNewPanel();
-            await loadMyTrades();
+            await Promise.all([loadMyTrades(), refreshBalance()]);
         } catch (e) {
             alert('Ошибка соединения с сервером');
             console.error(e);
@@ -2846,13 +2881,16 @@ async function resolveTrade(tradeId, action) {
             return;
         }
         // Комиссия/доплата TON могли списаться или вернуться на баланс —
-        // сервер отдаёт актуальный баланс сразу в ответе.
+        // сначала применяем то, что уже пришло в ответе (быстро, без лишнего
+        // запроса), а следом принудительно перепроверяем баланс с сервера —
+        // чтобы он гарантированно был актуальным, даже если бы поле balance
+        // в ответе этого конкретного эндпоинта почему-то не пришло/устарело.
         if (typeof data.balance === 'number') {
             updateBalanceUI(data.balance);
         }
         tradeDetailModal.style.display = 'none';
         currentTradeDetailId = null;
-        await Promise.all([loadIncomingTrades(), loadMyTrades()]);
+        await Promise.all([loadIncomingTrades(), loadMyTrades(), refreshBalance()]);
         if (action === 'accept') {
             await loadInventory(); // если открыто "Хранилище" — состав уже изменился
         }
