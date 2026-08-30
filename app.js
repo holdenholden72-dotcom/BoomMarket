@@ -435,6 +435,8 @@ const listingDetailBackdrop = document.getElementById('listingDetailBackdrop');
 const listingDetailSymbol = document.getElementById('listingDetailSymbol');
 const listingDetailPrice = document.getElementById('listingDetailPrice');
 const listingDetailBuyBtn = document.getElementById('listingDetailBuyBtn');
+const listingOffers = document.getElementById('listingOffers');
+const listingOffersList = document.getElementById('listingOffersList');
 
 let currentDetailListingId = null;
 
@@ -442,7 +444,55 @@ function traitLabel(name) {
     return name || '—';
 }
 
-function openListingDetail(item) {
+function timeAgoLabel(isoString) {
+    const diffMs = Date.now() - new Date(isoString.replace(' ', 'T') + 'Z').getTime();
+    const minutes = Math.floor(diffMs / 60000);
+    if (minutes < 1) return 'только что';
+    if (minutes < 60) return `${minutes} мин назад`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} ч назад`;
+    const days = Math.floor(hours / 24);
+    return `${days} дн назад`;
+}
+
+function renderListingOffers(offers) {
+    listingOffersList.innerHTML = '';
+
+    if (!offers || offers.length === 0) {
+        listingOffersList.innerHTML = `<li class="listing-offers-empty">Пока нет предложений на этот лот</li>`;
+        return;
+    }
+
+    offers.forEach(offer => {
+        const li = document.createElement('li');
+        li.className = 'offer-row';
+        li.innerHTML = `
+            <div class="offer-row-info">
+                <div class="offer-row-price">💎 ${offer.max_price}</div>
+                <div class="offer-row-time">${timeAgoLabel(offer.created_at)}</div>
+            </div>
+            <button class="offer-accept-btn" data-order-id="${offer.id}">Продать</button>
+        `;
+        listingOffersList.appendChild(li);
+    });
+}
+
+async function loadListingOffers(listingId) {
+    listingOffersList.innerHTML = `<li class="listing-offers-empty">Загрузка...</li>`;
+    try {
+        const res = await fetch(`${API_URL}/api/listings/${listingId}/offers`, {
+            headers: { 'Authorization': `Bearer ${authToken}` },
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Не удалось загрузить предложения');
+        renderListingOffers(data.offers);
+    } catch (e) {
+        console.error('Не удалось загрузить предложения по лоту:', e);
+        listingOffersList.innerHTML = `<li class="listing-offers-empty">Не удалось загрузить предложения</li>`;
+    }
+}
+
+async function openListingDetail(item) {
     currentDetailListingId = item.id;
 
     const image = item.model_icon || item.collection_image || '';
@@ -456,7 +506,17 @@ function openListingDetail(item) {
     listingDetailSymbol.textContent = traitLabel(item.symbol_name);
     listingDetailPrice.textContent = item.price;
 
+    // Свой лот — вместо кнопки "Купить" показываем предложения покупателей
+    // (активные ордера на этот трейт), чтобы владелец мог продать напрямую.
+    const isOwnListing = currentTgId != null && item.owner_tg_id === currentTgId;
+    listingDetailBuyBtn.style.display = isOwnListing ? 'none' : '';
+    listingOffers.style.display = isOwnListing ? '' : 'none';
+
     listingDetailModal.style.display = 'flex';
+
+    if (isOwnListing && authToken) {
+        await loadListingOffers(item.id);
+    }
 }
 
 grid.addEventListener('click', (e) => {
@@ -486,6 +546,53 @@ if (closeListingDetailBtn && listingDetailModal) {
     closeListingDetailBtn.addEventListener('click', () => {
         listingDetailModal.style.display = 'none';
         currentDetailListingId = null;
+    });
+}
+
+// Клик по "Продать" в списке предложений (только на своём лоте).
+if (listingOffersList) {
+    listingOffersList.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.offer-accept-btn');
+        if (!btn || !currentDetailListingId) return;
+
+        const orderId = btn.dataset.orderId;
+        if (!authToken) {
+            alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+            return;
+        }
+
+        if (!confirm('Продать этот лот по цене предложения?')) return;
+
+        btn.disabled = true;
+
+        try {
+            const res = await fetch(`${API_URL}/api/listings/${currentDetailListingId}/accept-offer`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`,
+                },
+                body: JSON.stringify({ orderId }),
+            });
+
+            const data = await res.json();
+
+            if (!data.ok) {
+                alert(data.error || 'Не удалось продать лот');
+                btn.disabled = false;
+                return;
+            }
+
+            updateBalanceUI(data.balance);
+            alert('Лот продан!');
+            listingDetailModal.style.display = 'none';
+            currentDetailListingId = null;
+            await loadListings();
+        } catch (err) {
+            alert('Ошибка соединения с сервером');
+            console.error(err);
+            btn.disabled = false;
+        }
     });
 }
 
@@ -1205,6 +1312,7 @@ const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
 const tg = window.Telegram?.WebApp;
 
 let authToken = null;
+let currentTgId = null;
 
 function updateBalanceUI(balance) {
     const userBalanceElements = document.querySelectorAll('.user-balance');
@@ -1233,6 +1341,7 @@ async function authenticateWithBackend(initData) {
         }
 
         authToken = data.token;
+        currentTgId = data.user.id;
         updateBalanceUI(data.user.balance);
 
         console.log('Авторизован как:', data.user.username || data.user.first_name);

@@ -516,6 +516,16 @@
                 <span class="listing-detail-value" id="listingDetailSymbol"></span>
             </div>
 
+            <!-- Показывается вместо кнопки "Купить", когда лот принадлежит текущему
+                 пользователю — список активных ордеров (предложений), которые
+                 подходят под этот лот, с возможностью продать напрямую по цене ордера. -->
+            <div class="listing-offers" id="listingOffers" style="display:none;">
+                <div class="listing-offers-title">Предложения покупателей</div>
+                <ul class="listing-offers-list" id="listingOffersList">
+                    <!-- Строки генерируются через JS -->
+                </ul>
+            </div>
+
             <button class="action-btn listing-detail-buy" id="listingDetailBuyBtn">
                 Купить <span id="listingDetailPrice"></span> 💎
             </button>
