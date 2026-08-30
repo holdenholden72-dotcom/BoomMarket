@@ -186,7 +186,7 @@
             <span class="nav-icon">🕘</span>
             <span class="nav-text">История</span>
         </button>
-        <button class="nav-item">
+        <button class="nav-item" data-nav="storage">
             <span class="nav-icon">📦</span>
             <span class="nav-text">Хранилище</span>
         </button>
@@ -228,7 +228,7 @@
                     <span class="nav-icon">🕘</span>
                     <span class="nav-text">История</span>
                 </button>
-                <button class="nav-item">
+                <button class="nav-item" data-nav="storage">
                     <span class="nav-icon">📦</span>
                     <span class="nav-text">Хранилище</span>
                 </button>
@@ -288,11 +288,93 @@
                     <span class="nav-icon">🕘</span>
                     <span class="nav-text">История</span>
                 </button>
-                <button class="nav-item">
+                <button class="nav-item" data-nav="storage">
                     <span class="nav-icon">📦</span>
                     <span class="nav-text">Хранилище</span>
                 </button>
             </nav>
+        </div>
+    </div>
+
+    <!-- ЭКРАН 5: ХРАНИЛИЩЕ (товары пользователя, которые сейчас не выставлены
+         на продажу — попадают сюда после покупки или после снятия лота) -->
+    <div id="storageScreen" class="screen">
+        <header class="profile-header">
+            <button class="back-btn" id="backToProfileFromStorageBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Назад
+            </button>
+        </header>
+
+        <div class="profile-content">
+            <div class="section-title">ХРАНИЛИЩЕ</div>
+
+            <main class="market-grid" id="storageGrid">
+                <!-- Карточки генерируются через JS (см. loadInventory/renderStorageGrid в app.js) -->
+            </main>
+
+            <!-- Нижняя навигация -->
+            <nav class="bottom-nav">
+                <button class="nav-item" data-nav="market">
+                    <span class="nav-icon">🏪</span>
+                    <span class="nav-text">Маркет</span>
+                </button>
+                <button class="nav-item">
+                    <span class="nav-icon">🎮</span>
+                    <span class="nav-text">Игровой хаб</span>
+                </button>
+                <button class="nav-item" data-nav="orders">
+                    <span class="nav-icon">🧾</span>
+                    <span class="nav-text">Ордеры</span>
+                </button>
+                <button class="nav-item" data-nav="history">
+                    <span class="nav-icon">🕘</span>
+                    <span class="nav-text">История</span>
+                </button>
+                <button class="nav-item active" data-nav="storage">
+                    <span class="nav-icon">📦</span>
+                    <span class="nav-text">Хранилище</span>
+                </button>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Модальное окно выставления товара из "Хранилища" обратно на продажу
+         (открывается по кнопке "Выставить на продажу" на карточке товара) —
+         оформлена так же, как карточка покупки: картинка + трейты + поле цены. -->
+    <div id="relistModal" class="modal" style="display: none;">
+        <div class="modal-content listing-detail-content">
+            <button class="close-modal listing-detail-close" id="closeRelistModal">&times;</button>
+
+            <div class="listing-detail-image-wrap" id="relistImageWrap">
+                <img id="relistImage" class="listing-detail-image" src="" alt="">
+            </div>
+            <div class="listing-detail-title" id="relistTitle"></div>
+            <div class="listing-detail-number" id="relistNumber"></div>
+
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Коллекция</span>
+                <span class="listing-detail-value" id="relistCollection"></span>
+            </div>
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Модель</span>
+                <span class="listing-detail-value" id="relistModel"></span>
+            </div>
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Фон</span>
+                <span class="listing-detail-value" id="relistBackdrop"></span>
+            </div>
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Символ</span>
+                <span class="listing-detail-value" id="relistSymbol"></span>
+            </div>
+
+            <div class="withdraw-input-box">
+                <input type="number" id="relistPrice" placeholder="Цена 💎" min="0.01" step="0.01">
+            </div>
+            <div class="listing-fee-note">Комиссия маркетплейса при продаже: 1.5%</div>
+
+            <button class="action-btn listing-detail-buy quick-order-confirm-btn" id="relistConfirmBtn">Выставить на продажу</button>
         </div>
     </div>
 

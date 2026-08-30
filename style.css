@@ -251,6 +251,32 @@ body {
     transform: scale(0.94);
 }
 
+/* Карточка товара в "Хранилище" — вместо цены/корзины одна полноширинная
+   кнопка "Выставить на продажу" (переопределяем колоночный .action-btn). */
+.nft-bottom .storage-relist-btn {
+    width: 100%;
+    background: #2c2c2e;
+    border: 1px solid rgba(10, 132, 255, 0.45);
+    color: #0a84ff;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 6px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+
+.nft-bottom .storage-relist-btn:active {
+    background: rgba(10, 132, 255, 0.18);
+    transform: scale(0.98);
+}
+
 /* Стили экрана профиля */
 .profile-header {
     padding: 12px 16px;

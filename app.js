@@ -11,16 +11,19 @@ const marketScreen = document.getElementById('marketScreen');
 const profileScreen = document.getElementById('profileScreen');
 const historyScreen = document.getElementById('historyScreen');
 const ordersScreen = document.getElementById('ordersScreen');
+const storageScreen = document.getElementById('storageScreen');
 const openProfileBtn = document.getElementById('openProfileBtn');
 const backToMarketBtn = document.getElementById('backToMarketBtn');
 const backToProfileFromHistoryBtn = document.getElementById('backToProfileFromHistoryBtn');
 const backToProfileFromOrdersBtn = document.getElementById('backToProfileFromOrdersBtn');
+const backToProfileFromStorageBtn = document.getElementById('backToProfileFromStorageBtn');
 
 const screensByName = {
     market: marketScreen,
     profile: profileScreen,
     history: historyScreen,
     orders: ordersScreen,
+    storage: storageScreen,
 };
 
 /** Показывает один экран из screensByName, скрывая остальные, и подсвечивает
@@ -43,6 +46,9 @@ function showScreen(name) {
         loadOrderHistory();
         loadMyOffers();
     }
+    if (name === 'storage') {
+        loadInventory();
+    }
 }
 
 openProfileBtn.addEventListener('click', () => {
@@ -61,6 +67,12 @@ if (backToProfileFromHistoryBtn) {
 
 if (backToProfileFromOrdersBtn) {
     backToProfileFromOrdersBtn.addEventListener('click', () => {
+        showScreen('profile');
+    });
+}
+
+if (backToProfileFromStorageBtn) {
+    backToProfileFromStorageBtn.addEventListener('click', () => {
         showScreen('profile');
     });
 }
@@ -1805,6 +1817,163 @@ if (confirmCreateListingBtn) {
         } catch (e) {
             alert('Ошибка соединения с сервером');
             console.error(e);
+        }
+    });
+}
+
+// =====================================================================
+// ХРАНИЛИЩЕ — товары пользователя, которые сейчас не выставлены на продажу
+// (попадают сюда после покупки лота или после снятия своего лота с продажи).
+// =====================================================================
+
+const storageGrid = document.getElementById('storageGrid');
+const storageItemsById = new Map();
+
+async function loadInventory() {
+    if (!authToken) {
+        storageGrid.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/api/inventory`, {
+            headers: { 'Authorization': `Bearer ${authToken}` },
+        });
+        const data = await res.json();
+        if (data.ok) renderStorageGrid(data.items);
+    } catch (e) {
+        console.error('Не удалось загрузить хранилище:', e);
+        storageGrid.innerHTML = `<div class="empty-state">Не удалось загрузить хранилище. Проверьте соединение.</div>`;
+    }
+}
+
+function renderStorageGrid(items) {
+    storageGrid.innerHTML = '';
+    storageItemsById.clear();
+
+    if (!items || items.length === 0) {
+        storageGrid.innerHTML = `<div class="empty-state">Пока пусто — купленные подарки и снятые с продажи лоты появятся здесь</div>`;
+        return;
+    }
+
+    items.forEach(item => {
+        storageItemsById.set(String(item.id), item);
+
+        const card = document.createElement('div');
+        card.className = 'nft-card';
+
+        const bg = item.backdrop_color || '#333';
+        const image = item.model_icon || item.collection_image || '';
+
+        card.innerHTML = `
+            <div class="nft-image-container" style="background-color: ${bg};">
+                ${image ? `<img src="${image}" class="nft-img" alt="${item.collection_name}">` : ''}
+            </div>
+            <div class="nft-info">
+                <div class="nft-title">${item.collection_name}</div>
+                <div class="nft-number">#${item.gift_number}</div>
+                <div class="nft-bottom">
+                    <button class="action-btn storage-relist-btn" data-item-id="${item.id}">Выставить на продажу</button>
+                </div>
+            </div>
+        `;
+        storageGrid.appendChild(card);
+    });
+}
+
+if (storageGrid) {
+    storageGrid.addEventListener('click', (e) => {
+        const relistBtn = e.target.closest('.storage-relist-btn');
+        if (relistBtn) {
+            const item = storageItemsById.get(relistBtn.dataset.itemId);
+            if (item) openRelistModal(item);
+        }
+    });
+}
+
+// === Модалка "Выставить на продажу" из Хранилища ===
+const relistModal = document.getElementById('relistModal');
+const closeRelistModalBtn = document.getElementById('closeRelistModal');
+const relistImageWrap = document.getElementById('relistImageWrap');
+const relistImage = document.getElementById('relistImage');
+const relistTitle = document.getElementById('relistTitle');
+const relistNumber = document.getElementById('relistNumber');
+const relistCollection = document.getElementById('relistCollection');
+const relistModel = document.getElementById('relistModel');
+const relistBackdrop = document.getElementById('relistBackdrop');
+const relistSymbol = document.getElementById('relistSymbol');
+const relistPriceInput = document.getElementById('relistPrice');
+const relistConfirmBtn = document.getElementById('relistConfirmBtn');
+
+let currentRelistItemId = null;
+
+function openRelistModal(item) {
+    currentRelistItemId = item.id;
+
+    const image = item.model_icon || item.collection_image || '';
+    relistImageWrap.style.backgroundColor = item.backdrop_color || '#333';
+    relistImage.src = image;
+    relistTitle.textContent = item.collection_name;
+    relistNumber.textContent = `#${item.gift_number}`;
+    relistCollection.textContent = item.collection_name;
+    relistModel.textContent = traitLabel(item.model_name);
+    relistBackdrop.textContent = traitLabel(item.backdrop_name);
+    relistSymbol.textContent = traitLabel(item.symbol_name);
+    relistPriceInput.value = '';
+
+    relistModal.style.display = 'flex';
+}
+
+if (closeRelistModalBtn && relistModal) {
+    closeRelistModalBtn.addEventListener('click', () => {
+        relistModal.style.display = 'none';
+        currentRelistItemId = null;
+    });
+}
+
+if (relistConfirmBtn) {
+    relistConfirmBtn.addEventListener('click', async () => {
+        if (!currentRelistItemId) return;
+
+        const price = parseFloat(relistPriceInput.value);
+        if (!price || price <= 0) {
+            alert('Укажите корректную цену');
+            return;
+        }
+        if (!authToken) {
+            alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+            return;
+        }
+
+        relistConfirmBtn.disabled = true;
+
+        try {
+            const res = await fetch(`${API_URL}/api/listings/${currentRelistItemId}/relist`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`,
+                },
+                body: JSON.stringify({ price }),
+            });
+
+            const data = await res.json();
+
+            if (!data.ok) {
+                alert(data.error || 'Не удалось выставить товар на продажу');
+                return;
+            }
+
+            alert(data.matchedOrder ? 'Товар сразу продан по подходящему ордеру!' : 'Товар выставлен на продажу!');
+            relistModal.style.display = 'none';
+            currentRelistItemId = null;
+
+            await loadInventory();
+        } catch (e) {
+            alert('Ошибка соединения с сервером');
+            console.error(e);
+        } finally {
+            relistConfirmBtn.disabled = false;
         }
     });
 }
