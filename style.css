@@ -362,6 +362,12 @@ body {
     justify-content: space-between;
     align-items: center;
     height: 50px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.stat-mini-card:active {
+    background: #2c2c2e;
 }
 
 .stat-title {

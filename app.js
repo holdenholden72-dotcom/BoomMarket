@@ -142,6 +142,18 @@ document.querySelectorAll('.bottom-nav .nav-item[data-nav]').forEach(btn => {
     });
 });
 
+// Карточка "Ордера" в профиле — клик переносит сразу на вкладку заказов.
+const ordersStatCard = document.getElementById('ordersStatCard');
+if (ordersStatCard) {
+    ordersStatCard.addEventListener('click', () => showScreen('orders'));
+    ordersStatCard.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            showScreen('orders');
+        }
+    });
+}
+
 // =====================================================================
 // СОСТОЯНИЕ ФИЛЬТРОВ И ДАННЫХ
 // =====================================================================
