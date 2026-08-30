@@ -14,6 +14,7 @@ const ordersScreen = document.getElementById('ordersScreen');
 const storageScreen = document.getElementById('storageScreen');
 const tradeScreen = document.getElementById('tradeScreen');
 const slotsScreen = document.getElementById('slotsScreen');
+const rouletteScreen = document.getElementById('rouletteScreen');
 const openProfileBtn = document.getElementById('openProfileBtn');
 const backToMarketBtn = document.getElementById('backToMarketBtn');
 const backToProfileFromHistoryBtn = document.getElementById('backToProfileFromHistoryBtn');
@@ -21,6 +22,7 @@ const backToProfileFromOrdersBtn = document.getElementById('backToProfileFromOrd
 const backToProfileFromStorageBtn = document.getElementById('backToProfileFromStorageBtn');
 const backToProfileFromTradeBtn = document.getElementById('backToProfileFromTradeBtn');
 const backToProfileFromSlotsBtn = document.getElementById('backToProfileFromSlotsBtn');
+const backToProfileFromRouletteBtn = document.getElementById('backToProfileFromRouletteBtn');
 
 const screensByName = {
     market: marketScreen,
@@ -30,6 +32,7 @@ const screensByName = {
     storage: storageScreen,
     trade: tradeScreen,
     slots: slotsScreen,
+    roulette: rouletteScreen,
 };
 
 /** Показывает один экран из screensByName, скрывая остальные, и подсвечивает
@@ -143,6 +146,12 @@ if (backToProfileFromSlotsBtn) {
     });
 }
 
+if (backToProfileFromRouletteBtn) {
+    backToProfileFromRouletteBtn.addEventListener('click', () => {
+        showScreen('profile');
+    });
+}
+
 // Нижняя навигация встречается на нескольких экранах (профиль, история) —
 // делегируем клики по data-nav вместо привязки к id конкретной кнопки.
 document.querySelectorAll('.bottom-nav .nav-item[data-nav]').forEach(btn => {
@@ -163,12 +172,17 @@ if (ordersStatCard) {
     });
 }
 
-// Игровой хаб в профиле — "Слоты" ведут в реальную игру, остальные плитки
-// (Coinflip, Кости, Рулетка) пока чисто визуальные заглушки.
+// Игровой хаб в профиле — "Слоты" и "Рулетка" ведут в реальные игры,
+// остальные плитки (Coinflip, Кости) пока чисто визуальные заглушки.
 document.querySelectorAll('.game-tile').forEach(tile => {
     tile.addEventListener('click', () => {
-        if (tile.getAttribute('data-game') === 'slots') {
+        const game = tile.getAttribute('data-game');
+        if (game === 'slots') {
             showScreen('slots');
+            return;
+        }
+        if (game === 'roulette') {
+            showScreen('roulette');
             return;
         }
         alert('Эта игра скоро появится!');
@@ -2948,7 +2962,7 @@ const SLOTS_SYMBOLS = {
 };
 const SLOTS_SYMBOL_IDS = Object.keys(SLOTS_SYMBOLS);
 const SLOTS_MIN_BET = 0.3;
-const SLOTS_MAX_BET = 10000;
+const SLOTS_MAX_BET = 1000;
 const SLOTS_REEL_SYMBOL_HEIGHT = 92; // px, должно совпадать с высотой .slot-reel-window в CSS
 
 const slotsScreenEl = document.getElementById('slotsScreen');
@@ -3173,3 +3187,230 @@ function initSlotsReelsIdle() {
     });
 }
 initSlotsReelsIdle();
+
+// =====================================================================
+// ИГРА "РУЛЕТКА"
+// =====================================================================
+// Секторы колеса — те же веса, что и на сервере (см. server.js), нужны
+// здесь только для отрисовки колеса и расчёта угла остановки. Реальный
+// результат (какой сектор выпал) всегда считает сервер.
+const ROULETTE_SEGMENTS_RAW = [
+    { id: 'miss', label: '0', weight: 650, color: '#3a3a3c' },
+    { id: 'x15', label: 'x1.5', weight: 200, color: '#34c759' },
+    { id: 'x2', label: 'x2', weight: 90, color: '#0a84ff' },
+    { id: 'x3', label: 'x3', weight: 40, color: '#ffd700' },
+    { id: 'x5', label: 'x5', weight: 15, color: '#ff9f0a' },
+    { id: 'x10', label: 'x10', weight: 5, color: '#ff453a' },
+];
+const ROULETTE_TOTAL_WEIGHT = ROULETTE_SEGMENTS_RAW.reduce((sum, s) => sum + s.weight, 0);
+
+// Раскладываем секторы по кругу (0-360°), считая угол каждого от предыдущего.
+let rouletteCursorDeg = 0;
+const ROULETTE_SEGMENTS = ROULETTE_SEGMENTS_RAW.map(seg => {
+    const sizeDeg = (seg.weight / ROULETTE_TOTAL_WEIGHT) * 360;
+    const startDeg = rouletteCursorDeg;
+    const endDeg = rouletteCursorDeg + sizeDeg;
+    rouletteCursorDeg = endDeg;
+    return { ...seg, startDeg, endDeg };
+});
+
+const ROULETTE_MIN_BET = 0.3;
+const ROULETTE_MAX_BET = 1000;
+
+const rouletteBetInput = document.getElementById('rouletteBetInput');
+const rouletteBetMinusBtn = document.getElementById('rouletteBetMinusBtn');
+const rouletteBetPlusBtn = document.getElementById('rouletteBetPlusBtn');
+const rouletteSpinBtn = document.getElementById('rouletteSpinBtn');
+const rouletteResultEl = document.getElementById('rouletteResult');
+const rouletteWheelEl = document.getElementById('rouletteWheel');
+const rouletteWheelWrapEl = document.querySelector('.roulette-wheel-wrap');
+const openRouletteRulesBtn = document.getElementById('openRouletteRulesBtn');
+const rouletteRulesModal = document.getElementById('rouletteRulesModal');
+const closeRouletteRulesModal = document.getElementById('closeRouletteRulesModal');
+const closeRouletteRulesModalBtn = document.getElementById('closeRouletteRulesModalBtn');
+
+let rouletteIsSpinning = false;
+let rouletteCurrentRotation = 0; // накапливаем, чтобы колесо всегда крутилось вперёд
+
+// === Строим conic-gradient колеса один раз при загрузке, по тем же секторам ===
+function buildRouletteWheelBackground() {
+    if (!rouletteWheelEl) return;
+    const stops = ROULETTE_SEGMENTS
+        .map(seg => `${seg.color} ${seg.startDeg}deg ${seg.endDeg}deg`)
+        .join(', ');
+    rouletteWheelEl.style.background = `conic-gradient(from 0deg, ${stops})`;
+}
+buildRouletteWheelBackground();
+
+// === Правила ===
+function openRouletteRules() {
+    if (rouletteRulesModal) rouletteRulesModal.style.display = 'flex';
+}
+function closeRouletteRules() {
+    if (rouletteRulesModal) rouletteRulesModal.style.display = 'none';
+}
+if (openRouletteRulesBtn) openRouletteRulesBtn.addEventListener('click', openRouletteRules);
+if (closeRouletteRulesModal) closeRouletteRulesModal.addEventListener('click', closeRouletteRules);
+if (closeRouletteRulesModalBtn) closeRouletteRulesModalBtn.addEventListener('click', closeRouletteRules);
+if (rouletteRulesModal) {
+    rouletteRulesModal.addEventListener('click', (e) => {
+        if (e.target === rouletteRulesModal) closeRouletteRules();
+    });
+}
+
+// === Управление ставкой (логика идентична слотам) ===
+function getRouletteBalanceNumber() {
+    const el = document.querySelector('.user-balance');
+    const value = el ? parseFloat(el.textContent) : NaN;
+    return isNaN(value) ? ROULETTE_MAX_BET : value;
+}
+
+function clampRouletteBet(value) {
+    if (isNaN(value)) return ROULETTE_MIN_BET;
+    let v = Math.max(ROULETTE_MIN_BET, Math.min(ROULETTE_MAX_BET, value));
+    v = Math.round(v * 10) / 10;
+    return v;
+}
+
+function setRouletteBetValue(value) {
+    if (rouletteBetInput) rouletteBetInput.value = clampRouletteBet(value);
+}
+
+if (rouletteBetInput) {
+    rouletteBetInput.addEventListener('change', () => {
+        setRouletteBetValue(parseFloat(rouletteBetInput.value));
+    });
+}
+if (rouletteBetMinusBtn) {
+    rouletteBetMinusBtn.addEventListener('click', () => {
+        setRouletteBetValue(parseFloat(rouletteBetInput.value) - 0.1);
+    });
+}
+if (rouletteBetPlusBtn) {
+    rouletteBetPlusBtn.addEventListener('click', () => {
+        setRouletteBetValue(parseFloat(rouletteBetInput.value) + 0.1);
+    });
+}
+document.querySelectorAll('.roulette-bet-quick-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const mode = btn.getAttribute('data-bet-mode');
+        const current = parseFloat(rouletteBetInput.value) || ROULETTE_MIN_BET;
+        if (mode === 'min') setRouletteBetValue(ROULETTE_MIN_BET);
+        if (mode === 'half') setRouletteBetValue(current / 2);
+        if (mode === 'double') setRouletteBetValue(current * 2);
+        if (mode === 'max') setRouletteBetValue(Math.min(getRouletteBalanceNumber(), ROULETTE_MAX_BET));
+    });
+});
+
+function setRouletteSpinningUI(isSpinning) {
+    rouletteIsSpinning = isSpinning;
+    if (rouletteSpinBtn) {
+        rouletteSpinBtn.disabled = isSpinning;
+        rouletteSpinBtn.classList.toggle('is-spinning', isSpinning);
+        rouletteSpinBtn.querySelector('.roulette-spin-btn-text').textContent = isSpinning ? '' : 'КРУТИТЬ';
+    }
+    if (rouletteBetMinusBtn) rouletteBetMinusBtn.disabled = isSpinning;
+    if (rouletteBetPlusBtn) rouletteBetPlusBtn.disabled = isSpinning;
+    if (rouletteBetInput) rouletteBetInput.disabled = isSpinning;
+    document.querySelectorAll('.roulette-bet-quick-btn').forEach(btn => { btn.disabled = isSpinning; });
+}
+
+// === Крутим колесо до случайного угла внутри сектора, присланного сервером,
+// плюс несколько полных оборотов сверху — вращение всегда накапливается,
+// чтобы CSS-переход срабатывал даже если выпал тот же сектор, что в прошлый раз. ===
+function spinRouletteWheelToResult(resultId) {
+    return new Promise(resolve => {
+        const segment = ROULETTE_SEGMENTS.find(s => s.id === resultId) || ROULETTE_SEGMENTS[0];
+        const pointInSegment = segment.startDeg + Math.random() * (segment.endDeg - segment.startDeg);
+        const extraFullSpins = 6 + Math.floor(Math.random() * 3); // 6-8 полных оборотов
+
+        // Указатель зафиксирован сверху (0°), значит нужно повернуть колесо так,
+        // чтобы угол pointInSegment оказался под ним — то есть на (360 - pointInSegment).
+        const targetWithinCircle = (360 - pointInSegment) % 360;
+
+        // Продолжаем от текущего накопленного угла, никогда не уменьшая его.
+        const baseFullTurns = Math.floor(rouletteCurrentRotation / 360);
+        let nextRotation = (baseFullTurns + extraFullSpins) * 360 + targetWithinCircle;
+        while (nextRotation <= rouletteCurrentRotation) nextRotation += 360;
+
+        rouletteCurrentRotation = nextRotation;
+
+        if (rouletteWheelEl) {
+            rouletteWheelEl.style.transition = 'transform 3.2s cubic-bezier(0.12, 0.65, 0.15, 1)';
+            rouletteWheelEl.style.transform = `rotate(${rouletteCurrentRotation}deg)`;
+
+            const onEnd = () => {
+                rouletteWheelEl.removeEventListener('transitionend', onEnd);
+                resolve();
+            };
+            rouletteWheelEl.addEventListener('transitionend', onEnd);
+        } else {
+            resolve();
+        }
+    });
+}
+
+async function handleRouletteSpin() {
+    if (rouletteIsSpinning) return;
+
+    const bet = clampRouletteBet(parseFloat(rouletteBetInput.value));
+    setRouletteBetValue(bet);
+
+    if (!authToken) {
+        alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+        return;
+    }
+
+    setRouletteSpinningUI(true);
+    rouletteResultEl.className = 'roulette-result';
+    rouletteResultEl.textContent = 'Крутим колесо...';
+    if (rouletteWheelWrapEl) rouletteWheelWrapEl.classList.add('is-spinning');
+
+    try {
+        const res = await fetch(`${API_URL}/api/games/roulette/spin`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`,
+            },
+            body: JSON.stringify({ bet }),
+        });
+        const data = await res.json();
+
+        if (!data.ok) {
+            rouletteResultEl.className = 'roulette-result';
+            rouletteResultEl.textContent = data.error || 'Не удалось запустить игру';
+            setRouletteSpinningUI(false);
+            if (rouletteWheelWrapEl) rouletteWheelWrapEl.classList.remove('is-spinning');
+            return;
+        }
+
+        await spinRouletteWheelToResult(data.result);
+
+        if (typeof data.balance === 'number') {
+            updateBalanceUI(data.balance);
+        }
+
+        if (rouletteWheelWrapEl) rouletteWheelWrapEl.classList.remove('is-spinning');
+
+        if (data.win) {
+            rouletteResultEl.className = 'roulette-result is-win';
+            rouletteResultEl.textContent = `Выигрыш! x${data.multiplier} — +${data.winAmount} 💎`;
+        } else {
+            rouletteResultEl.className = 'roulette-result is-lose';
+            rouletteResultEl.textContent = 'Не повезло — попробуйте ещё раз';
+        }
+
+        setRouletteSpinningUI(false);
+    } catch (e) {
+        console.error(e);
+        rouletteResultEl.className = 'roulette-result';
+        rouletteResultEl.textContent = 'Ошибка соединения с сервером';
+        setRouletteSpinningUI(false);
+        if (rouletteWheelWrapEl) rouletteWheelWrapEl.classList.remove('is-spinning');
+    }
+}
+
+if (rouletteSpinBtn) {
+    rouletteSpinBtn.addEventListener('click', handleRouletteSpin);
+}

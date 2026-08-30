@@ -219,7 +219,6 @@
                 <button class="game-tile" data-game="roulette">
                     <span class="game-tile-icon">🎡</span>
                     <span class="game-tile-name">Рулетка</span>
-                    <span class="game-tile-badge">Скоро</span>
                 </button>
                 <button class="game-tile" data-game="slots">
                     <span class="game-tile-icon">🎰</span>
@@ -474,7 +473,7 @@
                 <div class="slots-bet-controls">
                     <button class="slots-bet-step-btn" id="slotsBetMinusBtn" type="button">−</button>
                     <div class="slots-bet-input-wrap">
-                        <input type="number" id="slotsBetInput" value="0.3" min="0.3" max="10000" step="0.1" inputmode="decimal">
+                        <input type="number" id="slotsBetInput" value="0.3" min="0.3" max="1000" step="0.1" inputmode="decimal">
                         <span class="slots-bet-diamond">💎</span>
                     </div>
                     <button class="slots-bet-step-btn" id="slotsBetPlusBtn" type="button">+</button>
@@ -530,11 +529,128 @@
                 </div>
                 <div class="slots-rules-bet-item">
                     <span>Макс. ставка</span>
-                    <b>10 000 💎</b>
+                    <b>1 000 💎</b>
                 </div>
             </div>
 
             <button class="action-btn slots-rules-close-btn" id="closeSlotsRulesModalBtn">Понятно</button>
+        </div>
+    </div>
+
+    <!-- ЭКРАН: ИГРА "РУЛЕТКА" -->
+    <div id="rouletteScreen" class="screen">
+        <header class="profile-header slots-header">
+            <button class="back-btn" id="backToProfileFromRouletteBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Назад
+            </button>
+            <button class="slots-rules-btn" id="openRouletteRulesBtn">
+                <span class="slots-rules-btn-icon">i</span>
+                Правила
+            </button>
+        </header>
+
+        <div class="slots-content roulette-content">
+            <div class="slots-title">🎡 Рулетка</div>
+
+            <div class="slots-balance-pill">
+                <span class="slots-balance-label">Баланс</span>
+                <span class="slots-balance-value"><span id="rouletteBalanceValue" class="user-balance">0</span> 💎</span>
+            </div>
+
+            <div class="roulette-wheel-wrap">
+                <div class="roulette-pointer"></div>
+                <div class="roulette-wheel" id="rouletteWheel"></div>
+                <div class="roulette-wheel-hub">🎡</div>
+            </div>
+
+            <div class="roulette-legend">
+                <div class="roulette-legend-item"><span class="roulette-legend-dot" style="background:#3a3a3c"></span>0</div>
+                <div class="roulette-legend-item"><span class="roulette-legend-dot" style="background:#34c759"></span>x1.5</div>
+                <div class="roulette-legend-item"><span class="roulette-legend-dot" style="background:#0a84ff"></span>x2</div>
+                <div class="roulette-legend-item"><span class="roulette-legend-dot" style="background:#ffd700"></span>x3</div>
+                <div class="roulette-legend-item"><span class="roulette-legend-dot" style="background:#ff9f0a"></span>x5</div>
+                <div class="roulette-legend-item"><span class="roulette-legend-dot" style="background:#ff453a"></span>x10</div>
+            </div>
+
+            <div class="slots-result roulette-result" id="rouletteResult">Крутите колесо — удача любит смелых</div>
+
+            <div class="slots-bet-panel">
+                <div class="slots-bet-label">Ставка</div>
+                <div class="slots-bet-controls">
+                    <button class="slots-bet-step-btn" id="rouletteBetMinusBtn" type="button">−</button>
+                    <div class="slots-bet-input-wrap">
+                        <input type="number" id="rouletteBetInput" value="0.3" min="0.3" max="1000" step="0.1" inputmode="decimal">
+                        <span class="slots-bet-diamond">💎</span>
+                    </div>
+                    <button class="slots-bet-step-btn" id="rouletteBetPlusBtn" type="button">+</button>
+                </div>
+                <div class="slots-bet-quick">
+                    <button class="slots-bet-quick-btn roulette-bet-quick-btn" data-bet-mode="min" type="button">MIN</button>
+                    <button class="slots-bet-quick-btn roulette-bet-quick-btn" data-bet-mode="half" type="button">1/2</button>
+                    <button class="slots-bet-quick-btn roulette-bet-quick-btn" data-bet-mode="double" type="button">x2</button>
+                    <button class="slots-bet-quick-btn roulette-bet-quick-btn" data-bet-mode="max" type="button">MAX</button>
+                </div>
+            </div>
+
+            <button class="slots-spin-btn roulette-spin-btn" id="rouletteSpinBtn" type="button">
+                <span class="slots-spin-btn-text roulette-spin-btn-text">КРУТИТЬ</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Модальное окно правил игры "Рулетка" -->
+    <div id="rouletteRulesModal" class="modal" style="display: none;">
+        <div class="modal-content slots-rules-content">
+            <button class="close-modal" id="closeRouletteRulesModal">&times;</button>
+            <h2>Правила игры</h2>
+            <p class="slots-rules-desc">Крутите колесо — куда укажет стрелка, такой множитель и применяется к ставке. Чем больше множитель, тем меньше его территория на колесе:</p>
+
+            <div class="slots-rules-list">
+                <div class="slots-rules-row">
+                    <span class="roulette-legend-dot" style="background:#3a3a3c"></span>
+                    <span class="slots-rules-name">Мимо</span>
+                    <span class="slots-rules-mult">x0</span>
+                </div>
+                <div class="slots-rules-row">
+                    <span class="roulette-legend-dot" style="background:#34c759"></span>
+                    <span class="slots-rules-name">Зелёный</span>
+                    <span class="slots-rules-mult">x1.5</span>
+                </div>
+                <div class="slots-rules-row">
+                    <span class="roulette-legend-dot" style="background:#0a84ff"></span>
+                    <span class="slots-rules-name">Синий</span>
+                    <span class="slots-rules-mult">x2</span>
+                </div>
+                <div class="slots-rules-row">
+                    <span class="roulette-legend-dot" style="background:#ffd700"></span>
+                    <span class="slots-rules-name">Золотой</span>
+                    <span class="slots-rules-mult">x3</span>
+                </div>
+                <div class="slots-rules-row">
+                    <span class="roulette-legend-dot" style="background:#ff9f0a"></span>
+                    <span class="slots-rules-name">Оранжевый</span>
+                    <span class="slots-rules-mult">x5</span>
+                </div>
+                <div class="slots-rules-row is-top">
+                    <span class="roulette-legend-dot" style="background:#ff453a"></span>
+                    <span class="slots-rules-name">Красный</span>
+                    <span class="slots-rules-mult">x10</span>
+                </div>
+            </div>
+
+            <div class="slots-rules-bets">
+                <div class="slots-rules-bet-item">
+                    <span>Мин. ставка</span>
+                    <b>0.3 💎</b>
+                </div>
+                <div class="slots-rules-bet-item">
+                    <span>Макс. ставка</span>
+                    <b>1 000 💎</b>
+                </div>
+            </div>
+
+            <button class="action-btn slots-rules-close-btn" id="closeRouletteRulesModalBtn">Понятно</button>
         </div>
     </div>
 

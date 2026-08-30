@@ -2090,3 +2090,86 @@ body {
     font-weight: 800;
     padding: 13px 0;
 }
+
+/* =====================================================================
+   ИГРА "РУЛЕТКА" — переиспользует базовые классы слотов (панель ставки,
+   кнопка спина, модалка правил), здесь только специфика самого колеса.
+   ===================================================================== */
+
+.roulette-wheel-wrap {
+    position: relative;
+    width: 260px;
+    height: 260px;
+    margin: 6px auto 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.roulette-wheel {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 6px solid #1c1c1e;
+    box-shadow: 0 0 0 1px rgba(255, 215, 0, 0.35), 0 12px 30px rgba(0, 0, 0, 0.5), inset 0 0 12px rgba(0, 0, 0, 0.5);
+    will-change: transform;
+}
+
+.roulette-wheel-wrap.is-spinning .roulette-wheel {
+    box-shadow: 0 0 0 1px rgba(255, 215, 0, 0.85), 0 0 30px 6px rgba(255, 215, 0, 0.4), inset 0 0 12px rgba(0, 0, 0, 0.5);
+}
+
+.roulette-wheel-hub {
+    position: absolute;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: #1c1c1e;
+    border: 2px solid #ffd700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* Стрелка-указатель — зафиксирована сверху колеса и никогда не крутится */
+.roulette-pointer {
+    position: absolute;
+    top: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 12px solid transparent;
+    border-right: 12px solid transparent;
+    border-top: 20px solid #ffd700;
+    z-index: 4;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.roulette-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 14px;
+    margin-bottom: 14px;
+    max-width: 320px;
+}
+
+.roulette-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #b8b8bd;
+}
+
+.roulette-legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
