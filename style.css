@@ -1137,6 +1137,10 @@ body {
     cursor: pointer;
 }
 
+.trade-item-row {
+    cursor: pointer;
+}
+
 .history-thumb {
     width: 48px;
     height: 48px;

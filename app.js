@@ -591,7 +591,7 @@ function traitLabel(name) {
     return name || '—';
 }
 
-function openListingDetail(item) {
+function openListingDetail(item, opts = {}) {
     currentDetailListingId = item.id;
 
     const image = item.model_icon || item.collection_image || '';
@@ -605,10 +605,17 @@ function openListingDetail(item) {
     listingDetailSymbol.textContent = traitLabel(item.symbol_name);
     listingDetailPrice.textContent = item.price;
 
-    // Свой лот нельзя купить — вместо кнопки "Купить" показываем "Снять с продажи".
-    const isOwn = currentTgId != null && item.owner_tg_id === currentTgId;
-    if (listingDetailBuyBtn) listingDetailBuyBtn.style.display = isOwn ? 'none' : '';
-    if (listingDetailCancelBtn) listingDetailCancelBtn.style.display = isOwn ? '' : 'none';
+    // Режим просмотра (например, предмет обмена, который не выставлен на
+    // продажу): показываем только трейты, без кнопок "Купить"/"Снять с продажи".
+    if (opts.viewOnly) {
+        if (listingDetailBuyBtn) listingDetailBuyBtn.style.display = 'none';
+        if (listingDetailCancelBtn) listingDetailCancelBtn.style.display = 'none';
+    } else {
+        // Свой лот нельзя купить — вместо кнопки "Купить" показываем "Снять с продажи".
+        const isOwn = currentTgId != null && item.owner_tg_id === currentTgId;
+        if (listingDetailBuyBtn) listingDetailBuyBtn.style.display = isOwn ? 'none' : '';
+        if (listingDetailCancelBtn) listingDetailCancelBtn.style.display = isOwn ? '' : 'none';
+    }
 
     listingDetailModal.style.display = 'flex';
 }
@@ -2681,7 +2688,7 @@ function renderTradeItemRow(item) {
     const image = item.model_image || item.collection_image || '';
     const bg = item.backdrop_color || '#333';
     const li = document.createElement('li');
-    li.className = 'history-row';
+    li.className = 'history-row trade-item-row';
     li.innerHTML = `
         <div class="history-thumb" style="background-color:${bg};">
             ${image ? `<img src="${image}" alt="">` : ''}
@@ -2691,6 +2698,10 @@ function renderTradeItemRow(item) {
             <div class="history-meta">${traitLabel(item.model_name)}</div>
         </div>
     `;
+    // Клик по предмету обмена открывает ту же карточку с деталями, что и на
+    // маркете (номер, коллекция, модель, фон, символ), но без кнопок
+    // купли/продажи — это просто просмотр.
+    li.addEventListener('click', () => openListingDetail(item, { viewOnly: true }));
     return li;
 }
 
