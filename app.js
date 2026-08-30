@@ -2209,6 +2209,8 @@ if (confirmCreateListingBtn) {
 // =====================================================================
 
 const storageGrid = document.getElementById('storageGrid');
+const storageSummaryCount = document.getElementById('storageSummaryCount');
+const storageSummaryWorth = document.getElementById('storageSummaryWorth');
 const storageItemsById = new Map();
 
 // Полный, неотфильтрованный список товаров пользователя с сервера —
@@ -2274,6 +2276,19 @@ function applyStorageFilters() {
     }
 
     renderStorageGrid(items, allInventoryItems.length === 0);
+    updateStorageSummary();
+}
+
+/** Обновляет сводную плашку над сеткой хранилища: общее количество подарков
+ * и сумму их цен на момент покупки (грубая оценка стоимости инвентаря). */
+function updateStorageSummary() {
+    if (!storageSummaryCount || !storageSummaryWorth) return;
+
+    const count = allInventoryItems.length;
+    const worth = allInventoryItems.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
+
+    storageSummaryCount.textContent = count;
+    storageSummaryWorth.textContent = worth % 1 === 0 ? worth : worth.toFixed(1);
 }
 
 function renderStorageGrid(items, isTrulyEmpty) {
@@ -2297,13 +2312,25 @@ function renderStorageGrid(items, isTrulyEmpty) {
         const bg = item.backdrop_color || '#333';
         const image = item.model_icon || item.collection_image || '';
 
+        // Показываем бейдж редкости только для действительно редких трейтов
+        // (топ ~5% модели) — иначе бейдж превращается в шум на каждой карточке.
+        const rarityPermille = item.model_rarity;
+        const rarityBadge = (typeof rarityPermille === 'number' && rarityPermille > 0 && rarityPermille <= 50)
+            ? `<div class="nft-rarity-badge">★ ${(rarityPermille / 10).toFixed(1)}%</div>`
+            : '';
+
         card.innerHTML = `
             <div class="nft-image-container" style="background-color: ${bg};">
                 ${image ? `<img src="${image}" class="nft-img" alt="${item.collection_name}">` : ''}
+                ${rarityBadge}
             </div>
             <div class="nft-info">
                 <div class="nft-title">${item.collection_name}</div>
                 <div class="nft-number">#${item.gift_number}</div>
+                <div class="nft-bottom">
+                    <div class="nft-price">💎 ${item.price}</div>
+                    <div class="storage-sell-tag">Продать</div>
+                </div>
             </div>
         `;
         storageGrid.appendChild(card);

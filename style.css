@@ -293,6 +293,107 @@ button:focus-visible, input:focus-visible, .game-tile:focus-visible {
     font-size: 13px;
 }
 
+#storageGrid .nft-bottom {
+    gap: 6px;
+}
+
+#storageGrid .nft-price {
+    font-size: 13px;
+}
+
+/* Сводная плашка над сеткой хранилища — количество подарков и их
+   суммарная стоимость по цене покупки. */
+.storage-summary {
+    display: flex;
+    align-items: center;
+    background: linear-gradient(135deg, rgba(255,215,0,0.08) 0%, var(--surface) 60%);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--r-lg);
+    padding: 14px 18px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow-card);
+}
+
+.storage-summary-stat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.storage-summary-stat:last-child {
+    align-items: flex-end;
+    text-align: right;
+}
+
+.storage-summary-value {
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: 0.2px;
+}
+
+.storage-summary-worth {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--gold-grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.storage-summary-worth .diamond-icon {
+    -webkit-text-fill-color: initial;
+    filter: drop-shadow(0 0 3px rgba(255,215,0,0.5));
+}
+
+.storage-summary-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.storage-summary-divider {
+    width: 1px;
+    height: 32px;
+    background: var(--surface-border-strong);
+    margin: 0 16px;
+}
+
+/* Бейдж редкого трейта поверх картинки подарка */
+.nft-rarity-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 2;
+    background: var(--gold-grad);
+    color: #1a1a1a;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: var(--r-pill);
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.35);
+}
+
+#storageGrid .nft-card {
+    cursor: pointer;
+}
+
+/* Плашка-подсказка "Продать" на карточке хранилища — вся карточка
+   кликабельна и открывает модалку выставления на продажу, эта плашка
+   лишь даёт понять, что с ней можно сделать. */
+.storage-sell-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--blue);
+    background: rgba(10, 132, 255, 0.12);
+    border: 1px solid rgba(10, 132, 255, 0.35);
+    padding: 4px 9px;
+    border-radius: var(--r-pill);
+    white-space: nowrap;
+}
+
 .nft-image-container {
     height: 160px;
     position: relative;
@@ -430,10 +531,6 @@ button:focus-visible, input:focus-visible, .game-tile:focus-visible {
     text-align: center;
     white-space: normal;
     word-break: break-word;
-    cursor: pointer;
-}
-
-#storageGrid .nft-card {
     cursor: pointer;
 }
 
