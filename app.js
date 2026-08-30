@@ -181,8 +181,7 @@ if (ordersStatCard) {
     });
 }
 
-// Игровой хаб в профиле — "Слоты" и "Рулетка" ведут в реальные игры,
-// остальные плитки (Coinflip, Кости) пока чисто визуальные заглушки.
+// Игровой хаб в профиле — "Слоты", "Рулетка" и "Бомбер" ведут в реальные игры.
 document.querySelectorAll('.game-tile').forEach(tile => {
     tile.addEventListener('click', () => {
         const game = tile.getAttribute('data-game');
