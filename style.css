@@ -159,6 +159,22 @@ body {
     flex-direction: column;
 }
 
+#storageGrid.market-grid {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+#storageGrid .nft-image-container {
+    height: 220px;
+}
+
+#storageGrid .nft-title {
+    font-size: 16px;
+}
+
+#storageGrid .nft-number {
+    font-size: 13px;
+}
+
 .nft-image-container {
     height: 160px;
     position: relative;
