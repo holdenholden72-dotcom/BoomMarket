@@ -3195,10 +3195,10 @@ initSlotsReelsIdle();
 // здесь только для отрисовки колеса и расчёта угла остановки. Реальный
 // результат (какой сектор выпал) всегда считает сервер.
 const ROULETTE_SEGMENTS_RAW = [
-    { id: 'miss', label: '0', weight: 650, color: '#3a3a3c' },
-    { id: 'x15', label: 'x1.5', weight: 200, color: '#34c759' },
-    { id: 'x2', label: 'x2', weight: 90, color: '#0a84ff' },
-    { id: 'x3', label: 'x3', weight: 40, color: '#ffd700' },
+    { id: 'miss', label: '0', weight: 600, color: '#3a3a3c' },
+    { id: 'x15', label: 'x1.5', weight: 230, color: '#34c759' },
+    { id: 'x2', label: 'x2', weight: 100, color: '#0a84ff' },
+    { id: 'x3', label: 'x3', weight: 50, color: '#ffd700' },
     { id: 'x5', label: 'x5', weight: 15, color: '#ff9f0a' },
     { id: 'x10', label: 'x10', weight: 5, color: '#ff453a' },
 ];
