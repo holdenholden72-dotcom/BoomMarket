@@ -407,7 +407,10 @@ function renderGrid(listings) {
                 <div class="nft-number">#${item.gift_number}</div>
                 <div class="nft-bottom">
                     <div class="nft-price">💎 ${item.price}</div>
-                    <button class="cart-btn" data-listing-id="${item.id}">🛒</button>
+                    <div class="nft-actions">
+                        <button class="order-quick-btn" data-listing-id="${item.id}" title="Создать ордер на этот трейт">🧾</button>
+                        <button class="cart-btn" data-listing-id="${item.id}">🛒</button>
+                    </div>
                 </div>
             </div>
         `;
@@ -457,13 +460,26 @@ function openListingDetail(item) {
 }
 
 grid.addEventListener('click', (e) => {
-    const btn = e.target.closest('.cart-btn');
-    if (!btn) return;
+    const cartBtn = e.target.closest('.cart-btn');
+    if (cartBtn) {
+        const item = listingsById.get(cartBtn.dataset.listingId);
+        if (item) openListingDetail(item);
+        return;
+    }
 
-    const item = listingsById.get(btn.dataset.listingId);
-    if (!item) return;
-
-    openListingDetail(item);
+    const orderBtn = e.target.closest('.order-quick-btn');
+    if (orderBtn) {
+        const item = listingsById.get(orderBtn.dataset.listingId);
+        if (item) {
+            openCreateOrderModal({
+                collectionId: item.collection_id,
+                modelId: item.model_id,
+                backdropId: item.backdrop_id,
+                symbolId: item.symbol_id,
+            });
+        }
+        return;
+    }
 });
 
 if (closeListingDetailBtn && listingDetailModal) {
@@ -955,39 +971,10 @@ async function populateOrderCollectionSelect() {
     });
 }
 
-if (openCreateOrderBtn && createOrderModal) {
-    openCreateOrderBtn.addEventListener('click', async () => {
-        if (!authToken) {
-            alert('Не удалось подтвердить личность. Попробуйте перезайти.');
-            return;
-        }
-        resetOrderForm();
-        await populateOrderCollectionSelect();
-        createOrderModal.style.display = 'flex';
-    });
-}
-
-if (closeCreateOrderModalBtn && createOrderModal) {
-    closeCreateOrderModalBtn.addEventListener('click', () => {
-        createOrderModal.style.display = 'none';
-    });
-}
-
-// При выборе коллекции — подгружаем её трейты (с id) и разрешаем выбрать
-// конкретную модель/фон/символ; поля остаются необязательными ("Любая/Любой").
-orderCollectionSelect.addEventListener('change', async () => {
-    const collectionId = orderCollectionSelect.value;
-
-    if (!collectionId) {
-        orderModelSelect.innerHTML = '<option value="">Сначала выберите коллекцию</option>';
-        orderBackdropSelect.innerHTML = '<option value="">Сначала выберите коллекцию</option>';
-        orderSymbolSelect.innerHTML = '<option value="">Сначала выберите коллекцию</option>';
-        orderModelSelect.disabled = true;
-        orderBackdropSelect.disabled = true;
-        orderSymbolSelect.disabled = true;
-        return;
-    }
-
+// Подгружает трейты (с id) выбранной коллекции в селекты модалки ордера;
+// вынесено в отдельную функцию, чтобы вызывать и из события change, и
+// программно — при открытии модалки с предзаполненным трейтом с карточки.
+async function loadOrderTraitsForCollection(collectionId) {
     orderModelSelect.innerHTML = '<option value="">Загрузка...</option>';
     orderBackdropSelect.innerHTML = '<option value="">Загрузка...</option>';
     orderSymbolSelect.innerHTML = '<option value="">Загрузка...</option>';
@@ -1017,6 +1004,57 @@ orderCollectionSelect.addEventListener('change', async () => {
         orderBackdropSelect.innerHTML = '<option value="">Ошибка загрузки</option>';
         orderSymbolSelect.innerHTML = '<option value="">Ошибка загрузки</option>';
     }
+}
+
+// Открывает модалку создания ордера. Если передан preset ({collectionId,
+// modelId, backdropId, symbolId}) — сразу подгружает трейты этой коллекции
+// и выставляет конкретные модель/фон/символ (используется кнопкой 🧾 на
+// карточке маркета — "создать ордер именно на этот трейт").
+async function openCreateOrderModal(preset = null) {
+    if (!authToken) {
+        alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+        return;
+    }
+
+    resetOrderForm();
+    await populateOrderCollectionSelect();
+
+    if (preset && preset.collectionId) {
+        orderCollectionSelect.value = String(preset.collectionId);
+        await loadOrderTraitsForCollection(preset.collectionId);
+        if (preset.modelId) orderModelSelect.value = String(preset.modelId);
+        if (preset.backdropId) orderBackdropSelect.value = String(preset.backdropId);
+        if (preset.symbolId) orderSymbolSelect.value = String(preset.symbolId);
+    }
+
+    createOrderModal.style.display = 'flex';
+}
+
+if (openCreateOrderBtn && createOrderModal) {
+    openCreateOrderBtn.addEventListener('click', () => openCreateOrderModal());
+}
+
+if (closeCreateOrderModalBtn && createOrderModal) {
+    closeCreateOrderModalBtn.addEventListener('click', () => {
+        createOrderModal.style.display = 'none';
+    });
+}
+
+// При ручном выборе коллекции в модалке — подгружаем её трейты.
+orderCollectionSelect.addEventListener('change', async () => {
+    const collectionId = orderCollectionSelect.value;
+
+    if (!collectionId) {
+        orderModelSelect.innerHTML = '<option value="">Сначала выберите коллекцию</option>';
+        orderBackdropSelect.innerHTML = '<option value="">Сначала выберите коллекцию</option>';
+        orderSymbolSelect.innerHTML = '<option value="">Сначала выберите коллекцию</option>';
+        orderModelSelect.disabled = true;
+        orderBackdropSelect.disabled = true;
+        orderSymbolSelect.disabled = true;
+        return;
+    }
+
+    await loadOrderTraitsForCollection(collectionId);
 });
 
 if (confirmCreateOrderBtn) {
