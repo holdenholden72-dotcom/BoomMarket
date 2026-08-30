@@ -255,20 +255,26 @@ body {
    кнопка "Выставить на продажу" (переопределяем колоночный .action-btn). */
 .nft-bottom .storage-relist-btn {
     width: 100%;
+    min-height: 40px;
     background: #2c2c2e;
     border: 1px solid rgba(10, 132, 255, 0.45);
     color: #0a84ff;
     font-size: 12px;
     font-weight: 600;
-    padding: 8px 6px;
+    line-height: 1.25;
+    padding: 10px 8px;
     border-radius: 10px;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    text-align: center;
+    white-space: normal;
+    word-break: break-word;
+    cursor: pointer;
+}
+
+#storageGrid .nft-image-container {
     cursor: pointer;
 }
 

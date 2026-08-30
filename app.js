@@ -1861,6 +1861,7 @@ function renderStorageGrid(items) {
 
         const card = document.createElement('div');
         card.className = 'nft-card';
+        card.dataset.itemId = item.id;
 
         const bg = item.backdrop_color || '#333';
         const image = item.model_icon || item.collection_image || '';
@@ -1886,6 +1887,16 @@ if (storageGrid) {
         const relistBtn = e.target.closest('.storage-relist-btn');
         if (relistBtn) {
             const item = storageItemsById.get(relistBtn.dataset.itemId);
+            if (item) openRelistModal(item);
+            return;
+        }
+
+        // Клик по картинке — открываем полную информацию о товаре
+        // (та же карточка, что и по кнопке "Выставить на продажу").
+        const imageContainer = e.target.closest('.nft-image-container');
+        if (imageContainer) {
+            const card = imageContainer.closest('.nft-card');
+            const item = card && storageItemsById.get(card.dataset.itemId);
             if (item) openRelistModal(item);
         }
     });
