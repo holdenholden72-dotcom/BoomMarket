@@ -1327,3 +1327,141 @@ body {
     opacity: 0.6;
     cursor: default;
 }
+
+/* === Экран "Трейд" (P2P-обмен подарками) === */
+.trade-panel {
+    padding-bottom: 90px; /* место под фиксированную нижнюю навигацию */
+}
+
+.trade-search-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.trade-search-row input {
+    flex: 1;
+    background: #1c1c1e;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: #fff;
+    font-size: 14px;
+    outline: none;
+}
+
+.trade-find-btn {
+    width: auto;
+    flex-direction: row;
+    padding: 0 18px;
+    font-size: 13px;
+    border-radius: 12px;
+}
+
+.trade-found-list {
+    margin-bottom: 4px;
+}
+
+.trade-found-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #2c2c2e;
+    cursor: pointer;
+}
+
+.trade-found-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #2c2c2e;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.trade-found-name {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.trade-selected-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #1c1c1e;
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin: 6px 0 14px;
+    font-size: 13px;
+    color: #8e8e93;
+}
+
+.trade-selected-user b {
+    color: #fff;
+}
+
+.trade-subtitle {
+    margin-top: 16px;
+}
+
+.trade-pick-list {
+    padding-bottom: 4px;
+}
+
+.trade-pick-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #2c2c2e;
+    cursor: pointer;
+}
+
+.trade-pick-row input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    accent-color: #ffd700;
+}
+
+.trade-status-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.trade-status-badge.is-pending { background: rgba(10, 132, 255, 0.15); color: #0a84ff; }
+.trade-status-badge.is-accepted { background: rgba(52, 199, 89, 0.15); color: #34c759; }
+.trade-status-badge.is-declined,
+.trade-status-badge.is-cancelled,
+.trade-status-badge.is-failed { background: rgba(255, 69, 58, 0.15); color: #ff453a; }
+
+.trade-detail-meta {
+    text-align: center;
+    color: #8e8e93;
+    font-size: 13px;
+    margin-bottom: 4px;
+}
+
+.trade-detail-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.trade-detail-actions .action-btn {
+    flex: 1;
+    flex-direction: row;
+    justify-content: center;
+    padding: 14px 0;
+}
+
+.trade-decline-btn {
+    background: #2c2c2e;
+    color: #ff453a;
+}

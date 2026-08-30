@@ -177,11 +177,7 @@
                 <div class="stats-column">
                     <div class="stat-mini-card">
                         <span class="stat-title">Ордера</span>
-                        <span class="stat-value">0</span>
-                    </div>
-                    <div class="stat-mini-card">
-                        <span class="stat-title">Офферы</span>
-                        <span class="stat-value">0</span>
+                        <span class="stat-value orders-stat-value">0</span>
                     </div>
                 </div>
             </div>
@@ -209,9 +205,12 @@
             <span class="nav-icon">🏪</span>
             <span class="nav-text">Маркет</span>
         </button>
-        <button class="nav-item">
-            <span class="nav-icon">🎮</span>
-            <span class="nav-text">Игровой хаб</span>
+        <button class="nav-item" data-nav="trade">
+
+            <span class="nav-icon">🔄</span>
+
+            <span class="nav-text">Трейд</span>
+
         </button>
         <button class="nav-item" data-nav="orders">
             <span class="nav-icon">🧾</span>
@@ -251,9 +250,12 @@
                     <span class="nav-icon">🏪</span>
                     <span class="nav-text">Маркет</span>
                 </button>
-                <button class="nav-item">
-                    <span class="nav-icon">🎮</span>
-                    <span class="nav-text">Игровой хаб</span>
+                <button class="nav-item" data-nav="trade">
+
+                    <span class="nav-icon">🔄</span>
+
+                    <span class="nav-text">Трейд</span>
+
                 </button>
                 <button class="nav-item" data-nav="orders">
                     <span class="nav-icon">🧾</span>
@@ -311,9 +313,12 @@
                     <span class="nav-icon">🏪</span>
                     <span class="nav-text">Маркет</span>
                 </button>
-                <button class="nav-item">
-                    <span class="nav-icon">🎮</span>
-                    <span class="nav-text">Игровой хаб</span>
+                <button class="nav-item" data-nav="trade">
+
+                    <span class="nav-icon">🔄</span>
+
+                    <span class="nav-text">Трейд</span>
+
                 </button>
                 <button class="nav-item active" data-nav="orders">
                     <span class="nav-icon">🧾</span>
@@ -372,9 +377,12 @@
                     <span class="nav-icon">🏪</span>
                     <span class="nav-text">Маркет</span>
                 </button>
-                <button class="nav-item">
-                    <span class="nav-icon">🎮</span>
-                    <span class="nav-text">Игровой хаб</span>
+                <button class="nav-item" data-nav="trade">
+
+                    <span class="nav-icon">🔄</span>
+
+                    <span class="nav-text">Трейд</span>
+
                 </button>
                 <button class="nav-item" data-nav="orders">
                     <span class="nav-icon">🧾</span>
@@ -389,6 +397,96 @@
                     <span class="nav-text">Хранилище</span>
                 </button>
             </nav>
+        </div>
+    </div>
+
+    <!-- ЭКРАН 6: ТРЕЙД (P2P-обмен подарками между пользователями) -->
+    <div id="tradeScreen" class="screen">
+        <header class="profile-header">
+            <button class="back-btn" id="backToProfileFromTradeBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Назад
+            </button>
+        </header>
+
+        <div class="profile-content">
+            <div class="section-title">ТРЕЙД — ОБМЕН ПОДАРКАМИ</div>
+
+            <div class="orders-tabs" id="tradeTabs">
+                <button class="orders-tab active" data-trade-tab="new">Новый</button>
+                <button class="orders-tab" data-trade-tab="incoming">Входящие</button>
+                <button class="orders-tab" data-trade-tab="mine">Мои обмены</button>
+            </div>
+
+            <!-- Вкладка: новый обмен -->
+            <div id="tradeNewPanel" class="trade-panel">
+                <div class="trade-search-row">
+                    <input type="text" id="tradeRecipientInput" placeholder="Username получателя, например durov">
+                    <button class="action-btn trade-find-btn" id="tradeFindUserBtn">Найти</button>
+                </div>
+                <div id="tradeFoundUsers" class="trade-found-list"></div>
+
+                <div id="tradeSelectionArea" style="display:none;">
+                    <div class="trade-selected-user" id="tradeSelectedUserBox"></div>
+
+                    <div class="section-title trade-subtitle">ВАШИ ПРЕДМЕТЫ</div>
+                    <ul class="history-list trade-pick-list" id="tradeMyItemsList"></ul>
+
+                    <div class="section-title trade-subtitle" id="tradeTheirItemsTitle">ПРЕДМЕТЫ ПОЛУЧАТЕЛЯ</div>
+                    <ul class="history-list trade-pick-list" id="tradeTheirItemsList"></ul>
+
+                    <button class="action-btn" id="tradeSubmitBtn">Предложить обмен</button>
+                </div>
+            </div>
+
+            <!-- Вкладка: входящие предложения -->
+            <ul class="history-list trade-panel" id="tradeIncomingList" style="display:none;"></ul>
+
+            <!-- Вкладка: мои обмены (исходящие + история) -->
+            <ul class="history-list trade-panel" id="tradeMineList" style="display:none;"></ul>
+
+            <!-- Нижняя навигация -->
+            <nav class="bottom-nav">
+                <button class="nav-item" data-nav="market">
+                    <span class="nav-icon">🏪</span>
+                    <span class="nav-text">Маркет</span>
+                </button>
+                <button class="nav-item active" data-nav="trade">
+                    <span class="nav-icon">🔄</span>
+                    <span class="nav-text">Трейд</span>
+                </button>
+                <button class="nav-item" data-nav="orders">
+                    <span class="nav-icon">🧾</span>
+                    <span class="nav-text">Ордеры</span>
+                </button>
+                <button class="nav-item" data-nav="history">
+                    <span class="nav-icon">🕘</span>
+                    <span class="nav-text">История</span>
+                </button>
+                <button class="nav-item" data-nav="storage">
+                    <span class="nav-icon">📦</span>
+                    <span class="nav-text">Хранилище</span>
+                </button>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Модальное окно детального просмотра трейда (обе стороны обмена + кнопки
+         Принять/Отклонить для входящих, Отменить для своих исходящих) -->
+    <div id="tradeDetailModal" class="modal" style="display: none;">
+        <div class="modal-content listing-form">
+            <button class="close-modal" id="closeTradeDetailModal">&times;</button>
+            <h2>Обмен</h2>
+
+            <div class="trade-detail-meta" id="tradeDetailMeta"></div>
+
+            <div class="section-title trade-subtitle" id="tradeDetailGiveTitle">ВЫ ОТДАЁТЕ</div>
+            <ul class="history-list" id="tradeDetailGiveList"></ul>
+
+            <div class="section-title trade-subtitle" id="tradeDetailGetTitle">ВЫ ПОЛУЧАЕТЕ</div>
+            <ul class="history-list" id="tradeDetailGetList"></ul>
+
+            <div class="trade-detail-actions" id="tradeDetailActions"></div>
         </div>
     </div>
 

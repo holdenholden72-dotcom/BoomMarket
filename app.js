@@ -12,11 +12,13 @@ const profileScreen = document.getElementById('profileScreen');
 const historyScreen = document.getElementById('historyScreen');
 const ordersScreen = document.getElementById('ordersScreen');
 const storageScreen = document.getElementById('storageScreen');
+const tradeScreen = document.getElementById('tradeScreen');
 const openProfileBtn = document.getElementById('openProfileBtn');
 const backToMarketBtn = document.getElementById('backToMarketBtn');
 const backToProfileFromHistoryBtn = document.getElementById('backToProfileFromHistoryBtn');
 const backToProfileFromOrdersBtn = document.getElementById('backToProfileFromOrdersBtn');
 const backToProfileFromStorageBtn = document.getElementById('backToProfileFromStorageBtn');
+const backToProfileFromTradeBtn = document.getElementById('backToProfileFromTradeBtn');
 
 const screensByName = {
     market: marketScreen,
@@ -24,6 +26,7 @@ const screensByName = {
     history: historyScreen,
     orders: ordersScreen,
     storage: storageScreen,
+    trade: tradeScreen,
 };
 
 /** Показывает один экран из screensByName, скрывая остальные, и подсвечивает
@@ -49,6 +52,14 @@ function showScreen(name) {
     if (name === 'storage') {
         loadInventory();
     }
+    if (name === 'profile') {
+        refreshOrdersStat();
+    }
+    if (name === 'trade') {
+        resetTradeNewPanel();
+        loadIncomingTrades();
+        loadMyTrades();
+    }
 }
 
 openProfileBtn.addEventListener('click', () => {
@@ -73,6 +84,12 @@ if (backToProfileFromOrdersBtn) {
 
 if (backToProfileFromStorageBtn) {
     backToProfileFromStorageBtn.addEventListener('click', () => {
+        showScreen('profile');
+    });
+}
+
+if (backToProfileFromTradeBtn) {
+    backToProfileFromTradeBtn.addEventListener('click', () => {
         showScreen('profile');
     });
 }
@@ -756,6 +773,8 @@ const historyTypeLabels = {
     withdraw: 'Вывод средств',
     buy: 'Покупка NFT',
     sell: 'Продажа NFT',
+    trade_in: 'Получено в обмене',
+    trade_out: 'Отдано в обмене',
 };
 
 const historyTypeIcons = {
@@ -795,7 +814,7 @@ function renderHistoryList(items) {
 
         // "Картинка подарка" и клик на полную карточку доступны только для покупок/продаж —
         // у пополнения/вывода нет привязанного NFT.
-        const isGift = item.type === 'buy' || item.type === 'sell';
+        const isGift = item.type === 'buy' || item.type === 'sell' || item.type === 'trade_in' || item.type === 'trade_out';
 
         const li = document.createElement('li');
         li.className = 'history-row' + (isGift ? ' has-gift' : '');
@@ -987,6 +1006,26 @@ function renderOrdersList(container, cacheMap, items, { showCancel }) {
     });
 }
 
+// Счётчик "Ордера" на экране профиля — держим в актуальном состоянии
+// отдельной лёгкой функцией, чтобы обновлять его даже когда список активных
+// ордеров не отображается (профиль открыт, а не вкладка "Ордеры").
+const ordersStatValueEl = document.querySelector('.orders-stat-value');
+
+function setOrdersStatValue(count) {
+    if (ordersStatValueEl) ordersStatValueEl.textContent = String(count);
+}
+
+async function refreshOrdersStat() {
+    if (!authToken) return;
+    try {
+        const res = await fetch(`${API_URL}/api/orders`, { headers: { 'Authorization': `Bearer ${authToken}` } });
+        const data = await res.json();
+        if (data.ok) setOrdersStatValue(data.orders.length);
+    } catch (e) {
+        console.error('Не удалось обновить счётчик ордеров:', e);
+    }
+}
+
 async function loadActiveOrders() {
     if (!ordersActiveList) return;
     if (!authToken) {
@@ -1002,6 +1041,9 @@ async function loadActiveOrders() {
             return;
         }
         renderOrdersList(ordersActiveList, ordersActiveById, data.orders, { showCancel: true });
+        // Тот же ответ уже содержит актуальное число активных ордеров — обновляем
+        // счётчик в профиле заодно, без лишнего запроса.
+        setOrdersStatValue(data.orders.length);
     } catch (e) {
         ordersActiveList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
         console.error(e);
@@ -1636,6 +1678,7 @@ async function authenticateWithBackend(initData) {
         authToken = data.token;
         currentTgId = data.user.id;
         updateBalanceUI(data.user.balance);
+        refreshOrdersStat();
 
         console.log('Авторизован как:', data.user.username || data.user.first_name);
     } catch (e) {
@@ -2199,5 +2242,462 @@ if (relistConfirmBtn) {
         } finally {
             relistConfirmBtn.disabled = false;
         }
+    });
+}
+
+// =====================================================================
+// ТРЕЙД (P2P-обмен подарками между пользователями)
+// =====================================================================
+
+const tradeTabs = document.getElementById('tradeTabs');
+const tradeNewPanel = document.getElementById('tradeNewPanel');
+const tradeIncomingList = document.getElementById('tradeIncomingList');
+const tradeMineList = document.getElementById('tradeMineList');
+const tradeRecipientInput = document.getElementById('tradeRecipientInput');
+const tradeFindUserBtn = document.getElementById('tradeFindUserBtn');
+const tradeFoundUsers = document.getElementById('tradeFoundUsers');
+const tradeSelectionArea = document.getElementById('tradeSelectionArea');
+const tradeSelectedUserBox = document.getElementById('tradeSelectedUserBox');
+const tradeMyItemsList = document.getElementById('tradeMyItemsList');
+const tradeTheirItemsTitle = document.getElementById('tradeTheirItemsTitle');
+const tradeTheirItemsList = document.getElementById('tradeTheirItemsList');
+const tradeSubmitBtn = document.getElementById('tradeSubmitBtn');
+
+const tradeDetailModal = document.getElementById('tradeDetailModal');
+const closeTradeDetailModalBtn = document.getElementById('closeTradeDetailModal');
+const tradeDetailMeta = document.getElementById('tradeDetailMeta');
+const tradeDetailGiveList = document.getElementById('tradeDetailGiveList');
+const tradeDetailGetList = document.getElementById('tradeDetailGetList');
+const tradeDetailActions = document.getElementById('tradeDetailActions');
+
+let tradeTargetUser = null;
+const tradeMySelected = new Set();
+const tradeTheirSelected = new Set();
+const tradeIncomingCache = new Map();
+const tradeMineCache = new Map();
+let currentTradeDetailId = null;
+
+const tradeStatusLabels = {
+    pending: 'Ожидает',
+    accepted: 'Принят',
+    declined: 'Отклонён',
+    cancelled: 'Отменён',
+    failed: 'Не удался',
+};
+
+/** Сбрасывает вкладку "Новый обмен" — вызывается при каждом заходе на экран
+ * "Трейд", чтобы не оперировать устаревшим выбором предметов. */
+function resetTradeNewPanel() {
+    tradeTargetUser = null;
+    tradeMySelected.clear();
+    tradeTheirSelected.clear();
+    if (tradeRecipientInput) tradeRecipientInput.value = '';
+    if (tradeFoundUsers) tradeFoundUsers.innerHTML = '';
+    if (tradeSelectionArea) tradeSelectionArea.style.display = 'none';
+    if (tradeMyItemsList) tradeMyItemsList.innerHTML = '';
+    if (tradeTheirItemsList) tradeTheirItemsList.innerHTML = '';
+}
+
+if (tradeTabs) {
+    tradeTabs.addEventListener('click', (e) => {
+        const btn = e.target.closest('.orders-tab');
+        if (!btn) return;
+        const tab = btn.getAttribute('data-trade-tab');
+        tradeTabs.querySelectorAll('.orders-tab').forEach(t => t.classList.toggle('active', t === btn));
+        tradeNewPanel.style.display = tab === 'new' ? '' : 'none';
+        tradeIncomingList.style.display = tab === 'incoming' ? '' : 'none';
+        tradeMineList.style.display = tab === 'mine' ? '' : 'none';
+    });
+}
+
+async function searchTradeUsers() {
+    if (!tradeRecipientInput || !tradeFoundUsers) return;
+    const q = tradeRecipientInput.value.trim();
+    if (!q) {
+        tradeFoundUsers.innerHTML = '';
+        return;
+    }
+    if (!authToken) {
+        alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+        return;
+    }
+    tradeFoundUsers.innerHTML = `<div class="empty-state">Поиск...</div>`;
+    try {
+        const res = await fetch(`${API_URL}/api/users/search?q=${encodeURIComponent(q)}`, {
+            headers: { 'Authorization': `Bearer ${authToken}` },
+        });
+        const data = await res.json();
+        if (!data.ok) {
+            tradeFoundUsers.innerHTML = `<div class="empty-state">${data.error || 'Ошибка поиска'}</div>`;
+            return;
+        }
+        renderTradeFoundUsers(data.users);
+    } catch (e) {
+        tradeFoundUsers.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        console.error(e);
+    }
+}
+
+function renderTradeFoundUsers(users) {
+    tradeFoundUsers.innerHTML = '';
+    if (!users || users.length === 0) {
+        tradeFoundUsers.innerHTML = `<div class="empty-state">Пользователь не найден</div>`;
+        return;
+    }
+    users.forEach(u => {
+        const row = document.createElement('div');
+        row.className = 'trade-found-row';
+        const displayName = [u.first_name, u.last_name].filter(Boolean).join(' ');
+        row.innerHTML = `
+            <img class="trade-found-avatar" src="${u.photo_url || ''}" alt="">
+            <div class="trade-found-name">${displayName ? displayName + ' · ' : ''}@${u.username}</div>
+            <span>›</span>
+        `;
+        row.addEventListener('click', () => selectTradeTarget(u));
+        tradeFoundUsers.appendChild(row);
+    });
+}
+
+async function selectTradeTarget(user) {
+    tradeTargetUser = user;
+    tradeMySelected.clear();
+    tradeTheirSelected.clear();
+    tradeFoundUsers.innerHTML = '';
+    tradeRecipientInput.value = '';
+    tradeSelectedUserBox.innerHTML = `Обмен с <b>@${user.username}</b>`;
+    tradeSelectionArea.style.display = '';
+    tradeTheirItemsTitle.textContent = `ПРЕДМЕТЫ @${user.username}`;
+    await Promise.all([loadTradeMyItems(), loadTradeTheirItems()]);
+}
+
+function renderTradePickList(container, items, selectedSet) {
+    container.innerHTML = '';
+    if (!items || items.length === 0) {
+        container.innerHTML = `<div class="empty-state">Хранилище пусто</div>`;
+        return;
+    }
+    items.forEach(item => {
+        const li = document.createElement('li');
+        li.className = 'trade-pick-row';
+        const image = item.model_icon || item.collection_image || '';
+        const bg = item.backdrop_color || '#333';
+        li.innerHTML = `
+            <input type="checkbox" data-item-id="${item.id}" ${selectedSet.has(item.id) ? 'checked' : ''}>
+            <div class="history-thumb" style="background-color:${bg};">
+                ${image ? `<img src="${image}" alt="">` : ''}
+            </div>
+            <div class="history-info">
+                <div class="history-name">${item.collection_name}${item.gift_number ? ' #' + item.gift_number : ''}</div>
+                <div class="history-meta">${traitLabel(item.model_name)}</div>
+            </div>
+        `;
+        const checkbox = li.querySelector('input[type="checkbox"]');
+        checkbox.addEventListener('change', () => {
+            if (checkbox.checked) selectedSet.add(item.id);
+            else selectedSet.delete(item.id);
+        });
+        li.addEventListener('click', (e) => {
+            if (e.target === checkbox) return;
+            checkbox.checked = !checkbox.checked;
+            checkbox.dispatchEvent(new Event('change'));
+        });
+        container.appendChild(li);
+    });
+}
+
+async function loadTradeMyItems() {
+    if (!tradeMyItemsList || !authToken) return;
+    tradeMyItemsList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    try {
+        const res = await fetch(`${API_URL}/api/inventory`, { headers: { 'Authorization': `Bearer ${authToken}` } });
+        const data = await res.json();
+        if (!data.ok) {
+            tradeMyItemsList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить хранилище'}</div>`;
+            return;
+        }
+        renderTradePickList(tradeMyItemsList, data.items, tradeMySelected);
+    } catch (e) {
+        tradeMyItemsList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        console.error(e);
+    }
+}
+
+async function loadTradeTheirItems() {
+    if (!tradeTheirItemsList || !tradeTargetUser || !authToken) return;
+    tradeTheirItemsList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    try {
+        const res = await fetch(`${API_URL}/api/users/${tradeTargetUser.tg_id}/inventory`, {
+            headers: { 'Authorization': `Bearer ${authToken}` },
+        });
+        const data = await res.json();
+        if (!data.ok) {
+            tradeTheirItemsList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить предметы'}</div>`;
+            return;
+        }
+        renderTradePickList(tradeTheirItemsList, data.items, tradeTheirSelected);
+    } catch (e) {
+        tradeTheirItemsList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        console.error(e);
+    }
+}
+
+if (tradeFindUserBtn) {
+    tradeFindUserBtn.addEventListener('click', searchTradeUsers);
+}
+if (tradeRecipientInput) {
+    tradeRecipientInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') searchTradeUsers();
+    });
+}
+
+if (tradeSubmitBtn) {
+    tradeSubmitBtn.addEventListener('click', async () => {
+        if (!tradeTargetUser) {
+            alert('Сначала выберите получателя');
+            return;
+        }
+        if (tradeMySelected.size === 0 || tradeTheirSelected.size === 0) {
+            alert('Выберите хотя бы один предмет с каждой стороны');
+            return;
+        }
+        if (!authToken) {
+            alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+            return;
+        }
+
+        tradeSubmitBtn.disabled = true;
+        try {
+            const res = await fetch(`${API_URL}/api/trades`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`,
+                },
+                body: JSON.stringify({
+                    recipientTgId: tradeTargetUser.tg_id,
+                    myItemIds: Array.from(tradeMySelected),
+                    theirItemIds: Array.from(tradeTheirSelected),
+                }),
+            });
+            const data = await res.json();
+            if (!data.ok) {
+                alert(data.error || 'Не удалось создать предложение обмена');
+                return;
+            }
+            alert('Предложение обмена отправлено!');
+            resetTradeNewPanel();
+            await loadMyTrades();
+        } catch (e) {
+            alert('Ошибка соединения с сервером');
+            console.error(e);
+        } finally {
+            tradeSubmitBtn.disabled = false;
+        }
+    });
+}
+
+/** Возвращает "собеседника" по трейду относительно текущего пользователя. */
+function tradeCounterparty(trade) {
+    return trade.initiator_tg_id === currentTgId ? trade.recipient : trade.initiator;
+}
+/** Предметы, которые ОТДАЁТ текущий пользователь (независимо от того,
+ * инициатор он или получатель обмена). */
+function tradeItemsIGive(trade) {
+    return trade.initiator_tg_id === currentTgId ? trade.initiatorItems : trade.recipientItems;
+}
+/** Предметы, которые текущий пользователь ПОЛУЧАЕТ. */
+function tradeItemsIGet(trade) {
+    return trade.initiator_tg_id === currentTgId ? trade.recipientItems : trade.initiatorItems;
+}
+
+function renderTradeSummaryRow(trade) {
+    const other = tradeCounterparty(trade);
+    const give = tradeItemsIGive(trade);
+    const get = tradeItemsIGet(trade);
+    const thumbSource = give[0] || get[0];
+    const thumbImage = thumbSource ? (thumbSource.model_image || thumbSource.collection_image) : '';
+    const bg = thumbSource ? (thumbSource.backdrop_color || '#333') : '#333';
+
+    const li = document.createElement('li');
+    li.className = 'history-row has-gift';
+    li.dataset.tradeId = trade.id;
+    li.innerHTML = `
+        <div class="history-thumb" style="background-color:${bg};">
+            ${thumbImage ? `<img src="${thumbImage}" alt="">` : ''}
+        </div>
+        <div class="history-info">
+            <div class="history-name">@${other ? (other.username || other.first_name || other.tg_id) : '—'}</div>
+            <div class="history-meta">Отдаёте ${give.length} · получаете ${get.length}</div>
+            <div class="history-meta">${formatHistoryDate(trade.created_at)}</div>
+        </div>
+        <span class="trade-status-badge is-${trade.status}">${tradeStatusLabels[trade.status] || trade.status}</span>
+    `;
+    return li;
+}
+
+async function loadIncomingTrades() {
+    if (!tradeIncomingList) return;
+    if (!authToken) {
+        tradeIncomingList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
+        return;
+    }
+    tradeIncomingList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    try {
+        const res = await fetch(`${API_URL}/api/trades/incoming`, { headers: { 'Authorization': `Bearer ${authToken}` } });
+        const data = await res.json();
+        if (!data.ok) {
+            tradeIncomingList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить обмены'}</div>`;
+            return;
+        }
+        tradeIncomingCache.clear();
+        tradeIncomingList.innerHTML = '';
+        if (!data.trades.length) {
+            tradeIncomingList.innerHTML = `<div class="empty-state">Нет входящих предложений</div>`;
+            return;
+        }
+        data.trades.forEach(trade => {
+            tradeIncomingCache.set(String(trade.id), trade);
+            tradeIncomingList.appendChild(renderTradeSummaryRow(trade));
+        });
+    } catch (e) {
+        tradeIncomingList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        console.error(e);
+    }
+}
+
+async function loadMyTrades() {
+    if (!tradeMineList) return;
+    if (!authToken) {
+        tradeMineList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
+        return;
+    }
+    tradeMineList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    try {
+        const res = await fetch(`${API_URL}/api/trades/mine`, { headers: { 'Authorization': `Bearer ${authToken}` } });
+        const data = await res.json();
+        if (!data.ok) {
+            tradeMineList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить обмены'}</div>`;
+            return;
+        }
+        tradeMineCache.clear();
+        tradeMineList.innerHTML = '';
+        if (!data.trades.length) {
+            tradeMineList.innerHTML = `<div class="empty-state">Пока нет обменов</div>`;
+            return;
+        }
+        data.trades.forEach(trade => {
+            tradeMineCache.set(String(trade.id), trade);
+            tradeMineList.appendChild(renderTradeSummaryRow(trade));
+        });
+    } catch (e) {
+        tradeMineList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        console.error(e);
+    }
+}
+
+function bindTradeListClicks(container, cacheMap) {
+    if (!container) return;
+    container.addEventListener('click', (e) => {
+        const row = e.target.closest('.history-row[data-trade-id]');
+        if (!row) return;
+        const trade = cacheMap.get(row.dataset.tradeId);
+        if (!trade) return;
+        openTradeDetail(trade);
+    });
+}
+bindTradeListClicks(tradeIncomingList, tradeIncomingCache);
+bindTradeListClicks(tradeMineList, tradeMineCache);
+
+function renderTradeItemRow(item) {
+    const image = item.model_image || item.collection_image || '';
+    const bg = item.backdrop_color || '#333';
+    const li = document.createElement('li');
+    li.className = 'history-row';
+    li.innerHTML = `
+        <div class="history-thumb" style="background-color:${bg};">
+            ${image ? `<img src="${image}" alt="">` : ''}
+        </div>
+        <div class="history-info">
+            <div class="history-name">${item.collection_name}${item.gift_number ? ' #' + item.gift_number : ''}</div>
+            <div class="history-meta">${traitLabel(item.model_name)}</div>
+        </div>
+    `;
+    return li;
+}
+
+function openTradeDetail(trade) {
+    currentTradeDetailId = trade.id;
+    const other = tradeCounterparty(trade);
+    const give = tradeItemsIGive(trade);
+    const get = tradeItemsIGet(trade);
+
+    tradeDetailMeta.textContent = `Обмен с @${other ? (other.username || other.first_name || other.tg_id) : '—'} · ${tradeStatusLabels[trade.status] || trade.status}`;
+
+    tradeDetailGiveList.innerHTML = '';
+    give.forEach(item => tradeDetailGiveList.appendChild(renderTradeItemRow(item)));
+
+    tradeDetailGetList.innerHTML = '';
+    get.forEach(item => tradeDetailGetList.appendChild(renderTradeItemRow(item)));
+
+    tradeDetailActions.innerHTML = '';
+    const isRecipient = trade.recipient_tg_id === currentTgId;
+    const isInitiator = trade.initiator_tg_id === currentTgId;
+
+    if (trade.status === 'pending' && isRecipient) {
+        const acceptBtn = document.createElement('button');
+        acceptBtn.className = 'action-btn';
+        acceptBtn.textContent = 'Принять';
+        acceptBtn.addEventListener('click', () => resolveTrade(trade.id, 'accept'));
+
+        const declineBtn = document.createElement('button');
+        declineBtn.className = 'action-btn trade-decline-btn';
+        declineBtn.textContent = 'Отклонить';
+        declineBtn.addEventListener('click', () => resolveTrade(trade.id, 'decline'));
+
+        tradeDetailActions.appendChild(acceptBtn);
+        tradeDetailActions.appendChild(declineBtn);
+    } else if (trade.status === 'pending' && isInitiator) {
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'action-btn trade-decline-btn';
+        cancelBtn.textContent = 'Отменить обмен';
+        cancelBtn.addEventListener('click', () => resolveTrade(trade.id, 'cancel'));
+        tradeDetailActions.appendChild(cancelBtn);
+    }
+
+    tradeDetailModal.style.display = 'flex';
+}
+
+async function resolveTrade(tradeId, action) {
+    if (!authToken) {
+        alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+        return;
+    }
+    try {
+        const endpoint = action === 'cancel'
+            ? `${API_URL}/api/trades/${tradeId}`
+            : `${API_URL}/api/trades/${tradeId}/${action}`;
+        const method = action === 'cancel' ? 'DELETE' : 'POST';
+        const res = await fetch(endpoint, { method, headers: { 'Authorization': `Bearer ${authToken}` } });
+        const data = await res.json();
+        if (!data.ok) {
+            alert(data.error || 'Не удалось выполнить действие');
+            return;
+        }
+        tradeDetailModal.style.display = 'none';
+        currentTradeDetailId = null;
+        await Promise.all([loadIncomingTrades(), loadMyTrades()]);
+        if (action === 'accept') {
+            await loadInventory(); // если открыто "Хранилище" — состав уже изменился
+        }
+    } catch (e) {
+        alert('Ошибка соединения с сервером');
+        console.error(e);
+    }
+}
+
+if (closeTradeDetailModalBtn && tradeDetailModal) {
+    closeTradeDetailModalBtn.addEventListener('click', () => {
+        tradeDetailModal.style.display = 'none';
+        currentTradeDetailId = null;
     });
 }
