@@ -3436,9 +3436,9 @@ if (rouletteSpinBtn) {
 // сервера) продублирован здесь по той же честной формуле, что и на
 // бэкенде — но итоговый результат каждой ячейки и правильный множитель
 // всегда приходят с сервера, клиент их не подделывает.
-const BOMBER_GRID_SIZE = 49; // 7x7
-const BOMBER_GRID_COLS = 7;
-const BOMBER_ALLOWED_BOMBS = [4, 6, 8, 10];
+const BOMBER_GRID_SIZE = 25; // 5x5
+const BOMBER_GRID_COLS = 5;
+const BOMBER_ALLOWED_BOMBS = [4, 6, 8];
 const BOMBER_MIN_BET = 0.3;
 const BOMBER_MAX_BET = 1000;
 const BOMBER_HOUSE_EDGE = 0.05;
