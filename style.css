@@ -428,6 +428,53 @@ body {
     justify-content: center;
 }
 
+/* Игровой хаб (пока визуальная заглушка) */
+.games-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.game-tile {
+    position: relative;
+    background: linear-gradient(135deg, #241f38 0%, #1c1c1e 100%);
+    border: 1px solid #2c2c2e;
+    border-radius: 16px;
+    padding: 18px 0 16px;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.game-tile-icon {
+    font-size: 26px;
+}
+
+.game-tile-name {
+    letter-spacing: 0.2px;
+}
+
+.game-tile-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #b8b8bd;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 3px 7px;
+    border-radius: 20px;
+}
+
 .history-title {
     display: flex;
     justify-content: space-between;

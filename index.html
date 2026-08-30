@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Telegram NFT Market</title>
-    <link rel="stylesheet" href="style.css?v=8">
+    <link rel="stylesheet" href="style.css?v=9">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 </head>
@@ -199,6 +199,32 @@
                 <button class="action-btn" id="addListingBtn">
                     <span class="action-icon">🎁</span>
                     <span>Добавить</span>
+                </button>
+            </div>
+
+            <!-- Игровой хаб — пока чисто визуальная заглушка, сами игры
+                 подключим позже. -->
+            <div class="section-title">ИГРЫ</div>
+            <div class="games-grid">
+                <button class="game-tile" data-game="coinflip">
+                    <span class="game-tile-icon">🪙</span>
+                    <span class="game-tile-name">Coinflip</span>
+                    <span class="game-tile-badge">Скоро</span>
+                </button>
+                <button class="game-tile" data-game="dice">
+                    <span class="game-tile-icon">🎲</span>
+                    <span class="game-tile-name">Кости</span>
+                    <span class="game-tile-badge">Скоро</span>
+                </button>
+                <button class="game-tile" data-game="roulette">
+                    <span class="game-tile-icon">🎡</span>
+                    <span class="game-tile-name">Рулетка</span>
+                    <span class="game-tile-badge">Скоро</span>
+                </button>
+                <button class="game-tile" data-game="slots">
+                    <span class="game-tile-icon">🎰</span>
+                    <span class="game-tile-name">Слоты</span>
+                    <span class="game-tile-badge">Скоро</span>
                 </button>
             </div>
 
@@ -859,6 +885,6 @@
     </div>
 
     <!-- Скрипт подключаем один раз в самом конце -->
-    <script src="app.js?v=9"></script>
+    <script src="app.js?v=10"></script>
 </body>
 </html>
