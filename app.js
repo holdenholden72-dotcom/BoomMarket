@@ -31,7 +31,11 @@ const screensByName = {
 
 /** Показывает один экран из screensByName, скрывая остальные, и подсвечивает
  * соответствующий пункт во всех копиях нижней навигации (она есть на нескольких экранах). */
+let currentScreenName = 'market';
+
 function showScreen(name) {
+    currentScreenName = name;
+
     Object.values(screensByName).forEach(screen => {
         if (screen) screen.classList.remove('active');
     });
@@ -68,6 +72,21 @@ function showScreen(name) {
         loadListings();
     }
 }
+
+// === Автообновление маркета, пока пользователь на нём стоит ===
+// Одного loadListings() при переходе на экран недостаточно: если человек
+// просто сидит на маркете и никуда не переключается, чужие изменения
+// (снятие лота, покупка, новый лот) не появятся сами — раньше это было
+// видно только после полного перезахода в бота. Опрашиваем сервер, пока
+// вкладка активна и открыт именно экран маркета, чтобы не слать лишние
+// запросы, когда бот свёрнут или пользователь на другом экране.
+const MARKET_POLL_INTERVAL_MS = 5000;
+
+setInterval(() => {
+    if (currentScreenName === 'market' && document.visibilityState === 'visible') {
+        loadListings();
+    }
+}, MARKET_POLL_INTERVAL_MS);
 
 openProfileBtn.addEventListener('click', () => {
     showScreen('profile');
