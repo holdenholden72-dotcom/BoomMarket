@@ -1118,3 +1118,93 @@ body {
 .history-detail-amount.negative {
     color: #ff453a;
 }
+
+/* === Экран "Ордеры" === */
+.orders-create-btn {
+    width: 100%;
+    flex-direction: row;
+    gap: 8px;
+    margin: 14px 0 18px;
+    background: #1c1c1e;
+    border: 2px solid #ffd700;
+    color: #ffd700;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.orders-tabs {
+    display: flex;
+    gap: 8px;
+    background: #1c1c1e;
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 12px;
+}
+
+.orders-tab {
+    flex: 1;
+    background: none;
+    border: none;
+    color: #8e8e93;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 0;
+    border-radius: 9px;
+    cursor: pointer;
+}
+
+.orders-tab.active {
+    background: #2c2c2e;
+    color: #fff;
+}
+
+.order-row-price {
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.order-row-status {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 8px;
+    background: #2c2c2e;
+    color: #8e8e93;
+}
+
+.order-row-status.is-active {
+    background: #2b3a2b;
+    color: #34c759;
+}
+
+.order-row-status.is-filled {
+    background: #2b2345;
+    color: #d9c8ff;
+}
+
+.order-row-status.is-cancelled {
+    background: #2c2c2e;
+    color: #8e8e93;
+}
+
+.order-detail-cancel-btn {
+    border-color: #ff453a;
+    color: #ff453a;
+}
+
+.order-row-cancel {
+    background: #2c2c2e;
+    color: #ff453a;
+    border: none;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+}

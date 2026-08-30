@@ -178,7 +178,7 @@
             <span class="nav-icon">🎮</span>
             <span class="nav-text">Игровой хаб</span>
         </button>
-        <button class="nav-item">
+        <button class="nav-item" data-nav="orders">
             <span class="nav-icon">🧾</span>
             <span class="nav-text">Ордеры</span>
         </button>
@@ -220,11 +220,67 @@
                     <span class="nav-icon">🎮</span>
                     <span class="nav-text">Игровой хаб</span>
                 </button>
-                <button class="nav-item">
+                <button class="nav-item" data-nav="orders">
                     <span class="nav-icon">🧾</span>
                     <span class="nav-text">Ордеры</span>
                 </button>
                 <button class="nav-item active" data-nav="history">
+                    <span class="nav-icon">🕘</span>
+                    <span class="nav-text">История</span>
+                </button>
+                <button class="nav-item">
+                    <span class="nav-icon">📦</span>
+                    <span class="nav-text">Хранилище</span>
+                </button>
+            </nav>
+        </div>
+    </div>
+
+    <!-- ЭКРАН 4: ОРДЕРЫ -->
+    <div id="ordersScreen" class="screen">
+        <header class="profile-header">
+            <button class="back-btn" id="backToProfileFromOrdersBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Назад
+            </button>
+        </header>
+
+        <div class="profile-content">
+            <div class="section-title">ОРДЕРЫ НА ПОКУПКУ</div>
+
+            <!-- Создание ордера — размещено перед списком лотов/ордеров -->
+            <button class="action-btn orders-create-btn" id="openCreateOrderBtn">
+                <span class="action-icon">➕</span>
+                <span>Создать ордер</span>
+            </button>
+
+            <div class="orders-tabs" id="ordersTabs">
+                <button class="orders-tab active" data-orders-tab="active">Активные</button>
+                <button class="orders-tab" data-orders-tab="history">История</button>
+            </div>
+
+            <ul class="history-list" id="ordersActiveList">
+                <!-- Строки генерируются через JS -->
+            </ul>
+            <ul class="history-list" id="ordersHistoryList" style="display:none;">
+                <!-- Строки генерируются через JS -->
+            </ul>
+
+            <!-- Нижняя навигация -->
+            <nav class="bottom-nav">
+                <button class="nav-item" data-nav="market">
+                    <span class="nav-icon">🏪</span>
+                    <span class="nav-text">Маркет</span>
+                </button>
+                <button class="nav-item">
+                    <span class="nav-icon">🎮</span>
+                    <span class="nav-text">Игровой хаб</span>
+                </button>
+                <button class="nav-item active" data-nav="orders">
+                    <span class="nav-icon">🧾</span>
+                    <span class="nav-text">Ордеры</span>
+                </button>
+                <button class="nav-item" data-nav="history">
                     <span class="nav-icon">🕘</span>
                     <span class="nav-text">История</span>
                 </button>
@@ -345,6 +401,90 @@
             <div class="listing-fee-note">Комиссия маркетплейса при продаже: 1.5%</div>
 
             <button class="action-btn" id="confirmCreateListingBtn">Выставить на продажу</button>
+        </div>
+    </div>
+
+    <!-- Модальное окно создания ордера на покупку -->
+    <div id="createOrderModal" class="modal" style="display: none;">
+        <div class="modal-content listing-form">
+            <button class="close-modal" id="closeCreateOrderModal">&times;</button>
+            <h2>Создать ордер</h2>
+
+            <label class="listing-field-label">Коллекция</label>
+            <select id="orderCollectionSelect" class="dropdown-filter listing-select">
+                <option value="">Выберите коллекцию</option>
+            </select>
+
+            <label class="listing-field-label">Модель</label>
+            <select id="orderModelSelect" class="dropdown-filter listing-select" disabled>
+                <option value="">Любая модель</option>
+            </select>
+
+            <label class="listing-field-label">Фон</label>
+            <select id="orderBackdropSelect" class="dropdown-filter listing-select" disabled>
+                <option value="">Любой фон</option>
+            </select>
+
+            <label class="listing-field-label">Символ</label>
+            <select id="orderSymbolSelect" class="dropdown-filter listing-select" disabled>
+                <option value="">Любой символ</option>
+            </select>
+
+            <div class="withdraw-input-box">
+                <input type="number" id="orderMaxPrice" placeholder="Ваша цена 💎" min="0.1" step="0.1">
+            </div>
+
+            <div class="listing-fee-note">Сумма спишется с баланса сразу и вернётся, если вы отмените ордер. Модель/фон/символ можно оставить пустыми — тогда подойдёт любой вариант.</div>
+
+            <button class="action-btn" id="confirmCreateOrderBtn">Создать ордер</button>
+        </div>
+    </div>
+
+    <!-- Модальное окно детального просмотра ордера (открывается при клике на аватарку в истории ордеров) -->
+    <div id="orderDetailModal" class="modal" style="display: none;">
+        <div class="modal-content listing-detail-content">
+            <button class="close-modal listing-detail-close" id="closeOrderDetail">&times;</button>
+
+            <div class="listing-detail-image-wrap" id="orderDetailImageWrap">
+                <img id="orderDetailImage" class="listing-detail-image" src="" alt="">
+            </div>
+            <div class="listing-detail-title" id="orderDetailTitle"></div>
+            <div class="listing-detail-number" id="orderDetailNumber"></div>
+
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Коллекция</span>
+                <span class="listing-detail-value" id="orderDetailCollection"></span>
+            </div>
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Модель</span>
+                <span class="listing-detail-value" id="orderDetailModel"></span>
+            </div>
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Фон</span>
+                <span class="listing-detail-value" id="orderDetailBackdrop"></span>
+            </div>
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Символ</span>
+                <span class="listing-detail-value" id="orderDetailSymbol"></span>
+            </div>
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Цена</span>
+                <span class="listing-detail-value" id="orderDetailPrice"></span>
+            </div>
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Статус</span>
+                <span class="listing-detail-value" id="orderDetailStatus"></span>
+            </div>
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Создан</span>
+                <span class="listing-detail-value" id="orderDetailCreated"></span>
+            </div>
+            <div class="listing-detail-row" id="orderDetailClosedRow">
+                <span class="listing-detail-label" id="orderDetailClosedLabel">Закрыт</span>
+                <span class="listing-detail-value" id="orderDetailClosed"></span>
+            </div>
+
+            <button class="action-btn listing-detail-buy order-detail-cancel-btn" id="orderDetailCancelBtn">Отменить ордер</button>
         </div>
     </div>
 

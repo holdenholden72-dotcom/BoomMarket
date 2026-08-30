@@ -10,14 +10,17 @@ const sortModal = document.getElementById('sortModal');
 const marketScreen = document.getElementById('marketScreen');
 const profileScreen = document.getElementById('profileScreen');
 const historyScreen = document.getElementById('historyScreen');
+const ordersScreen = document.getElementById('ordersScreen');
 const openProfileBtn = document.getElementById('openProfileBtn');
 const backToMarketBtn = document.getElementById('backToMarketBtn');
 const backToProfileFromHistoryBtn = document.getElementById('backToProfileFromHistoryBtn');
+const backToProfileFromOrdersBtn = document.getElementById('backToProfileFromOrdersBtn');
 
 const screensByName = {
     market: marketScreen,
     profile: profileScreen,
     history: historyScreen,
+    orders: ordersScreen,
 };
 
 /** Показывает один экран из screensByName, скрывая остальные, и подсвечивает
@@ -35,6 +38,10 @@ function showScreen(name) {
     if (name === 'history') {
         loadHistory();
     }
+    if (name === 'orders') {
+        loadActiveOrders();
+        loadOrderHistory();
+    }
 }
 
 openProfileBtn.addEventListener('click', () => {
@@ -47,6 +54,12 @@ backToMarketBtn.addEventListener('click', () => {
 
 if (backToProfileFromHistoryBtn) {
     backToProfileFromHistoryBtn.addEventListener('click', () => {
+        showScreen('profile');
+    });
+}
+
+if (backToProfileFromOrdersBtn) {
+    backToProfileFromOrdersBtn.addEventListener('click', () => {
         showScreen('profile');
     });
 }
@@ -664,6 +677,400 @@ if (historyList) {
 if (closeHistoryDetailBtn && historyDetailModal) {
     closeHistoryDetailBtn.addEventListener('click', () => {
         historyDetailModal.style.display = 'none';
+    });
+}
+
+// =====================================================================
+// ОРДЕРА НА ПОКУПКУ
+// =====================================================================
+
+const ordersActiveList = document.getElementById('ordersActiveList');
+const ordersHistoryList = document.getElementById('ordersHistoryList');
+const ordersTabs = document.getElementById('ordersTabs');
+
+const ordersActiveById = new Map();
+const ordersHistoryById = new Map();
+
+const orderStatusLabels = {
+    active: 'Активен',
+    filled: 'Исполнен',
+    cancelled: 'Отменён',
+};
+
+/** Короткое описание запрошенных трейтов ордера — пустое поле в БД значит "любой". */
+function orderCriteriaLabel(item) {
+    const parts = [];
+    parts.push(item.model_name ? item.model_name : 'Любая модель');
+    parts.push(item.backdrop_name ? item.backdrop_name : 'Любой фон');
+    parts.push(item.symbol_name ? item.symbol_name : 'Любой символ');
+    return parts.join(' · ');
+}
+
+function renderOrdersList(container, cacheMap, items, { showCancel }) {
+    container.innerHTML = '';
+    cacheMap.clear();
+
+    if (!items || items.length === 0) {
+        container.innerHTML = `<div class="empty-state">${showCancel ? 'Нет активных ордеров' : 'История ордеров пуста'}</div>`;
+        return;
+    }
+
+    items.forEach(item => {
+        cacheMap.set(String(item.id), item);
+
+        const image = item.model_image || item.collection_image || '';
+        const bg = item.backdrop_color || '#333';
+
+        const li = document.createElement('li');
+        li.className = 'history-row has-gift';
+        li.dataset.orderId = item.id;
+
+        const displayPrice = (item.status === 'filled' && item.matched_price != null) ? item.matched_price : item.max_price;
+
+        const rightHtml = showCancel
+            ? `<div class="order-row-price">
+                   <span>💎 ${displayPrice}</span>
+                   <button class="order-row-cancel" data-cancel-order-id="${item.id}">Отменить</button>
+               </div>`
+            : `<div class="order-row-price">
+                   <span>💎 ${displayPrice}</span>
+                   <span class="order-row-status is-${item.status}">${orderStatusLabels[item.status] || item.status}</span>
+               </div>`;
+
+        li.innerHTML = `
+            <div class="history-thumb" style="background-color:${bg};">
+                ${image ? `<img src="${image}" alt="">` : ''}
+            </div>
+            <div class="history-info">
+                <div class="history-name">${item.collection_name}</div>
+                <div class="history-meta">${orderCriteriaLabel(item)}</div>
+                <div class="history-meta">${formatHistoryDate(item.created_at)}</div>
+            </div>
+            ${rightHtml}
+        `;
+
+        container.appendChild(li);
+    });
+}
+
+async function loadActiveOrders() {
+    if (!ordersActiveList) return;
+    if (!authToken) {
+        ordersActiveList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
+        return;
+    }
+    ordersActiveList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    try {
+        const res = await fetch(`${API_URL}/api/orders`, { headers: { 'Authorization': `Bearer ${authToken}` } });
+        const data = await res.json();
+        if (!data.ok) {
+            ordersActiveList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить ордера'}</div>`;
+            return;
+        }
+        renderOrdersList(ordersActiveList, ordersActiveById, data.orders, { showCancel: true });
+    } catch (e) {
+        ordersActiveList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        console.error(e);
+    }
+}
+
+async function loadOrderHistory() {
+    if (!ordersHistoryList) return;
+    if (!authToken) {
+        ordersHistoryList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
+        return;
+    }
+    ordersHistoryList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    try {
+        const res = await fetch(`${API_URL}/api/orders/history`, { headers: { 'Authorization': `Bearer ${authToken}` } });
+        const data = await res.json();
+        if (!data.ok) {
+            ordersHistoryList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить историю ордеров'}</div>`;
+            return;
+        }
+        renderOrdersList(ordersHistoryList, ordersHistoryById, data.orders, { showCancel: false });
+    } catch (e) {
+        ordersHistoryList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        console.error(e);
+    }
+}
+
+// === Переключение вкладок "Активные" / "История" ===
+if (ordersTabs) {
+    ordersTabs.addEventListener('click', (e) => {
+        const btn = e.target.closest('.orders-tab');
+        if (!btn) return;
+
+        const tab = btn.getAttribute('data-orders-tab');
+        ordersTabs.querySelectorAll('.orders-tab').forEach(t => t.classList.toggle('active', t === btn));
+        ordersActiveList.style.display = tab === 'active' ? '' : 'none';
+        ordersHistoryList.style.display = tab === 'history' ? '' : 'none';
+    });
+}
+
+// === Детальная карточка ордера (открывается по клику на аватарку/строку, в т.ч. в истории) ===
+const orderDetailModal = document.getElementById('orderDetailModal');
+const closeOrderDetailBtn = document.getElementById('closeOrderDetail');
+const orderDetailImageWrap = document.getElementById('orderDetailImageWrap');
+const orderDetailImage = document.getElementById('orderDetailImage');
+const orderDetailTitle = document.getElementById('orderDetailTitle');
+const orderDetailNumber = document.getElementById('orderDetailNumber');
+const orderDetailCollection = document.getElementById('orderDetailCollection');
+const orderDetailModelEl = document.getElementById('orderDetailModel');
+const orderDetailBackdrop = document.getElementById('orderDetailBackdrop');
+const orderDetailSymbol = document.getElementById('orderDetailSymbol');
+const orderDetailPrice = document.getElementById('orderDetailPrice');
+const orderDetailStatus = document.getElementById('orderDetailStatus');
+const orderDetailCreated = document.getElementById('orderDetailCreated');
+const orderDetailClosedRow = document.getElementById('orderDetailClosedRow');
+const orderDetailClosedLabel = document.getElementById('orderDetailClosedLabel');
+const orderDetailClosed = document.getElementById('orderDetailClosed');
+const orderDetailCancelBtn = document.getElementById('orderDetailCancelBtn');
+
+let currentDetailOrderId = null;
+
+function openOrderDetail(item) {
+    currentDetailOrderId = item.id;
+
+    const image = item.model_image || item.collection_image || '';
+    orderDetailImageWrap.style.backgroundColor = item.backdrop_color || '#333';
+    orderDetailImage.src = image;
+    orderDetailTitle.textContent = item.collection_name;
+    orderDetailNumber.textContent = (item.status === 'filled' && item.matched_gift_number) ? `#${item.matched_gift_number}` : '';
+    orderDetailCollection.textContent = item.collection_name || '—';
+    orderDetailModelEl.textContent = traitLabel(item.model_name) === '—' ? 'Любая' : item.model_name;
+    orderDetailBackdrop.textContent = traitLabel(item.backdrop_name) === '—' ? 'Любой' : item.backdrop_name;
+    orderDetailSymbol.textContent = traitLabel(item.symbol_name) === '—' ? 'Любой' : item.symbol_name;
+
+    const displayPrice = (item.status === 'filled' && item.matched_price != null) ? item.matched_price : item.max_price;
+    orderDetailPrice.textContent = `💎 ${displayPrice}`;
+    orderDetailStatus.textContent = orderStatusLabels[item.status] || item.status;
+
+    orderDetailCreated.textContent = formatHistoryDate(item.created_at);
+
+    if (item.status === 'active') {
+        orderDetailClosedRow.style.display = 'none';
+        orderDetailCancelBtn.style.display = '';
+    } else {
+        orderDetailClosedRow.style.display = '';
+        orderDetailClosedLabel.textContent = item.status === 'filled' ? 'Исполнен' : 'Отменён';
+        orderDetailClosed.textContent = formatHistoryDate(item.closed_at);
+        orderDetailCancelBtn.style.display = 'none';
+    }
+
+    orderDetailModal.style.display = 'flex';
+}
+
+async function cancelOrder(orderId) {
+    if (!authToken) {
+        alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+        return;
+    }
+    try {
+        const res = await fetch(`${API_URL}/api/orders/${orderId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${authToken}` },
+        });
+        const data = await res.json();
+        if (!data.ok) {
+            alert(data.error || 'Не удалось отменить ордер');
+            return;
+        }
+        updateBalanceUI(data.balance);
+        await loadActiveOrders();
+        await loadOrderHistory();
+    } catch (e) {
+        alert('Ошибка соединения с сервером');
+        console.error(e);
+    }
+}
+
+function bindOrdersListClicks(container, cacheMap) {
+    if (!container) return;
+    container.addEventListener('click', (e) => {
+        const cancelBtn = e.target.closest('.order-row-cancel');
+        if (cancelBtn) {
+            cancelOrder(cancelBtn.dataset.cancelOrderId);
+            return;
+        }
+        const row = e.target.closest('.history-row[data-order-id]');
+        if (!row) return;
+        const item = cacheMap.get(row.dataset.orderId);
+        if (!item) return;
+        openOrderDetail(item);
+    });
+}
+
+bindOrdersListClicks(ordersActiveList, ordersActiveById);
+bindOrdersListClicks(ordersHistoryList, ordersHistoryById);
+
+if (closeOrderDetailBtn && orderDetailModal) {
+    closeOrderDetailBtn.addEventListener('click', () => {
+        orderDetailModal.style.display = 'none';
+        currentDetailOrderId = null;
+    });
+}
+
+if (orderDetailCancelBtn) {
+    orderDetailCancelBtn.addEventListener('click', async () => {
+        if (!currentDetailOrderId) return;
+        await cancelOrder(currentDetailOrderId);
+        orderDetailModal.style.display = 'none';
+        currentDetailOrderId = null;
+    });
+}
+
+// === Модалка создания ордера ===
+const createOrderModal = document.getElementById('createOrderModal');
+const openCreateOrderBtn = document.getElementById('openCreateOrderBtn');
+const closeCreateOrderModalBtn = document.getElementById('closeCreateOrderModal');
+const orderCollectionSelect = document.getElementById('orderCollectionSelect');
+const orderModelSelect = document.getElementById('orderModelSelect');
+const orderBackdropSelect = document.getElementById('orderBackdropSelect');
+const orderSymbolSelect = document.getElementById('orderSymbolSelect');
+const orderMaxPriceInput = document.getElementById('orderMaxPrice');
+const confirmCreateOrderBtn = document.getElementById('confirmCreateOrderBtn');
+
+let orderTraitsCache = { models: [], backdrops: [], symbols: [] };
+
+function resetOrderForm() {
+    orderCollectionSelect.value = '';
+    orderModelSelect.innerHTML = '<option value="">Сначала выберите коллекцию</option>';
+    orderBackdropSelect.innerHTML = '<option value="">Сначала выберите коллекцию</option>';
+    orderSymbolSelect.innerHTML = '<option value="">Сначала выберите коллекцию</option>';
+    orderModelSelect.disabled = true;
+    orderBackdropSelect.disabled = true;
+    orderSymbolSelect.disabled = true;
+    orderMaxPriceInput.value = '';
+    orderTraitsCache = { models: [], backdrops: [], symbols: [] };
+}
+
+async function populateOrderCollectionSelect() {
+    orderCollectionSelect.innerHTML = '<option value="">Выберите коллекцию</option>';
+    collectionsCache.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.name;
+        orderCollectionSelect.appendChild(opt);
+    });
+}
+
+if (openCreateOrderBtn && createOrderModal) {
+    openCreateOrderBtn.addEventListener('click', async () => {
+        if (!authToken) {
+            alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+            return;
+        }
+        resetOrderForm();
+        await populateOrderCollectionSelect();
+        createOrderModal.style.display = 'flex';
+    });
+}
+
+if (closeCreateOrderModalBtn && createOrderModal) {
+    closeCreateOrderModalBtn.addEventListener('click', () => {
+        createOrderModal.style.display = 'none';
+    });
+}
+
+// При выборе коллекции — подгружаем её трейты (с id) и разрешаем выбрать
+// конкретную модель/фон/символ; поля остаются необязательными ("Любая/Любой").
+orderCollectionSelect.addEventListener('change', async () => {
+    const collectionId = orderCollectionSelect.value;
+
+    if (!collectionId) {
+        orderModelSelect.innerHTML = '<option value="">Сначала выберите коллекцию</option>';
+        orderBackdropSelect.innerHTML = '<option value="">Сначала выберите коллекцию</option>';
+        orderSymbolSelect.innerHTML = '<option value="">Сначала выберите коллекцию</option>';
+        orderModelSelect.disabled = true;
+        orderBackdropSelect.disabled = true;
+        orderSymbolSelect.disabled = true;
+        return;
+    }
+
+    orderModelSelect.innerHTML = '<option value="">Загрузка...</option>';
+    orderBackdropSelect.innerHTML = '<option value="">Загрузка...</option>';
+    orderSymbolSelect.innerHTML = '<option value="">Загрузка...</option>';
+
+    try {
+        const res = await fetch(`${API_URL}/api/collections/${collectionId}/filters`);
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Не удалось загрузить трейты');
+
+        orderTraitsCache = data.filters;
+
+        fillListingSelect(orderModelSelect, orderTraitsCache.models, 'Любая модель', m =>
+            m.rarity_permille != null ? `${m.name} (${m.rarity_permille}%)` : m.name);
+        fillListingSelect(orderBackdropSelect, orderTraitsCache.backdrops, 'Любой фон', b =>
+            b.rarity_permille != null ? `${b.name} (${b.rarity_permille}%)` : b.name);
+        fillListingSelect(orderSymbolSelect, orderTraitsCache.symbols, 'Любой символ', s =>
+            s.rarity_permille != null ? `${s.name} (${s.rarity_permille}%)` : s.name);
+
+        // В отличие от формы выставления лота, здесь трейты не обязательны —
+        // "Любая/Любой" остаётся доступным вариантом, поэтому селект не блокируем.
+        orderModelSelect.disabled = false;
+        orderBackdropSelect.disabled = false;
+        orderSymbolSelect.disabled = false;
+    } catch (e) {
+        console.error('Не удалось загрузить трейты коллекции:', e);
+        orderModelSelect.innerHTML = '<option value="">Ошибка загрузки</option>';
+        orderBackdropSelect.innerHTML = '<option value="">Ошибка загрузки</option>';
+        orderSymbolSelect.innerHTML = '<option value="">Ошибка загрузки</option>';
+    }
+});
+
+if (confirmCreateOrderBtn) {
+    confirmCreateOrderBtn.addEventListener('click', async () => {
+        const collectionId = parseInt(orderCollectionSelect.value, 10);
+        const modelId = orderModelSelect.value ? parseInt(orderModelSelect.value, 10) : null;
+        const backdropId = orderBackdropSelect.value ? parseInt(orderBackdropSelect.value, 10) : null;
+        const symbolId = orderSymbolSelect.value ? parseInt(orderSymbolSelect.value, 10) : null;
+        const maxPrice = parseFloat(orderMaxPriceInput.value);
+
+        if (!collectionId) {
+            alert('Выберите коллекцию');
+            return;
+        }
+        if (!maxPrice || maxPrice <= 0) {
+            alert('Укажите корректную цену');
+            return;
+        }
+        if (!authToken) {
+            alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+            return;
+        }
+
+        confirmCreateOrderBtn.disabled = true;
+
+        try {
+            const res = await fetch(`${API_URL}/api/orders`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`,
+                },
+                body: JSON.stringify({ collectionId, modelId, backdropId, symbolId, maxPrice }),
+            });
+
+            const data = await res.json();
+
+            if (!data.ok) {
+                alert(data.error || 'Не удалось создать ордер');
+                return;
+            }
+
+            updateBalanceUI(data.balance);
+            alert('Ордер создан!');
+            createOrderModal.style.display = 'none';
+            resetOrderForm();
+
+            await loadActiveOrders();
+        } catch (e) {
+            alert('Ошибка соединения с сервером');
+            console.error(e);
+        } finally {
+            confirmCreateOrderBtn.disabled = false;
+        }
     });
 }
 
