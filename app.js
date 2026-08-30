@@ -203,7 +203,9 @@ function getOptionsForFilterType(type) {
 
 /** Опции для фильтров Хранилища — считаются на лету из уже загруженного
  * инвентаря пользователя (без похода на сервер), сужаются по выбранным
- * коллекциям, если тип фильтра не сама коллекция (как и в Маркете). */
+ * коллекциям, если тип фильтра не сама коллекция (как и в Маркете).
+ * В отличие от Маркета, проценты редкости здесь не показываем — это личный
+ * инвентарь, а не витрина для выбора по редкости. */
 function getStorageOptionsForFilterType(type) {
     let items = allInventoryItems;
     if (type !== 'collection' && storageActiveFilters.collectionIds.length) {
@@ -220,19 +222,27 @@ function getStorageOptionsForFilterType(type) {
     } else if (type === 'model') {
         items.forEach(i => {
             if (i.model_name && !map.has(i.model_name)) {
-                map.set(i.model_name, { value: i.model_name, label: i.model_name, image: i.model_icon, rarity: i.model_rarity });
+                map.set(i.model_name, { value: i.model_name, label: i.model_name, image: i.model_icon });
             }
         });
     } else if (type === 'backdrop') {
         items.forEach(i => {
             if (i.backdrop_name && !map.has(i.backdrop_name)) {
-                map.set(i.backdrop_name, { value: i.backdrop_name, label: i.backdrop_name, colorHex: i.backdrop_color, rarity: i.backdrop_rarity });
+                // Если у фона нет цвета в базе — показываем картинку самого подарка
+                // вместо пустой заглушки "?".
+                const fallbackImage = i.model_icon || i.collection_image || null;
+                map.set(i.backdrop_name, {
+                    value: i.backdrop_name,
+                    label: i.backdrop_name,
+                    colorHex: i.backdrop_color || null,
+                    image: i.backdrop_color ? null : fallbackImage,
+                });
             }
         });
     } else if (type === 'symbol') {
         items.forEach(i => {
             if (i.symbol_name && !map.has(i.symbol_name)) {
-                map.set(i.symbol_name, { value: i.symbol_name, label: i.symbol_name, image: i.symbol_icon, rarity: i.symbol_rarity });
+                map.set(i.symbol_name, { value: i.symbol_name, label: i.symbol_name, image: i.symbol_icon });
             }
         });
     }
