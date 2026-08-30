@@ -557,6 +557,7 @@ const listingDetailBackdrop = document.getElementById('listingDetailBackdrop');
 const listingDetailSymbol = document.getElementById('listingDetailSymbol');
 const listingDetailPrice = document.getElementById('listingDetailPrice');
 const listingDetailBuyBtn = document.getElementById('listingDetailBuyBtn');
+const listingDetailCancelBtn = document.getElementById('listingDetailCancelBtn');
 
 let currentDetailListingId = null;
 
@@ -578,6 +579,11 @@ function openListingDetail(item) {
     listingDetailSymbol.textContent = traitLabel(item.symbol_name);
     listingDetailPrice.textContent = item.price;
 
+    // Свой лот нельзя купить — вместо кнопки "Купить" показываем "Снять с продажи".
+    const isOwn = currentTgId != null && item.owner_tg_id === currentTgId;
+    if (listingDetailBuyBtn) listingDetailBuyBtn.style.display = isOwn ? 'none' : '';
+    if (listingDetailCancelBtn) listingDetailCancelBtn.style.display = isOwn ? '' : 'none';
+
     listingDetailModal.style.display = 'flex';
 }
 
@@ -586,12 +592,6 @@ grid.addEventListener('click', (e) => {
     if (cartBtn) {
         const item = listingsById.get(cartBtn.dataset.listingId);
         if (!item) return;
-
-        // Свой лот купить нельзя — говорим об этом сразу, не открывая карточку.
-        if (currentTgId != null && item.owner_tg_id === currentTgId) {
-            alert('Это ваш лот — вы не можете купить собственный товар. Предложения на него смотрите во вкладке «Ордеры».');
-            return;
-        }
 
         openListingDetail(item);
         return;
@@ -757,6 +757,49 @@ if (listingDetailBuyBtn) {
             console.error(err);
         } finally {
             listingDetailBuyBtn.disabled = false;
+        }
+    });
+}
+
+if (listingDetailCancelBtn) {
+    listingDetailCancelBtn.addEventListener('click', async () => {
+        if (!currentDetailListingId) return;
+
+        if (!authToken) {
+            alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+            return;
+        }
+
+        listingDetailCancelBtn.disabled = true;
+
+        try {
+            // Сервер сам проверяет, что это лот текущего пользователя — чужой
+            // лот снять не даст (403 "Это не ваш листинг").
+            const res = await fetch(`${API_URL}/api/listings/${currentDetailListingId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${authToken}` },
+            });
+
+            const data = await res.json();
+
+            if (!data.ok) {
+                alert(data.error || 'Не удалось снять лот с продажи');
+                listingDetailCancelBtn.disabled = false;
+                return;
+            }
+
+            alert('Лот снят с продажи и возвращён в Хранилище');
+            listingDetailModal.style.display = 'none';
+            currentDetailListingId = null;
+            await loadListings();
+            if (typeof loadInventory === 'function') {
+                await loadInventory();
+            }
+        } catch (err) {
+            alert('Ошибка соединения с сервером');
+            console.error(err);
+        } finally {
+            listingDetailCancelBtn.disabled = false;
         }
     });
 }
