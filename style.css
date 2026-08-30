@@ -160,11 +160,8 @@ body {
 }
 
 #storageGrid.market-grid {
-    grid-template-columns: repeat(2, 1fr);
-}
-
-#storageGrid .nft-image-container {
-    height: 220px;
+    padding: 0 10px;
+    gap: 8px;
 }
 
 #storageGrid .nft-title {
