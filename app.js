@@ -1873,9 +1873,6 @@ function renderStorageGrid(items) {
             <div class="nft-info">
                 <div class="nft-title">${item.collection_name}</div>
                 <div class="nft-number">#${item.gift_number}</div>
-                <div class="nft-bottom">
-                    <button class="action-btn storage-relist-btn" data-item-id="${item.id}">Выставить на продажу</button>
-                </div>
             </div>
         `;
         storageGrid.appendChild(card);
@@ -1891,12 +1888,11 @@ if (storageGrid) {
             return;
         }
 
-        // Клик по картинке — открываем полную информацию о товаре
-        // (та же карточка, что и по кнопке "Выставить на продажу").
-        const imageContainer = e.target.closest('.nft-image-container');
-        if (imageContainer) {
-            const card = imageContainer.closest('.nft-card');
-            const item = card && storageItemsById.get(card.dataset.itemId);
+        // Клик по всей карточке — открываем полную информацию о товаре
+        // и возможность выставить его на продажу (кнопки на карточке больше нет).
+        const card = e.target.closest('.nft-card');
+        if (card) {
+            const item = storageItemsById.get(card.dataset.itemId);
             if (item) openRelistModal(item);
         }
     });
