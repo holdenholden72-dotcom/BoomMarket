@@ -164,6 +164,15 @@ body {
     gap: 8px;
 }
 
+/* На Хранилище .filter-section вложена в .profile-content (у него уже
+   есть padding 16px) — без этой правки поиск/фильтры получают двойной
+   отступ и съезжают правее, чем карточки под ними (у которых padding
+   всего 10px). Выравниваем по левому краю карточек. */
+#storageScreen .filter-section {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
 #storageGrid .nft-title {
     font-size: 16px;
 }
