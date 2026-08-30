@@ -2941,10 +2941,10 @@ if (closeTradeDetailModalBtn && tradeDetailModal) {
 // за 3 одинаковых на линии. Порядок влияет только на то, как символы
 // перемешиваются в декоративной ленте барабана перед остановкой.
 const SLOTS_SYMBOLS = {
-    cherry: { emoji: '🍒', multiplier: 2 },
-    lemon: { emoji: '🍋', multiplier: 2 },
-    seven: { emoji: '7️⃣', multiplier: 2.5 },
-    diamond: { emoji: '💎', multiplier: 3 },
+    cherry: { emoji: '🍒', multiplier: 3 },
+    lemon: { emoji: '🍋', multiplier: 3 },
+    seven: { emoji: '7️⃣', multiplier: 5 },
+    diamond: { emoji: '💎', multiplier: 7 },
 };
 const SLOTS_SYMBOL_IDS = Object.keys(SLOTS_SYMBOLS);
 const SLOTS_MIN_BET = 0.3;
