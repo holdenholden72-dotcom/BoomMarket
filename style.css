@@ -2099,6 +2099,15 @@ button:focus-visible, input:focus-visible, .game-tile:focus-visible {
     line-height: 1.4;
 }
 
+.trade-submit-btn {
+    flex-direction: row;
+    justify-content: center;
+    width: 100%;
+    padding: 15px 0;
+    margin-top: 18px;
+    font-size: 14px;
+}
+
 .trade-topup-note {
     text-align: center;
     color: var(--gold);
