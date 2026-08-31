@@ -2457,7 +2457,10 @@ const tradeFoundUsers = document.getElementById('tradeFoundUsers');
 const tradeSelectionArea = document.getElementById('tradeSelectionArea');
 const tradeSelectedUserBox = document.getElementById('tradeSelectedUserBox');
 const tradeMyItemsList = document.getElementById('tradeMyItemsList');
+const tradeMyCount = document.getElementById('tradeMyCount');
 const tradeTheirItemsTitle = document.getElementById('tradeTheirItemsTitle');
+const tradeTheirItemsTitleText = document.getElementById('tradeTheirItemsTitleText');
+const tradeTheirCount = document.getElementById('tradeTheirCount');
 const tradeTheirItemsList = document.getElementById('tradeTheirItemsList');
 const tradeSubmitBtn = document.getElementById('tradeSubmitBtn');
 const tradeTopupDirection = document.getElementById('tradeTopupDirection');
@@ -2499,6 +2502,8 @@ function resetTradeNewPanel() {
     if (tradeSelectionArea) tradeSelectionArea.style.display = 'none';
     if (tradeMyItemsList) tradeMyItemsList.innerHTML = '';
     if (tradeTheirItemsList) tradeTheirItemsList.innerHTML = '';
+    if (tradeTheirItemsTitleText) tradeTheirItemsTitleText.textContent = 'ВЫ ПОЛУЧАЕТЕ';
+    updateTradeCounts();
     if (tradeTopupAmount) {
         tradeTopupAmount.value = '';
         tradeTopupAmount.style.display = 'none';
@@ -2591,16 +2596,34 @@ async function selectTradeTarget(user) {
     tradeTheirSelected.clear();
     tradeFoundUsers.innerHTML = '';
     tradeRecipientInput.value = '';
-    tradeSelectedUserBox.innerHTML = `Обмен с <b>@${user.username}</b>`;
+    const displayName = [user.first_name, user.last_name].filter(Boolean).join(' ');
+    tradeSelectedUserBox.innerHTML = `
+        <img class="trade-found-avatar" src="${user.photo_url || ''}" alt="">
+        <div class="trade-selected-card-info">
+            <div class="trade-selected-card-name">${displayName ? displayName + ' · ' : ''}@${user.username}</div>
+            <div class="trade-selected-card-hint">Выбран для обмена</div>
+        </div>
+        <button type="button" class="trade-selected-card-clear" id="tradeSelectedClearBtn" title="Сменить получателя">✕</button>
+    `;
+    const clearBtn = document.getElementById('tradeSelectedClearBtn');
+    if (clearBtn) clearBtn.addEventListener('click', resetTradeNewPanel);
     tradeSelectionArea.style.display = '';
-    tradeTheirItemsTitle.textContent = `ПРЕДМЕТЫ @${user.username}`;
+    if (tradeTheirItemsTitleText) tradeTheirItemsTitleText.textContent = `ВЫ ПОЛУЧАЕТЕ ОТ @${user.username}`;
     await Promise.all([loadTradeMyItems(), loadTradeTheirItems()]);
+}
+
+/** Обновляет бейджи-счётчики "N" рядом с заголовками "Вы отдаёте"/"Вы
+ * получаете" по текущему размеру выбранных наборов предметов. */
+function updateTradeCounts() {
+    if (tradeMyCount) tradeMyCount.textContent = tradeMySelected.size;
+    if (tradeTheirCount) tradeTheirCount.textContent = tradeTheirSelected.size;
 }
 
 function renderTradePickList(container, items, selectedSet) {
     container.innerHTML = '';
     if (!items || items.length === 0) {
         container.innerHTML = `<div class="empty-state">Хранилище пусто</div>`;
+        updateTradeCounts();
         return;
     }
     items.forEach(item => {
@@ -2619,9 +2642,12 @@ function renderTradePickList(container, items, selectedSet) {
             </div>
         `;
         const checkbox = li.querySelector('input[type="checkbox"]');
+        li.classList.toggle('is-selected', checkbox.checked);
         checkbox.addEventListener('change', () => {
             if (checkbox.checked) selectedSet.add(item.id);
             else selectedSet.delete(item.id);
+            li.classList.toggle('is-selected', checkbox.checked);
+            updateTradeCounts();
         });
         li.addEventListener('click', (e) => {
             if (e.target === checkbox) return;
@@ -2630,6 +2656,7 @@ function renderTradePickList(container, items, selectedSet) {
         });
         container.appendChild(li);
     });
+    updateTradeCounts();
 }
 
 async function loadTradeMyItems() {

@@ -1877,25 +1877,93 @@ button:focus-visible, input:focus-visible, .game-tile:focus-visible {
     font-weight: 600;
 }
 
-.trade-selected-user {
+.trade-selected-card {
     display: flex;
     align-items: center;
     gap: 10px;
-    background: var(--surface);
-    border: 1px solid var(--surface-border);
+    background: linear-gradient(135deg, rgba(255,215,0,0.08) 0%, var(--surface) 65%);
+    border: 1px solid rgba(255,215,0,0.25);
     border-radius: var(--r-md);
     padding: 10px 12px;
     margin: 6px 0 14px;
-    font-size: 13px;
-    color: var(--text-secondary);
 }
 
-.trade-selected-user b {
+.trade-selected-card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.trade-selected-card-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.trade-selected-card-hint {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 1px;
+}
+
+.trade-selected-card-clear {
+    background: var(--surface-2);
+    border: 1px solid var(--surface-border);
+    color: var(--text-secondary);
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    font-size: 12px;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.trade-selected-card-clear:active {
+    background: #38383a;
     color: #fff;
 }
 
 .trade-subtitle {
     margin-top: 16px;
+}
+
+/* Заголовки "Вы отдаёте" / "Вы получаете" — цветной акцент вместо
+ * нейтрального золотого, чтобы направление обмена читалось с одного взгляда. */
+.section-title.trade-give::before {
+    background: linear-gradient(135deg, #ff6b5c 0%, #ff453a 100%);
+}
+
+.section-title.trade-get::before {
+    background: linear-gradient(135deg, #4ee08a 0%, #34c759 100%);
+}
+
+.trade-count-badge {
+    background: var(--surface-2);
+    color: var(--text-secondary);
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 5px;
+    border-radius: var(--r-pill);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+}
+
+.trade-fee-card {
+    background: var(--surface);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--r-sm);
+    padding: 10px 12px;
+    margin-top: 4px;
 }
 
 .trade-pick-list {
@@ -1912,11 +1980,17 @@ button:focus-visible, input:focus-visible, .game-tile:focus-visible {
     padding: 10px 8px;
     border-radius: var(--r-sm);
     cursor: pointer;
-    transition: background 0.15s ease;
+    border: 1px solid transparent;
+    transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .trade-pick-row:active {
     background: var(--surface);
+}
+
+.trade-pick-row.is-selected {
+    background: rgba(255, 215, 0, 0.08);
+    border-color: rgba(255, 215, 0, 0.3);
 }
 
 .trade-pick-row input[type="checkbox"] {
@@ -1930,7 +2004,7 @@ button:focus-visible, input:focus-visible, .game-tile:focus-visible {
     font-size: 11px;
     font-weight: 700;
     padding: 4px 10px;
-    border-radius: 8px;
+    border-radius: var(--r-sm);
     white-space: nowrap;
     flex-shrink: 0;
 }
@@ -1943,7 +2017,7 @@ button:focus-visible, input:focus-visible, .game-tile:focus-visible {
 
 .trade-detail-meta {
     text-align: center;
-    color: #8e8e93;
+    color: var(--text-secondary);
     font-size: 13px;
     margin-bottom: 4px;
 }
@@ -1962,7 +2036,8 @@ button:focus-visible, input:focus-visible, .game-tile:focus-visible {
 }
 
 .trade-decline-btn {
-    background: #2c2c2e;
+    background: var(--surface-2);
+    border: 1px solid rgba(255, 69, 58, 0.3);
     color: #ff453a;
 }
 
@@ -2003,25 +2078,30 @@ button:focus-visible, input:focus-visible, .game-tile:focus-visible {
 
 #tradeTopupAmount {
     width: 100%;
-    background: #1c1c1e;
-    border: 1px solid #2c2c2e;
-    border-radius: 12px;
+    background: var(--surface);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--r-md);
     padding: 12px 14px;
     color: #fff;
     font-size: 15px;
     box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+#tradeTopupAmount:focus {
+    border-color: rgba(255, 215, 0, 0.4);
 }
 
 .trade-fee-note {
-    margin-top: 10px;
     font-size: 11px;
-    color: #8e8e93;
+    color: var(--text-secondary);
     line-height: 1.4;
 }
 
 .trade-topup-note {
     text-align: center;
-    color: #ffd700;
+    color: var(--gold);
     font-size: 13px;
     font-weight: 600;
     margin-bottom: 10px;
