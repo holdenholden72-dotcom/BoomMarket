@@ -118,10 +118,16 @@ setInterval(() => {
 }, TRADE_POLL_INTERVAL_MS);
 
 // На случай, если Telegram просто "разбудил" уже открытое мини-приложение
-// (свернули/развернули), а не выполнил полную перезагрузку — досверяем баланс.
+// (свернули/развернули), а не выполнил полную перезагрузку — досверяем баланс
+// и, если пользователь как раз смотрит на Трейд, сразу подтягиваем обмены,
+// не дожидаясь следующего тика поллинга (до 5 секунд).
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
         refreshBalance();
+        if (currentScreenName === 'trade') {
+            loadIncomingTrades({ silent: true });
+            loadMyTrades({ silent: true });
+        }
     }
 });
 
@@ -2544,15 +2550,24 @@ if (tradeTopupDirection) {
     });
 }
 
+/** Переключает вкладку экрана "Трейд" программно (используется как обработчиком
+ * кликов по табам, так и кодом, который должен сам открыть нужную вкладку —
+ * например, показать "Мои обмены" сразу после отправки нового предложения). */
+function switchTradeTab(tab) {
+    if (!tradeTabs) return;
+    tradeTabs.querySelectorAll('.orders-tab').forEach(t => {
+        t.classList.toggle('active', t.getAttribute('data-trade-tab') === tab);
+    });
+    tradeNewPanel.style.display = tab === 'new' ? '' : 'none';
+    tradeIncomingList.style.display = tab === 'incoming' ? '' : 'none';
+    tradeMineList.style.display = tab === 'mine' ? '' : 'none';
+}
+
 if (tradeTabs) {
     tradeTabs.addEventListener('click', (e) => {
         const btn = e.target.closest('.orders-tab');
         if (!btn) return;
-        const tab = btn.getAttribute('data-trade-tab');
-        tradeTabs.querySelectorAll('.orders-tab').forEach(t => t.classList.toggle('active', t === btn));
-        tradeNewPanel.style.display = tab === 'new' ? '' : 'none';
-        tradeIncomingList.style.display = tab === 'incoming' ? '' : 'none';
-        tradeMineList.style.display = tab === 'mine' ? '' : 'none';
+        switchTradeTab(btn.getAttribute('data-trade-tab'));
     });
 }
 
@@ -2777,6 +2792,7 @@ if (tradeSubmitBtn) {
             }
             alert('Предложение обмена отправлено!');
             resetTradeNewPanel();
+            switchTradeTab('mine');
             await Promise.all([loadMyTrades(), refreshBalance()]);
         } catch (e) {
             alert('Ошибка соединения с сервером');
