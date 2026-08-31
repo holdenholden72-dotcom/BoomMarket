@@ -103,6 +103,20 @@ setInterval(() => {
     }
 }, MARKET_POLL_INTERVAL_MS);
 
+// === Автообновление трейда, пока пользователь на нём стоит ===
+// Так же, как и с маркетом: без этого статус обмена (принят/отклонён
+// другой стороной) и новые входящие предложения появлялись только после
+// перехода на другую вкладку и обратно — не сразу, как только собеседник
+// что-то сделал.
+const TRADE_POLL_INTERVAL_MS = 5000;
+
+setInterval(() => {
+    if (currentScreenName === 'trade' && document.visibilityState === 'visible') {
+        loadIncomingTrades({ silent: true });
+        loadMyTrades({ silent: true });
+    }
+}, TRADE_POLL_INTERVAL_MS);
+
 // На случай, если Telegram просто "разбудил" уже открытое мини-приложение
 // (свернули/развернули), а не выполнил полную перезагрузку — досверяем баланс.
 document.addEventListener('visibilitychange', () => {
@@ -2819,18 +2833,22 @@ function renderTradeSummaryRow(trade) {
     return li;
 }
 
-async function loadIncomingTrades() {
+async function loadIncomingTrades(opts = {}) {
+    const silent = opts.silent === true;
     if (!tradeIncomingList) return;
     if (!authToken) {
-        tradeIncomingList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
+        if (!silent) tradeIncomingList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
         return;
     }
-    tradeIncomingList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    // При фоновом автообновлении (поллинге) не затираем список текстом
+    // "Загрузка..." — иначе он мигал бы пустым каждые несколько секунд,
+    // пока пользователь просто смотрит на вкладку.
+    if (!silent) tradeIncomingList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
     try {
         const res = await fetch(`${API_URL}/api/trades/incoming`, { headers: { 'Authorization': `Bearer ${authToken}` } });
         const data = await res.json();
         if (!data.ok) {
-            tradeIncomingList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить обмены'}</div>`;
+            if (!silent) tradeIncomingList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить обмены'}</div>`;
             return;
         }
         tradeIncomingCache.clear();
@@ -2844,23 +2862,27 @@ async function loadIncomingTrades() {
             tradeIncomingList.appendChild(renderTradeSummaryRow(trade));
         });
     } catch (e) {
-        tradeIncomingList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        // При тихом фоновом обновлении не заменяем уже показанный список
+        // сообщением об ошибке из-за единичного сбоя сети — просто попробуем
+        // снова на следующем тике поллинга.
+        if (!silent) tradeIncomingList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
         console.error(e);
     }
 }
 
-async function loadMyTrades() {
+async function loadMyTrades(opts = {}) {
+    const silent = opts.silent === true;
     if (!tradeMineList) return;
     if (!authToken) {
-        tradeMineList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
+        if (!silent) tradeMineList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
         return;
     }
-    tradeMineList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    if (!silent) tradeMineList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
     try {
         const res = await fetch(`${API_URL}/api/trades/mine`, { headers: { 'Authorization': `Bearer ${authToken}` } });
         const data = await res.json();
         if (!data.ok) {
-            tradeMineList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить обмены'}</div>`;
+            if (!silent) tradeMineList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить обмены'}</div>`;
             return;
         }
         tradeMineCache.clear();
@@ -2874,7 +2896,7 @@ async function loadMyTrades() {
             tradeMineList.appendChild(renderTradeSummaryRow(trade));
         });
     } catch (e) {
-        tradeMineList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        if (!silent) tradeMineList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
         console.error(e);
     }
 }
