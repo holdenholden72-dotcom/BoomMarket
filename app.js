@@ -4066,3 +4066,37 @@ async function handleDiceRoll() {
 }
 
 if (diceRollBtn) diceRollBtn.addEventListener('click', handleDiceRoll);
+
+// =====================================================================
+// ОГРАНИЧЕНИЕ СТАВОК ДО ОДНОГО ЗНАКА ПОСЛЕ ЗАПЯТОЙ (во всех играх)
+// =====================================================================
+// Разрешены "круглые" ставки вида 0.3, 10, 10.7 — не более одного знака
+// после точки/запятой. Работает в реальном времени, пока пользователь
+// печатает (а не только при потере фокуса), поэтому 10.33 или 9.77
+// физически невозможно ввести в поле ставки. Финальная страховка —
+// clampBet-функции каждой игры (округляют до 0.1 перед отправкой) и
+// проверка isValidAmount() на сервере, которая в любом случае отклонит
+// значение, не кратное 0.1.
+function restrictBetInputToOneDecimal(inputEl) {
+    if (!inputEl) return;
+    inputEl.addEventListener('input', () => {
+        let v = inputEl.value;
+        // Поддерживаем и точку, и запятую (мобильная раскладка), но
+        // храним всегда через точку — так её понимает parseFloat().
+        v = v.replace(',', '.');
+        // Убираем всё, кроме цифр и точки.
+        v = v.replace(/[^\d.]/g, '');
+        // Оставляем только первую точку.
+        const firstDot = v.indexOf('.');
+        if (firstDot !== -1) {
+            v = v.slice(0, firstDot + 1) + v.slice(firstDot + 1).replace(/\./g, '');
+        }
+        // Не больше одного знака после точки.
+        if (firstDot !== -1 && v.length > firstDot + 2) {
+            v = v.slice(0, firstDot + 2);
+        }
+        if (v !== inputEl.value) inputEl.value = v;
+    });
+}
+
+[slotsBetInput, rouletteBetInput, bomberBetInput, diceBetInput].forEach(restrictBetInputToOneDecimal);
