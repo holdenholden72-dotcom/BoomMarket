@@ -4296,18 +4296,31 @@ async function plinkoAnimateDrop(path, slotIndex) {
     });
 
     plinkoBallEl.style.display = 'block';
-    plinkoBallEl.classList.remove('is-win', 'is-lose');
+    plinkoBallEl.classList.remove('is-win', 'is-lose', 'is-settled');
     plinkoBallEl.style.transition = 'none';
     plinkoBallEl.style.left = `${(positions[0] / 9) * 100}%`;
     plinkoBallEl.style.top = '0%';
+    plinkoBallEl.style.transform = 'rotate(0deg)';
     void plinkoBallEl.offsetWidth; // force reflow
 
+    // Каждый ряд шарик проходит за ~340мс — заметно медленнее, чем раньше,
+    // с мягким ускорением/торможением, чтобы падение выглядело более
+    // естественно и его было легко проследить взглядом.
+    const rowDurationMs = 340;
+    let rotation = 0;
     for (let row = 1; row <= PLINKO_ROWS; row++) {
-        plinkoBallEl.style.transition = 'left 0.16s ease, top 0.16s cubic-bezier(0.4, 0, 1, 1)';
+        const goingRight = positions[row] > positions[row - 1];
+        rotation += goingRight ? 55 : -55;
+        plinkoBallEl.style.transition = `left ${rowDurationMs}ms ease-in-out, top ${rowDurationMs}ms ease-in, transform ${rowDurationMs}ms ease-in-out`;
         plinkoBallEl.style.left = `${(positions[row] / 9) * 100}%`;
         plinkoBallEl.style.top = `${(row / PLINKO_ROWS) * 100}%`;
-        await new Promise(resolve => setTimeout(resolve, 160));
+        plinkoBallEl.style.transform = `rotate(${rotation}deg)`;
+        await new Promise(resolve => setTimeout(resolve, rowDurationMs));
     }
+
+    // Небольшой отскок при приземлении в корзину.
+    plinkoBallEl.classList.add('is-settled');
+    setTimeout(() => plinkoBallEl.classList.remove('is-settled'), 400);
 
     // Подсвечиваем корзину, в которую попал шарик.
     const bin = plinkoBinsEl ? plinkoBinsEl.querySelector(`[data-bin-index="${slotIndex}"]`) : null;

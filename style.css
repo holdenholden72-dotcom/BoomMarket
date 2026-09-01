@@ -2559,6 +2559,33 @@ body {
     margin-bottom: 14px;
 }
 
+/* Указатель точки старта шарика над доской — вместо "аватарки" из
+   референса тут собственно шарик (тот же стиль, что и у падающего). */
+.plinko-launcher {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    margin-bottom: 4px;
+}
+
+.plinko-launcher-arrow {
+    width: 0;
+    height: 0;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-top: 12px solid #ff9f0a;
+    filter: drop-shadow(0 2px 4px rgba(255, 159, 10, 0.5));
+}
+
+.plinko-launcher-ball {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff8dc, #ffd700 55%, #b8860b 100%);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}
+
 .plinko-board {
     position: relative;
     width: 100%;
@@ -2610,6 +2637,17 @@ body {
 
 .plinko-ball.is-lose {
     box-shadow: 0 0 12px 3px rgba(255, 69, 58, 0.6);
+}
+
+.plinko-ball.is-settled {
+    animation: plinkoBallBounce 0.4s ease-out;
+}
+
+@keyframes plinkoBallBounce {
+    0%   { transform: scale(1); }
+    35%  { transform: scale(1.35); }
+    70%  { transform: scale(0.9); }
+    100% { transform: scale(1); }
 }
 
 /* Корзины множителей внизу доски */
