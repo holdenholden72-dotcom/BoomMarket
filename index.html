@@ -792,7 +792,7 @@
         </div>
     </div>
 
-    <!-- ЭКРАН: ИГРА "КОСТИ" (Dice — roll under / roll over) -->
+    <!-- ЭКРАН: ИГРА "КОСТИ" (обычный кубик 1-6, ставка на одно число, x3) -->
     <div id="diceScreen" class="screen">
         <header class="profile-header slots-header">
             <button class="back-btn" id="backToProfileFromDiceBtn">
@@ -813,48 +813,40 @@
                 <span class="slots-balance-value"><span id="diceBalanceValue" class="user-balance">0</span> 💎</span>
             </div>
 
-            <!-- Переключатель направления броска -->
-            <div class="dice-direction-toggle" id="diceDirectionToggle">
-                <button class="dice-direction-btn is-active" data-direction="under" type="button">Меньше</button>
-                <button class="dice-direction-btn" data-direction="over" type="button">Больше</button>
+            <!-- Кубик с анимацией броска -->
+            <div class="dice-cube-wrap">
+                <div class="dice-cube" id="diceCube">
+                    <span class="dice-pip"></span><span class="dice-pip"></span><span class="dice-pip"></span>
+                    <span class="dice-pip"></span><span class="dice-pip"></span><span class="dice-pip"></span>
+                    <span class="dice-pip"></span><span class="dice-pip"></span><span class="dice-pip"></span>
+                </div>
             </div>
 
-            <!-- Статистика: шанс, множитель, потенциальный выигрыш -->
+            <!-- Выбор числа, на которое ставим -->
+            <div class="dice-numbers-panel">
+                <div class="dice-numbers-label">Ваше число</div>
+                <div class="dice-numbers-options" id="diceNumbersOptions">
+                    <button class="dice-number-btn is-active" data-number="1" type="button">1</button>
+                    <button class="dice-number-btn" data-number="2" type="button">2</button>
+                    <button class="dice-number-btn" data-number="3" type="button">3</button>
+                    <button class="dice-number-btn" data-number="4" type="button">4</button>
+                    <button class="dice-number-btn" data-number="5" type="button">5</button>
+                    <button class="dice-number-btn" data-number="6" type="button">6</button>
+                </div>
+            </div>
+
             <div class="bomber-stats-row dice-stats-row">
                 <div class="bomber-stat-box">
-                    <span class="bomber-stat-label">Шанс</span>
-                    <span class="bomber-stat-value" id="diceChanceValue">50.00%</span>
-                </div>
-                <div class="bomber-stat-box">
-                    <span class="bomber-stat-label">Множитель</span>
-                    <span class="bomber-stat-value" id="diceMultiplierValue">x1.90</span>
+                    <span class="bomber-stat-label">Выплата</span>
+                    <span class="bomber-stat-value">x3</span>
                 </div>
                 <div class="bomber-stat-box">
                     <span class="bomber-stat-label">Выигрыш</span>
-                    <span class="bomber-stat-value" id="dicePotentialWinValue">0.00 💎</span>
+                    <span class="bomber-stat-value" id="dicePotentialWinValue">0.90 💎</span>
                 </div>
             </div>
 
-            <!-- Шкала 0-100 с ползунком цели и маркером результата броска -->
-            <div class="dice-track-wrap">
-                <div class="dice-track" id="diceTrack">
-                    <div class="dice-track-lose" id="diceTrackLose"></div>
-                    <div class="dice-track-win" id="diceTrackWin"></div>
-                    <div class="dice-target-divider" id="diceTargetDivider"></div>
-                    <div class="dice-roll-marker" id="diceRollMarker" style="display:none;"></div>
-                </div>
-                <input type="range" id="diceTargetSlider" class="dice-target-slider" min="2" max="98" step="1" value="50">
-                <div class="dice-track-scale">
-                    <span>0</span>
-                    <span>25</span>
-                    <span>50</span>
-                    <span>75</span>
-                    <span>100</span>
-                </div>
-                <div class="dice-target-value">Цель: <b id="diceTargetValue">50</b></div>
-            </div>
-
-            <div class="slots-result" id="diceResult">Выберите цель и направление, сделайте ставку и нажмите «Бросить кости»</div>
+            <div class="slots-result" id="diceResult">Выберите число, сделайте ставку и нажмите «Бросить кубик»</div>
 
             <div class="slots-bet-panel">
                 <div class="slots-bet-label">Ставка</div>
@@ -875,7 +867,7 @@
             </div>
 
             <button class="slots-spin-btn dice-roll-btn" id="diceRollBtn" type="button">
-                <span class="slots-spin-btn-text">БРОСИТЬ КОСТИ</span>
+                <span class="slots-spin-btn-text">БРОСИТЬ КУБИК</span>
             </button>
         </div>
     </div>
@@ -886,37 +878,14 @@
             <button class="close-modal" id="closeDiceRulesModal">&times;</button>
             <h2>Правила игры «Кости»</h2>
             <p class="slots-rules-desc">
-                Выберите цель на шкале от 2 до 98 и направление броска: «Меньше» — выигрыш,
-                если результат броска окажется МЕНЬШЕ цели, «Больше» — если БОЛЬШЕ. Результат
-                броска — случайное число от 0.00 до 99.99, которое определяет сервер.
+                Обычный игральный кубик с гранями от 1 до 6. Выберите одно число, на которое
+                ставите, сделайте ставку и нажмите «Бросить кубик» — сервер честно бросит
+                кубик и определит результат.
             </p>
             <p class="slots-rules-desc">
-                Чем ýже выбранный диапазон выигрыша (то есть чем ниже шанс), тем выше множитель
-                ставки — и наоборот. Шанс и множитель пересчитываются сразу при движении
-                ползунка, ещё до броска, ничего не списывается, пока не нажата кнопка
-                «Бросить кости».
+                Если выпавшее число совпало с вашим — вы выигрываете <b>×3</b> от ставки.
+                Если нет — ставка сгорает. Ставить можно только на одно число за раз.
             </p>
-            <p class="slots-rules-desc">
-                Выигрыш = ставка × множитель, зачисляется на баланс сразу после броска.
-                Множитель считается по формуле 100 / Шанс% за вычетом комиссии площадки 5%.
-            </p>
-
-            <div class="bomber-rules-table">
-                <div class="bomber-rules-row bomber-rules-head">
-                    <span>Цель</span>
-                    <span>Шанс</span>
-                    <span>Множитель</span>
-                </div>
-                <div class="bomber-rules-row">
-                    <span>Меньше 50</span><span>50%</span><span class="bomber-risk-low">x1.90</span>
-                </div>
-                <div class="bomber-rules-row">
-                    <span>Меньше 20</span><span>20%</span><span class="bomber-risk-mid">x4.75</span>
-                </div>
-                <div class="bomber-rules-row">
-                    <span>Меньше 5</span><span>5%</span><span class="bomber-risk-high">x19.00</span>
-                </div>
-            </div>
 
             <div class="slots-rules-bets">
                 <div class="slots-rules-bet-item">

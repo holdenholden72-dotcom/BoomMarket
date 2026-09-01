@@ -3846,38 +3846,29 @@ async function bomberSyncActiveGame() {
     }
 }
 
+
 // =====================================================================
-// ИГРА "КОСТИ" (Dice — roll under / roll over)
+// ИГРА "КОСТИ" (обычный кубик 1-6, ставка на одно число, выплата x3)
 // =====================================================================
-// Формулы дублируются на клиенте только для мгновенного отображения шанса
-// и множителя при движении ползунка — реальный бросок и его результат
-// всегда считает сервер (см. server.js), клиент результат не подделывает.
 const DICE_MIN_BET = 0.3;
 const DICE_MAX_BET = 1000;
-const DICE_MIN_TARGET = 2;
-const DICE_MAX_TARGET = 98;
-const DICE_HOUSE_EDGE = 0.05;
+const DICE_PAYOUT_MULTIPLIER = 3;
 
-function diceWinChanceLocal(target, direction) {
-    return direction === 'over' ? (100 - target) : target;
-}
-function diceMultiplierLocal(target, direction) {
-    const chance = diceWinChanceLocal(target, direction);
-    return (100 / chance) * (1 - DICE_HOUSE_EDGE);
-}
+// Стандартное расположение точек на грани кубика — 9 позиций сетки 3x3
+// (индексы 0..8, слева направо сверху вниз), true = точка видна.
+const DICE_PIP_LAYOUTS = {
+    1: [4],
+    2: [0, 8],
+    3: [0, 4, 8],
+    4: [0, 2, 6, 8],
+    5: [0, 2, 4, 6, 8],
+    6: [0, 2, 3, 5, 6, 8],
+};
 
 const diceBalanceValueEl = document.getElementById('diceBalanceValue');
-const diceDirectionToggleEl = document.getElementById('diceDirectionToggle');
-const diceChanceValueEl = document.getElementById('diceChanceValue');
-const diceMultiplierValueEl = document.getElementById('diceMultiplierValue');
+const diceCubeEl = document.getElementById('diceCube');
+const diceNumbersOptionsEl = document.getElementById('diceNumbersOptions');
 const dicePotentialWinValueEl = document.getElementById('dicePotentialWinValue');
-const diceTrackEl = document.getElementById('diceTrack');
-const diceTrackLoseEl = document.getElementById('diceTrackLose');
-const diceTrackWinEl = document.getElementById('diceTrackWin');
-const diceTargetDividerEl = document.getElementById('diceTargetDivider');
-const diceRollMarkerEl = document.getElementById('diceRollMarker');
-const diceTargetSliderEl = document.getElementById('diceTargetSlider');
-const diceTargetValueEl = document.getElementById('diceTargetValue');
 const diceResultEl = document.getElementById('diceResult');
 const diceBetInput = document.getElementById('diceBetInput');
 const diceBetMinusBtn = document.getElementById('diceBetMinusBtn');
@@ -3888,9 +3879,19 @@ const diceRulesModal = document.getElementById('diceRulesModal');
 const closeDiceRulesModal = document.getElementById('closeDiceRulesModal');
 const closeDiceRulesModalBtn = document.getElementById('closeDiceRulesModalBtn');
 
-let diceDirection = 'under';
-let diceTarget = 50;
+let diceSelectedNumber = 1;
 let diceIsRolling = false;
+let diceRollIntervalId = null;
+
+// === Отрисовка грани кубика по числу ===
+function diceRenderFace(number) {
+    if (!diceCubeEl) return;
+    const pipsOn = new Set(DICE_PIP_LAYOUTS[number] || []);
+    diceCubeEl.querySelectorAll('.dice-pip').forEach((pip, idx) => {
+        pip.classList.toggle('is-on', pipsOn.has(idx));
+    });
+}
+diceRenderFace(1);
 
 // === Правила ===
 function openDiceRules() {
@@ -3922,7 +3923,7 @@ function clampDiceBet(value) {
 }
 function setDiceBetValue(value) {
     if (diceBetInput) diceBetInput.value = clampDiceBet(value);
-    diceUpdateDisplay();
+    diceUpdatePotentialWin();
 }
 if (diceBetInput) {
     diceBetInput.addEventListener('change', () => {
@@ -3950,72 +3951,39 @@ document.querySelectorAll('.dice-bet-quick-btn').forEach(btn => {
     });
 });
 
-// === Направление броска ===
-if (diceDirectionToggleEl) {
-    diceDirectionToggleEl.querySelectorAll('.dice-direction-btn').forEach(btn => {
+// === Выбор числа для ставки ===
+if (diceNumbersOptionsEl) {
+    diceNumbersOptionsEl.querySelectorAll('.dice-number-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             if (diceIsRolling) return;
-            diceDirection = btn.getAttribute('data-direction') === 'over' ? 'over' : 'under';
-            diceDirectionToggleEl.querySelectorAll('.dice-direction-btn').forEach(b => {
+            diceSelectedNumber = parseInt(btn.getAttribute('data-number'), 10);
+            diceNumbersOptionsEl.querySelectorAll('.dice-number-btn').forEach(b => {
                 b.classList.toggle('is-active', b === btn);
             });
-            diceUpdateDisplay();
         });
     });
 }
 
-// === Ползунок цели ===
-if (diceTargetSliderEl) {
-    diceTargetSliderEl.addEventListener('input', () => {
-        if (diceIsRolling) return;
-        diceTarget = clampDiceTarget(parseInt(diceTargetSliderEl.value, 10));
-        diceUpdateDisplay();
-    });
-}
-function clampDiceTarget(value) {
-    if (isNaN(value)) return 50;
-    return Math.max(DICE_MIN_TARGET, Math.min(DICE_MAX_TARGET, value));
-}
-
-// === Обновление шкалы, шанса, множителя и потенциального выигрыша ===
-function diceUpdateDisplay() {
-    const chance = diceWinChanceLocal(diceTarget, diceDirection);
-    const multiplier = diceMultiplierLocal(diceTarget, diceDirection);
+function diceUpdatePotentialWin() {
     const bet = clampDiceBet(parseFloat(diceBetInput.value)) || DICE_MIN_BET;
-
-    if (diceChanceValueEl) diceChanceValueEl.textContent = `${chance.toFixed(2)}%`;
-    if (diceMultiplierValueEl) diceMultiplierValueEl.textContent = `x${multiplier.toFixed(2)}`;
-    if (dicePotentialWinValueEl) dicePotentialWinValueEl.textContent = `${(bet * multiplier).toFixed(2)} 💎`;
-    if (diceTargetValueEl) diceTargetValueEl.textContent = diceTarget;
-    if (diceTargetSliderEl) diceTargetSliderEl.value = diceTarget;
-
-    // Зелёная зона (выигрыш) и красная зона (проигрыш) на шкале 0-100.
-    const targetPct = diceTarget;
-    if (diceDirection === 'under') {
-        if (diceTrackWinEl) { diceTrackWinEl.style.left = '0%'; diceTrackWinEl.style.width = `${targetPct}%`; }
-        if (diceTrackLoseEl) { diceTrackLoseEl.style.left = `${targetPct}%`; diceTrackLoseEl.style.width = `${100 - targetPct}%`; }
-    } else {
-        if (diceTrackLoseEl) { diceTrackLoseEl.style.left = '0%'; diceTrackLoseEl.style.width = `${targetPct}%`; }
-        if (diceTrackWinEl) { diceTrackWinEl.style.left = `${targetPct}%`; diceTrackWinEl.style.width = `${100 - targetPct}%`; }
+    if (dicePotentialWinValueEl) {
+        dicePotentialWinValueEl.textContent = `${(bet * DICE_PAYOUT_MULTIPLIER).toFixed(2)} 💎`;
     }
-    if (diceTargetDividerEl) diceTargetDividerEl.style.left = `${targetPct}%`;
 }
-diceUpdateDisplay();
+diceUpdatePotentialWin();
 
 function diceSetControlsDisabled(disabled) {
     diceIsRolling = disabled;
     if (diceRollBtn) {
         diceRollBtn.disabled = disabled;
-        diceRollBtn.classList.toggle('is-spinning', disabled);
-        diceRollBtn.querySelector('.slots-spin-btn-text').textContent = disabled ? '' : 'БРОСИТЬ КОСТИ';
+        diceRollBtn.querySelector('.slots-spin-btn-text').textContent = disabled ? 'БРОСАЕМ...' : 'БРОСИТЬ КУБИК';
     }
     if (diceBetMinusBtn) diceBetMinusBtn.disabled = disabled;
     if (diceBetPlusBtn) diceBetPlusBtn.disabled = disabled;
     if (diceBetInput) diceBetInput.disabled = disabled;
-    if (diceTargetSliderEl) diceTargetSliderEl.disabled = disabled;
     document.querySelectorAll('.dice-bet-quick-btn').forEach(btn => { btn.disabled = disabled; });
-    if (diceDirectionToggleEl) {
-        diceDirectionToggleEl.querySelectorAll('.dice-direction-btn').forEach(btn => { btn.disabled = disabled; });
+    if (diceNumbersOptionsEl) {
+        diceNumbersOptionsEl.querySelectorAll('.dice-number-btn').forEach(btn => { btn.disabled = disabled; });
     }
 }
 
@@ -4031,50 +3999,67 @@ async function handleDiceRoll() {
 
     diceSetControlsDisabled(true);
     diceResultEl.className = 'slots-result';
-    diceResultEl.textContent = 'Бросаем кости...';
-    if (diceRollMarkerEl) diceRollMarkerEl.style.display = 'none';
+    diceResultEl.textContent = 'Кубик катится...';
+    if (diceCubeEl) {
+        diceCubeEl.classList.remove('is-win', 'is-lose');
+        diceCubeEl.classList.add('is-rolling');
+    }
+
+    // Анимация: быстро перебираем случайные грани, пока ждём ответ сервера.
+    if (diceRollIntervalId) clearInterval(diceRollIntervalId);
+    diceRollIntervalId = setInterval(() => {
+        diceRenderFace(1 + Math.floor(Math.random() * 6));
+    }, 90);
+
+    // Небольшая минимальная длительность анимации, чтобы бросок не выглядел
+    // мгновенным, даже если сервер ответил очень быстро.
+    const minAnimationDelay = new Promise(resolve => setTimeout(resolve, 700));
 
     try {
-        const res = await fetch(`${API_URL}/api/games/dice/roll`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-            body: JSON.stringify({ bet, target: diceTarget, direction: diceDirection }),
-        });
+        const [res] = await Promise.all([
+            fetch(`${API_URL}/api/games/dice/roll`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+                body: JSON.stringify({ bet, number: diceSelectedNumber }),
+            }),
+            minAnimationDelay,
+        ]);
         const data = await res.json();
 
+        clearInterval(diceRollIntervalId);
+        diceRollIntervalId = null;
+        if (diceCubeEl) diceCubeEl.classList.remove('is-rolling');
+
         if (!data.ok) {
-            diceResultEl.textContent = data.error || 'Не удалось бросить кости';
+            diceResultEl.textContent = data.error || 'Не удалось бросить кубик';
             diceSetControlsDisabled(false);
             return;
         }
 
-        // Показываем маркер результата на шкале с небольшой анимацией.
-        if (diceRollMarkerEl) {
-            diceRollMarkerEl.style.transition = 'none';
-            diceRollMarkerEl.style.left = '0%';
-            diceRollMarkerEl.style.display = 'block';
-            void diceRollMarkerEl.offsetWidth; // force reflow
-            diceRollMarkerEl.style.transition = 'left 0.6s cubic-bezier(0.2, 0.7, 0.3, 1)';
-            diceRollMarkerEl.style.left = `${data.roll}%`;
-            diceRollMarkerEl.classList.toggle('is-win', data.win);
-            diceRollMarkerEl.classList.toggle('is-lose', !data.win);
+        diceRenderFace(data.roll);
+        if (diceCubeEl) {
+            diceCubeEl.classList.add('is-settled');
+            diceCubeEl.classList.toggle('is-win', data.win);
+            diceCubeEl.classList.toggle('is-lose', !data.win);
+            setTimeout(() => diceCubeEl.classList.remove('is-settled'), 500);
         }
-
-        await new Promise(resolve => setTimeout(resolve, 650));
 
         if (typeof data.balance === 'number') updateBalanceUI(data.balance);
 
         if (data.win) {
             diceResultEl.className = 'slots-result is-win';
-            diceResultEl.textContent = `Выпало ${data.roll.toFixed(2)} — выигрыш! x${data.multiplier} — +${data.winAmount} 💎`;
+            diceResultEl.textContent = `Выпало ${data.roll}! Угадали — выигрыш x3 — +${data.winAmount} 💎`;
         } else {
             diceResultEl.className = 'slots-result is-lose';
-            diceResultEl.textContent = `Выпало ${data.roll.toFixed(2)} — не повезло, попробуйте ещё раз`;
+            diceResultEl.textContent = `Выпало ${data.roll} — не повезло, попробуйте ещё раз`;
         }
 
         diceSetControlsDisabled(false);
     } catch (e) {
         console.error(e);
+        clearInterval(diceRollIntervalId);
+        diceRollIntervalId = null;
+        if (diceCubeEl) diceCubeEl.classList.remove('is-rolling');
         diceResultEl.textContent = 'Ошибка соединения с сервером';
         diceSetControlsDisabled(false);
     }
