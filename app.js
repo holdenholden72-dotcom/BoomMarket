@@ -17,6 +17,7 @@ const slotsScreen = document.getElementById('slotsScreen');
 const rouletteScreen = document.getElementById('rouletteScreen');
 const bomberScreen = document.getElementById('bomberScreen');
 const diceScreen = document.getElementById('diceScreen');
+const plinkoScreen = document.getElementById('plinkoScreen');
 const openProfileBtn = document.getElementById('openProfileBtn');
 const backToMarketBtn = document.getElementById('backToMarketBtn');
 const backToProfileFromHistoryBtn = document.getElementById('backToProfileFromHistoryBtn');
@@ -27,6 +28,7 @@ const backToProfileFromSlotsBtn = document.getElementById('backToProfileFromSlot
 const backToProfileFromRouletteBtn = document.getElementById('backToProfileFromRouletteBtn');
 const backToProfileFromBomberBtn = document.getElementById('backToProfileFromBomberBtn');
 const backToProfileFromDiceBtn = document.getElementById('backToProfileFromDiceBtn');
+const backToProfileFromPlinkoBtn = document.getElementById('backToProfileFromPlinkoBtn');
 
 const screensByName = {
     market: marketScreen,
@@ -39,6 +41,7 @@ const screensByName = {
     roulette: rouletteScreen,
     bomber: bomberScreen,
     dice: diceScreen,
+    plinko: plinkoScreen,
 };
 
 /** Показывает один экран из screensByName, скрывая остальные, и подсвечивает
@@ -170,6 +173,12 @@ if (backToProfileFromDiceBtn) {
     });
 }
 
+if (backToProfileFromPlinkoBtn) {
+    backToProfileFromPlinkoBtn.addEventListener('click', () => {
+        showScreen('profile');
+    });
+}
+
 // Нижняя навигация встречается на нескольких экранах (профиль, история) —
 // делегируем клики по data-nav вместо привязки к id конкретной кнопки.
 document.querySelectorAll('.bottom-nav .nav-item[data-nav]').forEach(btn => {
@@ -210,6 +219,10 @@ document.querySelectorAll('.game-tile').forEach(tile => {
         }
         if (game === 'dice') {
             showScreen('dice');
+            return;
+        }
+        if (game === 'plinko') {
+            showScreen('plinko');
             return;
         }
         alert('Эта игра скоро появится!');
@@ -4100,3 +4113,261 @@ function restrictBetInputToOneDecimal(inputEl) {
 }
 
 [slotsBetInput, rouletteBetInput, bomberBetInput, diceBetInput].forEach(restrictBetInputToOneDecimal);
+
+// =====================================================================
+// ИГРА "ПЛИНКО" (шарик через 8 рядов колышков в одну из 9 корзин)
+// =====================================================================
+const PLINKO_MIN_BET = 0.3;
+const PLINKO_MAX_BET = 1000;
+const PLINKO_ROWS = 8;
+
+// Те же таблицы множителей, что и на сервере — нужны только для отрисовки
+// корзин ДО броска. Итоговый выигрыш и путь шарика всегда определяет сервер.
+const PLINKO_MULTIPLIERS = {
+    low:    [2.8, 1.4, 1.1, 1.0, 0.6, 1.0, 1.1, 1.4, 2.8],
+    medium: [6.4, 2.4, 1.4, 0.8, 0.4, 0.8, 1.4, 2.4, 6.4],
+    high:   [16.0, 4.0, 1.5, 0.4, 0.2, 0.4, 1.5, 4.0, 16.0],
+};
+
+const plinkoBalanceValueEl = document.getElementById('plinkoBalanceValue');
+const plinkoRiskOptionsEl = document.getElementById('plinkoRiskOptions');
+const plinkoBoardEl = document.getElementById('plinkoBoard');
+const plinkoPegsLayerEl = document.getElementById('plinkoPegsLayer');
+const plinkoBallEl = document.getElementById('plinkoBall');
+const plinkoBinsEl = document.getElementById('plinkoBins');
+const plinkoResultEl = document.getElementById('plinkoResult');
+const plinkoBetInput = document.getElementById('plinkoBetInput');
+const plinkoBetMinusBtn = document.getElementById('plinkoBetMinusBtn');
+const plinkoBetPlusBtn = document.getElementById('plinkoBetPlusBtn');
+const plinkoDropBtn = document.getElementById('plinkoDropBtn');
+const openPlinkoRulesBtn = document.getElementById('openPlinkoRulesBtn');
+const plinkoRulesModal = document.getElementById('plinkoRulesModal');
+const closePlinkoRulesModal = document.getElementById('closePlinkoRulesModal');
+const closePlinkoRulesModalBtn = document.getElementById('closePlinkoRulesModalBtn');
+
+let plinkoSelectedRisk = 'medium';
+let plinkoIsDropping = false;
+
+restrictBetInputToOneDecimal(plinkoBetInput);
+
+// === Строим доску: 8 рядов колышков (треугольником, 1..8 колышков в ряду)
+// и 9 корзин снизу с множителями текущего уровня риска. Строится один раз,
+// корзины перерисовываются при смене риска. ===
+function plinkoBuildPegs() {
+    if (!plinkoPegsLayerEl) return;
+    plinkoPegsLayerEl.innerHTML = '';
+    for (let row = 0; row < PLINKO_ROWS; row++) {
+        const rowEl = document.createElement('div');
+        rowEl.className = 'plinko-peg-row';
+        const pegCount = row + 1;
+        for (let p = 0; p < pegCount; p++) {
+            const peg = document.createElement('span');
+            peg.className = 'plinko-peg';
+            rowEl.appendChild(peg);
+        }
+        plinkoPegsLayerEl.appendChild(rowEl);
+    }
+}
+plinkoBuildPegs();
+
+function plinkoBinTier(idx) {
+    // Индекс 0/8 — крайние (самый высокий множитель), 4 — центр (самый низкий).
+    const distanceFromCenter = Math.abs(idx - 4);
+    if (distanceFromCenter >= 4) return 'extreme';
+    if (distanceFromCenter >= 2) return 'high';
+    if (distanceFromCenter >= 1) return 'mid';
+    return 'low';
+}
+
+function plinkoRenderBins() {
+    if (!plinkoBinsEl) return;
+    const table = PLINKO_MULTIPLIERS[plinkoSelectedRisk];
+    plinkoBinsEl.innerHTML = '';
+    table.forEach((mult, idx) => {
+        const bin = document.createElement('div');
+        bin.className = `plinko-bin plinko-bin-${plinkoBinTier(idx)}`;
+        bin.setAttribute('data-bin-index', String(idx));
+        bin.textContent = `x${mult}`;
+        plinkoBinsEl.appendChild(bin);
+    });
+}
+plinkoRenderBins();
+
+// === Правила ===
+function openPlinkoRules() {
+    if (plinkoRulesModal) plinkoRulesModal.style.display = 'flex';
+}
+function closePlinkoRules() {
+    if (plinkoRulesModal) plinkoRulesModal.style.display = 'none';
+}
+if (openPlinkoRulesBtn) openPlinkoRulesBtn.addEventListener('click', openPlinkoRules);
+if (closePlinkoRulesModal) closePlinkoRulesModal.addEventListener('click', closePlinkoRules);
+if (closePlinkoRulesModalBtn) closePlinkoRulesModalBtn.addEventListener('click', closePlinkoRules);
+if (plinkoRulesModal) {
+    plinkoRulesModal.addEventListener('click', (e) => {
+        if (e.target === plinkoRulesModal) closePlinkoRules();
+    });
+}
+
+// === Уровень риска ===
+if (plinkoRiskOptionsEl) {
+    plinkoRiskOptionsEl.querySelectorAll('.plinko-risk-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (plinkoIsDropping) return;
+            plinkoSelectedRisk = btn.getAttribute('data-risk');
+            plinkoRiskOptionsEl.querySelectorAll('.plinko-risk-btn').forEach(b => {
+                b.classList.toggle('is-active', b === btn);
+            });
+            plinkoRenderBins();
+        });
+    });
+}
+
+// === Ставка (логика идентична остальным играм) ===
+function getPlinkoBalanceNumber() {
+    const el = document.querySelector('.user-balance');
+    const value = el ? parseFloat(el.textContent) : NaN;
+    return isNaN(value) ? PLINKO_MAX_BET : value;
+}
+function clampPlinkoBet(value) {
+    if (isNaN(value)) return PLINKO_MIN_BET;
+    let v = Math.max(PLINKO_MIN_BET, Math.min(PLINKO_MAX_BET, value));
+    v = Math.round(v * 10) / 10;
+    return v;
+}
+function setPlinkoBetValue(value) {
+    if (plinkoBetInput) plinkoBetInput.value = clampPlinkoBet(value);
+}
+if (plinkoBetInput) {
+    plinkoBetInput.addEventListener('change', () => {
+        setPlinkoBetValue(parseFloat(plinkoBetInput.value));
+    });
+}
+if (plinkoBetMinusBtn) {
+    plinkoBetMinusBtn.addEventListener('click', () => {
+        setPlinkoBetValue(parseFloat(plinkoBetInput.value) - 0.1);
+    });
+}
+if (plinkoBetPlusBtn) {
+    plinkoBetPlusBtn.addEventListener('click', () => {
+        setPlinkoBetValue(parseFloat(plinkoBetInput.value) + 0.1);
+    });
+}
+document.querySelectorAll('.plinko-bet-quick-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const mode = btn.getAttribute('data-bet-mode');
+        const current = parseFloat(plinkoBetInput.value) || PLINKO_MIN_BET;
+        if (mode === 'min') setPlinkoBetValue(PLINKO_MIN_BET);
+        if (mode === 'half') setPlinkoBetValue(current / 2);
+        if (mode === 'double') setPlinkoBetValue(current * 2);
+        if (mode === 'max') setPlinkoBetValue(Math.min(getPlinkoBalanceNumber(), PLINKO_MAX_BET));
+    });
+});
+
+function plinkoSetControlsDisabled(disabled) {
+    plinkoIsDropping = disabled;
+    if (plinkoDropBtn) {
+        plinkoDropBtn.disabled = disabled;
+        plinkoDropBtn.querySelector('.slots-spin-btn-text').textContent = disabled ? 'ШАРИК ПАДАЕТ...' : 'БРОСИТЬ ШАРИК';
+    }
+    if (plinkoBetMinusBtn) plinkoBetMinusBtn.disabled = disabled;
+    if (plinkoBetPlusBtn) plinkoBetPlusBtn.disabled = disabled;
+    if (plinkoBetInput) plinkoBetInput.disabled = disabled;
+    document.querySelectorAll('.plinko-bet-quick-btn').forEach(btn => { btn.disabled = disabled; });
+    if (plinkoRiskOptionsEl) {
+        plinkoRiskOptionsEl.querySelectorAll('.plinko-risk-btn').forEach(btn => { btn.disabled = disabled; });
+    }
+}
+
+// === Анимация падения шарика по пути, который прислал сервер ===
+// path — массив из 8 true/false (true = вправо). Горизонтальная позиция
+// считается в "единицах корзины" (всего 9 корзин, старт строго по центру
+// доски = 4.5 единицы), каждый ряд сдвигает шарик на ±0.5 единицы — после
+// 8 рядов шарик математически гарантированно оказывается по центру той
+// самой корзины, которую вернул сервер (slotIndex).
+async function plinkoAnimateDrop(path, slotIndex) {
+    if (!plinkoBallEl) return;
+
+    const positions = [4.5];
+    let x = 4.5;
+    path.forEach(goRight => {
+        x += goRight ? 0.5 : -0.5;
+        positions.push(x);
+    });
+
+    plinkoBallEl.style.display = 'block';
+    plinkoBallEl.classList.remove('is-win', 'is-lose');
+    plinkoBallEl.style.transition = 'none';
+    plinkoBallEl.style.left = `${(positions[0] / 9) * 100}%`;
+    plinkoBallEl.style.top = '0%';
+    void plinkoBallEl.offsetWidth; // force reflow
+
+    for (let row = 1; row <= PLINKO_ROWS; row++) {
+        plinkoBallEl.style.transition = 'left 0.16s ease, top 0.16s cubic-bezier(0.4, 0, 1, 1)';
+        plinkoBallEl.style.left = `${(positions[row] / 9) * 100}%`;
+        plinkoBallEl.style.top = `${(row / PLINKO_ROWS) * 100}%`;
+        await new Promise(resolve => setTimeout(resolve, 160));
+    }
+
+    // Подсвечиваем корзину, в которую попал шарик.
+    const bin = plinkoBinsEl ? plinkoBinsEl.querySelector(`[data-bin-index="${slotIndex}"]`) : null;
+    if (bin) {
+        bin.classList.add('is-landed');
+        setTimeout(() => bin.classList.remove('is-landed'), 900);
+    }
+}
+
+async function handlePlinkoDrop() {
+    if (plinkoIsDropping) return;
+    if (!authToken) {
+        alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+        return;
+    }
+
+    const bet = clampPlinkoBet(parseFloat(plinkoBetInput.value));
+    setPlinkoBetValue(bet);
+
+    plinkoSetControlsDisabled(true);
+    plinkoResultEl.className = 'slots-result';
+    plinkoResultEl.textContent = 'Шарик падает...';
+    if (plinkoBallEl) plinkoBallEl.style.display = 'none';
+
+    try {
+        const res = await fetch(`${API_URL}/api/games/plinko/drop`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+            body: JSON.stringify({ bet, risk: plinkoSelectedRisk }),
+        });
+        const data = await res.json();
+
+        if (!data.ok) {
+            plinkoResultEl.textContent = data.error || 'Не удалось бросить шарик';
+            plinkoSetControlsDisabled(false);
+            return;
+        }
+
+        await plinkoAnimateDrop(data.path, data.slotIndex);
+
+        if (typeof data.balance === 'number') updateBalanceUI(data.balance);
+
+        const isWin = data.winAmount > data.betAmount;
+        plinkoBallEl.classList.toggle('is-win', isWin);
+        plinkoBallEl.classList.toggle('is-lose', !isWin);
+
+        if (isWin) {
+            plinkoResultEl.className = 'slots-result is-win';
+            plinkoResultEl.textContent = `Шарик упал в x${data.multiplier} — выигрыш +${data.winAmount} 💎`;
+        } else {
+            plinkoResultEl.className = 'slots-result is-lose';
+            plinkoResultEl.textContent = `Шарик упал в x${data.multiplier} — вернулось ${data.winAmount} 💎`;
+        }
+
+        plinkoSetControlsDisabled(false);
+    } catch (e) {
+        console.error(e);
+        plinkoResultEl.textContent = 'Ошибка соединения с сервером';
+        plinkoSetControlsDisabled(false);
+    }
+}
+
+if (plinkoDropBtn) plinkoDropBtn.addEventListener('click', handlePlinkoDrop);

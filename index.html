@@ -227,6 +227,10 @@
                     <span class="game-tile-icon">💣</span>
                     <span class="game-tile-name">Бомбер</span>
                 </button>
+                <button class="game-tile" data-game="plinko">
+                    <span class="game-tile-icon">🎯</span>
+                    <span class="game-tile-name">Плинко</span>
+                </button>
             </div>
 
                <!-- Нижняя навигация -->
@@ -899,6 +903,126 @@
             </div>
 
             <button class="action-btn slots-rules-close-btn" id="closeDiceRulesModalBtn">Понятно</button>
+        </div>
+    </div>
+
+    <!-- ЭКРАН: ИГРА "ПЛИНКО" (шарик через колышки, 9 корзин с множителями) -->
+    <div id="plinkoScreen" class="screen">
+        <header class="profile-header slots-header">
+            <button class="back-btn" id="backToProfileFromPlinkoBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Назад
+            </button>
+            <button class="slots-rules-btn" id="openPlinkoRulesBtn">
+                <span class="slots-rules-btn-icon">i</span>
+                Правила
+            </button>
+        </header>
+
+        <div class="slots-content plinko-content">
+            <div class="slots-title">🎯 Плинко</div>
+
+            <div class="slots-balance-pill">
+                <span class="slots-balance-label">Баланс</span>
+                <span class="slots-balance-value"><span id="plinkoBalanceValue" class="user-balance">0</span> 💎</span>
+            </div>
+
+            <!-- Уровень риска -->
+            <div class="bomber-bombs-panel plinko-risk-panel">
+                <div class="bomber-bombs-label">Уровень риска</div>
+                <div class="bomber-bombs-options plinko-risk-options" id="plinkoRiskOptions">
+                    <button class="bomber-bombs-btn plinko-risk-btn" data-risk="low" type="button">Низкий</button>
+                    <button class="bomber-bombs-btn plinko-risk-btn is-active" data-risk="medium" type="button">Средний</button>
+                    <button class="bomber-bombs-btn plinko-risk-btn" data-risk="high" type="button">Высокий</button>
+                </div>
+            </div>
+
+            <!-- Доска с колышками, шариком и корзинами множителей -->
+            <div class="plinko-board-wrap">
+                <div class="plinko-board" id="plinkoBoard">
+                    <div class="plinko-pegs-layer" id="plinkoPegsLayer"></div>
+                    <div class="plinko-ball" id="plinkoBall" style="display:none;"></div>
+                </div>
+                <div class="plinko-bins" id="plinkoBins"></div>
+            </div>
+
+            <div class="slots-result" id="plinkoResult">Выберите риск, сделайте ставку и нажмите «Бросить шарик»</div>
+
+            <div class="slots-bet-panel">
+                <div class="slots-bet-label">Ставка</div>
+                <div class="slots-bet-controls">
+                    <button class="slots-bet-step-btn" id="plinkoBetMinusBtn" type="button">−</button>
+                    <div class="slots-bet-input-wrap">
+                        <input type="number" id="plinkoBetInput" value="0.3" min="0.3" max="1000" step="0.1" inputmode="decimal">
+                        <span class="slots-bet-diamond">💎</span>
+                    </div>
+                    <button class="slots-bet-step-btn" id="plinkoBetPlusBtn" type="button">+</button>
+                </div>
+                <div class="slots-bet-quick">
+                    <button class="slots-bet-quick-btn plinko-bet-quick-btn" data-bet-mode="min" type="button">MIN</button>
+                    <button class="slots-bet-quick-btn plinko-bet-quick-btn" data-bet-mode="half" type="button">1/2</button>
+                    <button class="slots-bet-quick-btn plinko-bet-quick-btn" data-bet-mode="double" type="button">x2</button>
+                    <button class="slots-bet-quick-btn plinko-bet-quick-btn" data-bet-mode="max" type="button">MAX</button>
+                </div>
+            </div>
+
+            <button class="slots-spin-btn plinko-drop-btn" id="plinkoDropBtn" type="button">
+                <span class="slots-spin-btn-text">БРОСИТЬ ШАРИК</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Модальное окно правил игры "Плинко" -->
+    <div id="plinkoRulesModal" class="modal" style="display: none;">
+        <div class="modal-content slots-rules-content">
+            <button class="close-modal" id="closePlinkoRulesModal">&times;</button>
+            <h2>Правила игры «Плинко»</h2>
+            <p class="slots-rules-desc">
+                Выберите уровень риска и сделайте ставку. Шарик падает через 8 рядов колышков,
+                на каждом ряду случайно уходя влево или вправо, и попадает в одну из 9 корзин
+                внизу — у каждой корзины свой множитель.
+            </p>
+            <p class="slots-rules-desc">
+                Выигрыш = ставка × множитель корзины, в которую попал шарик. Крайние корзины
+                (слева и справа) дают самый большой множитель, но шанс попасть в них ниже
+                всего — центральные корзины выпадают чаще всего, но множитель там ниже
+                (при низком и среднем риске может быть и меньше 1×).
+            </p>
+            <p class="slots-rules-desc">
+                Чем выше выбранный риск, тем больше разброс между крайними и центральными
+                множителями — выше шанс на крупный выигрыш, но и выше шанс потерять
+                большую часть ставки.
+            </p>
+
+            <div class="bomber-rules-table plinko-rules-table">
+                <div class="bomber-rules-row bomber-rules-head">
+                    <span>Риск</span>
+                    <span>Мин. множитель</span>
+                    <span>Макс. множитель</span>
+                </div>
+                <div class="bomber-rules-row">
+                    <span>Низкий</span><span class="bomber-risk-low">0.6×</span><span class="bomber-risk-low">2.8×</span>
+                </div>
+                <div class="bomber-rules-row">
+                    <span>Средний</span><span class="bomber-risk-mid">0.4×</span><span class="bomber-risk-mid">6.4×</span>
+                </div>
+                <div class="bomber-rules-row">
+                    <span>Высокий</span><span class="bomber-risk-high">0.2×</span><span class="bomber-risk-high">16×</span>
+                </div>
+            </div>
+
+            <div class="slots-rules-bets">
+                <div class="slots-rules-bet-item">
+                    <span>Мин. ставка</span>
+                    <b>0.3 💎</b>
+                </div>
+                <div class="slots-rules-bet-item">
+                    <span>Макс. ставка</span>
+                    <b>1 000 💎</b>
+                </div>
+            </div>
+
+            <button class="action-btn slots-rules-close-btn" id="closePlinkoRulesModalBtn">Понятно</button>
         </div>
     </div>
 

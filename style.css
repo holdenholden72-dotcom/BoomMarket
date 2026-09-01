@@ -2531,3 +2531,128 @@ body {
 .dice-roll-btn {
     margin-top: 6px;
 }
+
+/* =====================================================================
+   ИГРА "ПЛИНКО" (шарик через колышки в одну из 9 корзин)
+   ===================================================================== */
+
+.plinko-content {
+    padding-bottom: 28px;
+}
+
+.plinko-risk-panel {
+    margin-bottom: 14px;
+}
+
+.plinko-risk-options {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.plinko-risk-btn {
+    font-size: 13px;
+}
+
+/* Доска: колышки треугольником + падающий шарик */
+.plinko-board-wrap {
+    width: 100%;
+    max-width: 340px;
+    margin-bottom: 14px;
+}
+
+.plinko-board {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 0.85;
+    background: radial-gradient(ellipse at 50% 0%, #1c1c1e 0%, #0f0f0f 70%);
+    border: 1px solid rgba(255, 215, 0, 0.15);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 20px rgba(0,0,0,0.4);
+}
+
+.plinko-pegs-layer {
+    position: absolute;
+    inset: 6% 4% 4%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.plinko-peg-row {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+.plinko-peg {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #5a5a5e;
+    box-shadow: 0 0 3px rgba(255,255,255,0.15);
+}
+
+.plinko-ball {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    margin-left: -7px;
+    margin-top: -7px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff8dc, #ffd700 55%, #b8860b 100%);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    z-index: 2;
+}
+
+.plinko-ball.is-win {
+    box-shadow: 0 0 12px 3px rgba(52, 199, 89, 0.7);
+}
+
+.plinko-ball.is-lose {
+    box-shadow: 0 0 12px 3px rgba(255, 69, 58, 0.6);
+}
+
+/* Корзины множителей внизу доски */
+.plinko-bins {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap: 3px;
+    margin-top: 6px;
+}
+
+.plinko-bin {
+    text-align: center;
+    font-size: 9.5px;
+    font-weight: 800;
+    padding: 6px 0;
+    border-radius: 6px;
+    color: #1a1a1a;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.plinko-bin-low {
+    background: linear-gradient(160deg, #8e8e93, #6b6b70);
+    color: #fff;
+}
+
+.plinko-bin-mid {
+    background: linear-gradient(160deg, #4ee08a, #34c759);
+}
+
+.plinko-bin-high {
+    background: linear-gradient(160deg, #ffb347, #ff9f0a);
+}
+
+.plinko-bin-extreme {
+    background: linear-gradient(160deg, #ff6b6b, #ff453a);
+    color: #fff;
+}
+
+.plinko-bin.is-landed {
+    transform: scale(1.18) translateY(-3px);
+    box-shadow: 0 4px 14px rgba(255, 215, 0, 0.6);
+}
+
+.plinko-drop-btn {
+    margin-top: 6px;
+}
