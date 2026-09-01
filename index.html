@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Telegram NFT Market</title>
-    <link rel="stylesheet" href="style.css?v=10">
+    <link rel="stylesheet" href="style.css?v=17">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 </head>
@@ -206,15 +206,6 @@
                  подключим позже. -->
             <div class="section-title">ИГРЫ</div>
             <div class="games-grid">
-                <button class="game-tile" data-game="coinflip">
-                    <span class="game-tile-icon">🪙</span>
-                    <span class="game-tile-name">Coinflip</span>
-                    <span class="game-tile-badge">Скоро</span>
-                </button>
-                <button class="game-tile" data-game="dice">
-                    <span class="game-tile-icon">🎲</span>
-                    <span class="game-tile-name">Кости</span>
-                </button>
                 <button class="game-tile" data-game="roulette">
                     <span class="game-tile-icon">🎡</span>
                     <span class="game-tile-name">Рулетка</span>
@@ -378,6 +369,21 @@
 
         <div class="profile-content">
             <div class="section-title">ХРАНИЛИЩЕ</div>
+
+            <!-- Сводка по инвентарю: количество подарков и оценочная стоимость -->
+            <div class="storage-summary" id="storageSummary">
+                <div class="storage-summary-stat">
+                    <span class="storage-summary-value" id="storageSummaryCount">0</span>
+                    <span class="storage-summary-label">Подарков</span>
+                </div>
+                <div class="storage-summary-divider"></div>
+                <div class="storage-summary-stat">
+                    <span class="storage-summary-value storage-summary-worth">
+                        <span class="diamond-icon">💎</span><span id="storageSummaryWorth">0</span>
+                    </span>
+                    <span class="storage-summary-label">Оценочная стоимость</span>
+                </div>
+            </div>
 
             <!-- Поиск и фильтры (аналогично Маркету) -->
             <div class="filter-section">
@@ -792,147 +798,6 @@
         </div>
     </div>
 
-    <!-- ЭКРАН: ИГРА "КОСТИ" (Dice — roll under / roll over) -->
-    <div id="diceScreen" class="screen">
-        <header class="profile-header slots-header">
-            <button class="back-btn" id="backToProfileFromDiceBtn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-                Назад
-            </button>
-            <button class="slots-rules-btn" id="openDiceRulesBtn">
-                <span class="slots-rules-btn-icon">i</span>
-                Правила
-            </button>
-        </header>
-
-        <div class="slots-content dice-content">
-            <div class="slots-title">🎲 Кости</div>
-
-            <div class="slots-balance-pill">
-                <span class="slots-balance-label">Баланс</span>
-                <span class="slots-balance-value"><span id="diceBalanceValue" class="user-balance">0</span> 💎</span>
-            </div>
-
-            <!-- Переключатель направления броска -->
-            <div class="dice-direction-toggle" id="diceDirectionToggle">
-                <button class="dice-direction-btn is-active" data-direction="under" type="button">Меньше</button>
-                <button class="dice-direction-btn" data-direction="over" type="button">Больше</button>
-            </div>
-
-            <!-- Статистика: шанс, множитель, потенциальный выигрыш -->
-            <div class="bomber-stats-row dice-stats-row">
-                <div class="bomber-stat-box">
-                    <span class="bomber-stat-label">Шанс</span>
-                    <span class="bomber-stat-value" id="diceChanceValue">50.00%</span>
-                </div>
-                <div class="bomber-stat-box">
-                    <span class="bomber-stat-label">Множитель</span>
-                    <span class="bomber-stat-value" id="diceMultiplierValue">x1.90</span>
-                </div>
-                <div class="bomber-stat-box">
-                    <span class="bomber-stat-label">Выигрыш</span>
-                    <span class="bomber-stat-value" id="dicePotentialWinValue">0.00 💎</span>
-                </div>
-            </div>
-
-            <!-- Шкала 0-100 с ползунком цели и маркером результата броска -->
-            <div class="dice-track-wrap">
-                <div class="dice-track" id="diceTrack">
-                    <div class="dice-track-lose" id="diceTrackLose"></div>
-                    <div class="dice-track-win" id="diceTrackWin"></div>
-                    <div class="dice-target-divider" id="diceTargetDivider"></div>
-                    <div class="dice-roll-marker" id="diceRollMarker" style="display:none;"></div>
-                </div>
-                <input type="range" id="diceTargetSlider" class="dice-target-slider" min="2" max="98" step="1" value="50">
-                <div class="dice-track-scale">
-                    <span>0</span>
-                    <span>25</span>
-                    <span>50</span>
-                    <span>75</span>
-                    <span>100</span>
-                </div>
-                <div class="dice-target-value">Цель: <b id="diceTargetValue">50</b></div>
-            </div>
-
-            <div class="slots-result" id="diceResult">Выберите цель и направление, сделайте ставку и нажмите «Бросить кости»</div>
-
-            <div class="slots-bet-panel">
-                <div class="slots-bet-label">Ставка</div>
-                <div class="slots-bet-controls">
-                    <button class="slots-bet-step-btn" id="diceBetMinusBtn" type="button">−</button>
-                    <div class="slots-bet-input-wrap">
-                        <input type="number" id="diceBetInput" value="0.3" min="0.3" max="1000" step="0.1" inputmode="decimal">
-                        <span class="slots-bet-diamond">💎</span>
-                    </div>
-                    <button class="slots-bet-step-btn" id="diceBetPlusBtn" type="button">+</button>
-                </div>
-                <div class="slots-bet-quick">
-                    <button class="slots-bet-quick-btn dice-bet-quick-btn" data-bet-mode="min" type="button">MIN</button>
-                    <button class="slots-bet-quick-btn dice-bet-quick-btn" data-bet-mode="half" type="button">1/2</button>
-                    <button class="slots-bet-quick-btn dice-bet-quick-btn" data-bet-mode="double" type="button">x2</button>
-                    <button class="slots-bet-quick-btn dice-bet-quick-btn" data-bet-mode="max" type="button">MAX</button>
-                </div>
-            </div>
-
-            <button class="slots-spin-btn dice-roll-btn" id="diceRollBtn" type="button">
-                <span class="slots-spin-btn-text">БРОСИТЬ КОСТИ</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- Модальное окно правил игры "Кости" -->
-    <div id="diceRulesModal" class="modal" style="display: none;">
-        <div class="modal-content slots-rules-content">
-            <button class="close-modal" id="closeDiceRulesModal">&times;</button>
-            <h2>Правила игры «Кости»</h2>
-            <p class="slots-rules-desc">
-                Выберите цель на шкале от 2 до 98 и направление броска: «Меньше» — выигрыш,
-                если результат броска окажется МЕНЬШЕ цели, «Больше» — если БОЛЬШЕ. Результат
-                броска — случайное число от 0.00 до 99.99, которое определяет сервер.
-            </p>
-            <p class="slots-rules-desc">
-                Чем ýже выбранный диапазон выигрыша (то есть чем ниже шанс), тем выше множитель
-                ставки — и наоборот. Шанс и множитель пересчитываются сразу при движении
-                ползунка, ещё до броска, ничего не списывается, пока не нажата кнопка
-                «Бросить кости».
-            </p>
-            <p class="slots-rules-desc">
-                Выигрыш = ставка × множитель, зачисляется на баланс сразу после броска.
-                Множитель считается по формуле 100 / Шанс% за вычетом комиссии площадки 5%.
-            </p>
-
-            <div class="bomber-rules-table">
-                <div class="bomber-rules-row bomber-rules-head">
-                    <span>Цель</span>
-                    <span>Шанс</span>
-                    <span>Множитель</span>
-                </div>
-                <div class="bomber-rules-row">
-                    <span>Меньше 50</span><span>50%</span><span class="bomber-risk-low">x1.90</span>
-                </div>
-                <div class="bomber-rules-row">
-                    <span>Меньше 20</span><span>20%</span><span class="bomber-risk-mid">x4.75</span>
-                </div>
-                <div class="bomber-rules-row">
-                    <span>Меньше 5</span><span>5%</span><span class="bomber-risk-high">x19.00</span>
-                </div>
-            </div>
-
-            <div class="slots-rules-bets">
-                <div class="slots-rules-bet-item">
-                    <span>Мин. ставка</span>
-                    <b>0.3 💎</b>
-                </div>
-                <div class="slots-rules-bet-item">
-                    <span>Макс. ставка</span>
-                    <b>1 000 💎</b>
-                </div>
-            </div>
-
-            <button class="action-btn slots-rules-close-btn" id="closeDiceRulesModalBtn">Понятно</button>
-        </div>
-    </div>
-
     <!-- ЭКРАН 6: ТРЕЙД (P2P-обмен подарками между пользователями) -->
     <div id="tradeScreen" class="screen">
         <header class="profile-header">
@@ -960,12 +825,12 @@
                 <div id="tradeFoundUsers" class="trade-found-list"></div>
 
                 <div id="tradeSelectionArea" style="display:none;">
-                    <div class="trade-selected-user" id="tradeSelectedUserBox"></div>
+                    <div class="trade-selected-card" id="tradeSelectedUserBox"></div>
 
-                    <div class="section-title trade-subtitle">ВАШИ ПРЕДМЕТЫ</div>
+                    <div class="section-title trade-subtitle trade-give">ВЫ ОТДАЁТЕ<span class="trade-count-badge" id="tradeMyCount">0</span></div>
                     <ul class="history-list trade-pick-list" id="tradeMyItemsList"></ul>
 
-                    <div class="section-title trade-subtitle" id="tradeTheirItemsTitle">ПРЕДМЕТЫ ПОЛУЧАТЕЛЯ</div>
+                    <div class="section-title trade-subtitle trade-get" id="tradeTheirItemsTitle"><span id="tradeTheirItemsTitleText">ВЫ ПОЛУЧАЕТЕ</span><span class="trade-count-badge" id="tradeTheirCount">0</span></div>
                     <ul class="history-list trade-pick-list" id="tradeTheirItemsList"></ul>
 
                     <div class="section-title trade-subtitle">ДОПЛАТА TON (НЕОБЯЗАТЕЛЬНО)</div>
@@ -977,9 +842,9 @@
                         </div>
                         <input type="number" id="tradeTopupAmount" placeholder="0.0" min="0.1" step="0.1" style="display:none;">
                     </div>
-                    <div class="trade-fee-note">Комиссия площадки за трейд: 0.05 TON (спишется с вас сейчас, вернётся, если обмен не состоится)</div>
+                    <div class="trade-fee-note trade-fee-card">Комиссия площадки за трейд: 0.05 TON (спишется с вас сейчас, вернётся, если обмен не состоится)</div>
 
-                    <button class="action-btn" id="tradeSubmitBtn">Предложить обмен</button>
+                    <button class="action-btn trade-submit-btn" id="tradeSubmitBtn">Предложить обмен</button>
                 </div>
             </div>
 
@@ -1026,10 +891,10 @@
 
             <div class="trade-topup-note" id="tradeDetailTopupNote" style="display:none;"></div>
 
-            <div class="section-title trade-subtitle" id="tradeDetailGiveTitle">ВЫ ОТДАЁТЕ</div>
+            <div class="section-title trade-subtitle trade-give" id="tradeDetailGiveTitle">ВЫ ОТДАЁТЕ</div>
             <ul class="history-list" id="tradeDetailGiveList"></ul>
 
-            <div class="section-title trade-subtitle" id="tradeDetailGetTitle">ВЫ ПОЛУЧАЕТЕ</div>
+            <div class="section-title trade-subtitle trade-get" id="tradeDetailGetTitle">ВЫ ПОЛУЧАЕТЕ</div>
             <ul class="history-list" id="tradeDetailGetList"></ul>
 
             <div class="trade-detail-actions" id="tradeDetailActions"></div>
@@ -1340,6 +1205,45 @@
             <button class="action-btn listing-detail-cancel" id="listingDetailCancelBtn" style="display: none;">
                 Снять с продажи
             </button>
+        </div>
+    </div>
+
+    <!-- Модальное окно детального просмотра предложения (Ордеры → Предложения на ваши лоты) -->
+    <div id="offerDetailModal" class="modal" style="display: none;">
+        <div class="modal-content listing-detail-content">
+            <button class="close-modal listing-detail-close" id="closeOfferDetail">&times;</button>
+
+            <div class="listing-detail-image-wrap" id="offerDetailImageWrap">
+                <img id="offerDetailImage" class="listing-detail-image" src="" alt="">
+            </div>
+            <div class="listing-detail-title" id="offerDetailTitle"></div>
+            <div class="listing-detail-number" id="offerDetailNumber"></div>
+
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Модель</span>
+                <span class="listing-detail-value" id="offerDetailModel"></span>
+            </div>
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Фон</span>
+                <span class="listing-detail-value" id="offerDetailBackdrop"></span>
+            </div>
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Символ</span>
+                <span class="listing-detail-value" id="offerDetailSymbol"></span>
+            </div>
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Ваша цена лота</span>
+                <span class="listing-detail-value" id="offerDetailListingPrice"></span>
+            </div>
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Предлагают</span>
+                <span class="listing-detail-value offer-detail-offer-price" id="offerDetailOfferPrice"></span>
+            </div>
+
+            <div class="trade-detail-actions">
+                <button class="action-btn" id="offerDetailAcceptBtn">Подтвердить</button>
+                <button class="action-btn trade-decline-btn" id="offerDetailDeclineBtn">Отклонить</button>
+            </div>
         </div>
     </div>
 

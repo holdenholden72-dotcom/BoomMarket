@@ -16,7 +16,6 @@ const tradeScreen = document.getElementById('tradeScreen');
 const slotsScreen = document.getElementById('slotsScreen');
 const rouletteScreen = document.getElementById('rouletteScreen');
 const bomberScreen = document.getElementById('bomberScreen');
-const diceScreen = document.getElementById('diceScreen');
 const openProfileBtn = document.getElementById('openProfileBtn');
 const backToMarketBtn = document.getElementById('backToMarketBtn');
 const backToProfileFromHistoryBtn = document.getElementById('backToProfileFromHistoryBtn');
@@ -26,7 +25,6 @@ const backToProfileFromTradeBtn = document.getElementById('backToProfileFromTrad
 const backToProfileFromSlotsBtn = document.getElementById('backToProfileFromSlotsBtn');
 const backToProfileFromRouletteBtn = document.getElementById('backToProfileFromRouletteBtn');
 const backToProfileFromBomberBtn = document.getElementById('backToProfileFromBomberBtn');
-const backToProfileFromDiceBtn = document.getElementById('backToProfileFromDiceBtn');
 
 const screensByName = {
     market: marketScreen,
@@ -38,7 +36,6 @@ const screensByName = {
     slots: slotsScreen,
     roulette: rouletteScreen,
     bomber: bomberScreen,
-    dice: diceScreen,
 };
 
 /** Показывает один экран из screensByName, скрывая остальные, и подсвечивает
@@ -106,11 +103,50 @@ setInterval(() => {
     }
 }, MARKET_POLL_INTERVAL_MS);
 
+// === Автообновление трейда, пока пользователь на нём стоит ===
+// Так же, как и с маркетом: без этого статус обмена (принят/отклонён
+// другой стороной) и новые входящие предложения появлялись только после
+// перехода на другую вкладку и обратно — не сразу, как только собеседник
+// что-то сделал.
+const TRADE_POLL_INTERVAL_MS = 5000;
+
+setInterval(() => {
+    if (currentScreenName === 'trade' && document.visibilityState === 'visible') {
+        loadIncomingTrades({ silent: true });
+        loadMyTrades({ silent: true });
+    }
+}, TRADE_POLL_INTERVAL_MS);
+
+// === Автообновление ордеров, пока пользователь на этом экране ===
+// Та же логика, что и для маркета/трейда: без поллинга статус ордера
+// (например, "исполнен" после того, как кто-то продал/купил по нему)
+// появлялся только после ухода с вкладки и возврата на неё.
+const ORDERS_POLL_INTERVAL_MS = 5000;
+
+setInterval(() => {
+    if (currentScreenName === 'orders' && document.visibilityState === 'visible') {
+        loadActiveOrders({ silent: true });
+        loadOrderHistory({ silent: true });
+        loadMyOffers({ silent: true });
+    }
+}, ORDERS_POLL_INTERVAL_MS);
+
 // На случай, если Telegram просто "разбудил" уже открытое мини-приложение
-// (свернули/развернули), а не выполнил полную перезагрузку — досверяем баланс.
+// (свернули/развернули), а не выполнил полную перезагрузку — досверяем баланс
+// и, если пользователь как раз смотрит на Трейд, сразу подтягиваем обмены,
+// не дожидаясь следующего тика поллинга (до 5 секунд).
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
         refreshBalance();
+        if (currentScreenName === 'trade') {
+            loadIncomingTrades({ silent: true });
+            loadMyTrades({ silent: true });
+        }
+        if (currentScreenName === 'orders') {
+            loadActiveOrders({ silent: true });
+            loadOrderHistory({ silent: true });
+            loadMyOffers({ silent: true });
+        }
     }
 });
 
@@ -164,12 +200,6 @@ if (backToProfileFromBomberBtn) {
     });
 }
 
-if (backToProfileFromDiceBtn) {
-    backToProfileFromDiceBtn.addEventListener('click', () => {
-        showScreen('profile');
-    });
-}
-
 // Нижняя навигация встречается на нескольких экранах (профиль, история) —
 // делегируем клики по data-nav вместо привязки к id конкретной кнопки.
 document.querySelectorAll('.bottom-nav .nav-item[data-nav]').forEach(btn => {
@@ -190,8 +220,7 @@ if (ordersStatCard) {
     });
 }
 
-// Игровой хаб в профиле — "Слоты" и "Рулетка" ведут в реальные игры,
-// остальные плитки (Coinflip, Кости) пока чисто визуальные заглушки.
+// Игровой хаб в профиле — "Слоты", "Рулетка" и "Бомбер" ведут в реальные игры.
 document.querySelectorAll('.game-tile').forEach(tile => {
     tile.addEventListener('click', () => {
         const game = tile.getAttribute('data-game');
@@ -206,10 +235,6 @@ document.querySelectorAll('.game-tile').forEach(tile => {
         if (game === 'bomber') {
             showScreen('bomber');
             bomberSyncActiveGame();
-            return;
-        }
-        if (game === 'dice') {
-            showScreen('dice');
             return;
         }
         alert('Эта игра скоро появится!');
@@ -1198,18 +1223,24 @@ async function refreshOrdersStat() {
     }
 }
 
-async function loadActiveOrders() {
+async function loadActiveOrders(opts = {}) {
+    const silent = opts.silent === true;
     if (!ordersActiveList) return;
     if (!authToken) {
-        ordersActiveList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
+        if (!silent) ordersActiveList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
         return;
     }
-    ordersActiveList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    // При фоновом автообновлении не затираем список текстом "Загрузка..." —
+    // иначе он мигал бы пустым на каждом тике поллинга.
+    if (!silent) ordersActiveList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
     try {
-        const res = await fetch(`${API_URL}/api/orders`, { headers: { 'Authorization': `Bearer ${authToken}` } });
+        const res = await fetch(`${API_URL}/api/orders`, {
+            headers: { 'Authorization': `Bearer ${authToken}` },
+            cache: 'no-store',
+        });
         const data = await res.json();
         if (!data.ok) {
-            ordersActiveList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить ордера'}</div>`;
+            if (!silent) ordersActiveList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить ордера'}</div>`;
             return;
         }
         renderOrdersList(ordersActiveList, ordersActiveById, data.orders, { showCancel: true });
@@ -1217,28 +1248,32 @@ async function loadActiveOrders() {
         // счётчик в профиле заодно, без лишнего запроса.
         setOrdersStatValue(data.orders.length);
     } catch (e) {
-        ordersActiveList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        if (!silent) ordersActiveList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
         console.error(e);
     }
 }
 
-async function loadOrderHistory() {
+async function loadOrderHistory(opts = {}) {
+    const silent = opts.silent === true;
     if (!ordersHistoryList) return;
     if (!authToken) {
-        ordersHistoryList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
+        if (!silent) ordersHistoryList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
         return;
     }
-    ordersHistoryList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    if (!silent) ordersHistoryList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
     try {
-        const res = await fetch(`${API_URL}/api/orders/history`, { headers: { 'Authorization': `Bearer ${authToken}` } });
+        const res = await fetch(`${API_URL}/api/orders/history`, {
+            headers: { 'Authorization': `Bearer ${authToken}` },
+            cache: 'no-store',
+        });
         const data = await res.json();
         if (!data.ok) {
-            ordersHistoryList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить историю ордеров'}</div>`;
+            if (!silent) ordersHistoryList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить историю ордеров'}</div>`;
             return;
         }
         renderOrdersList(ordersHistoryList, ordersHistoryById, data.orders, { showCancel: false });
     } catch (e) {
-        ordersHistoryList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        if (!silent) ordersHistoryList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
         console.error(e);
     }
 }
@@ -1261,6 +1296,7 @@ function renderMyOffers(offers) {
 
         const li = document.createElement('li');
         li.className = 'history-row has-gift';
+        li.dataset.offerId = String(offer.order_id);
 
         li.innerHTML = `
             <div class="history-thumb" style="background-color:${bg};">
@@ -1281,70 +1317,170 @@ function renderMyOffers(offers) {
     });
 }
 
-async function loadMyOffers() {
+async function loadMyOffers(opts = {}) {
+    const silent = opts.silent === true;
     if (!ordersOffersList) return;
     if (!authToken) {
-        ordersOffersList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
+        if (!silent) ordersOffersList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
         return;
     }
-    ordersOffersList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    if (!silent) ordersOffersList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
     try {
         const res = await fetch(`${API_URL}/api/my-offers`, { headers: { 'Authorization': `Bearer ${authToken}` } });
         const data = await res.json();
         if (!data.ok) {
-            ordersOffersList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить предложения'}</div>`;
+            if (!silent) ordersOffersList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить предложения'}</div>`;
             return;
         }
         renderMyOffers(data.offers);
     } catch (e) {
-        ordersOffersList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        if (!silent) ordersOffersList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
         console.error(e);
+    }
+}
+
+/** Продаёт лот по конкретному предложению (order) — общая логика для кнопки
+ * "Продать" прямо в строке списка и кнопки "Подтвердить" в модалке деталей. */
+async function acceptOffer(listingId, orderId, btn) {
+    if (!authToken) {
+        alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+        return;
+    }
+    if (!confirm('Продать этот лот по цене предложения?')) return;
+
+    if (btn) btn.disabled = true;
+
+    try {
+        const res = await fetch(`${API_URL}/api/listings/${listingId}/accept-offer`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`,
+            },
+            body: JSON.stringify({ orderId }),
+        });
+
+        const data = await res.json();
+
+        if (!data.ok) {
+            alert(data.error || 'Не удалось продать лот');
+            if (btn) btn.disabled = false;
+            return;
+        }
+
+        updateBalanceUI(data.balance);
+        alert('Лот продан!');
+        if (offerDetailModal) offerDetailModal.style.display = 'none';
+        await loadMyOffers();
+        await loadListings();
+    } catch (err) {
+        alert('Ошибка соединения с сервером');
+        console.error(err);
+        if (btn) btn.disabled = false;
     }
 }
 
 if (ordersOffersList) {
     ordersOffersList.addEventListener('click', async (e) => {
-        const btn = e.target.closest('.offer-accept-btn');
-        if (!btn) return;
+        const acceptBtn = e.target.closest('.offer-accept-btn');
+        if (acceptBtn) {
+            await acceptOffer(acceptBtn.dataset.listingId, acceptBtn.dataset.orderId, acceptBtn);
+            return;
+        }
+        // Клик по остальной части строки (в том числе по картинке подарка) —
+        // открываем детальную карточку предложения.
+        const row = e.target.closest('.history-row.has-gift');
+        if (!row) return;
+        const offer = myOffersById.get(row.dataset.offerId);
+        if (!offer) return;
+        openOfferDetail(offer);
+    });
+}
 
-        const listingId = btn.dataset.listingId;
-        const orderId = btn.dataset.orderId;
+// === Модалка детального просмотра предложения на лот ===
+const offerDetailModal = document.getElementById('offerDetailModal');
+const closeOfferDetailBtn = document.getElementById('closeOfferDetail');
+const offerDetailImageWrap = document.getElementById('offerDetailImageWrap');
+const offerDetailImage = document.getElementById('offerDetailImage');
+const offerDetailTitle = document.getElementById('offerDetailTitle');
+const offerDetailNumber = document.getElementById('offerDetailNumber');
+const offerDetailModelEl = document.getElementById('offerDetailModel');
+const offerDetailBackdrop = document.getElementById('offerDetailBackdrop');
+const offerDetailSymbol = document.getElementById('offerDetailSymbol');
+const offerDetailListingPrice = document.getElementById('offerDetailListingPrice');
+const offerDetailOfferPrice = document.getElementById('offerDetailOfferPrice');
+const offerDetailAcceptBtn = document.getElementById('offerDetailAcceptBtn');
+const offerDetailDeclineBtn = document.getElementById('offerDetailDeclineBtn');
 
+function openOfferDetail(offer) {
+    const image = offer.model_icon || offer.collection_image || '';
+    offerDetailImageWrap.style.backgroundColor = offer.backdrop_color || '#333';
+    offerDetailImage.src = image;
+    offerDetailTitle.textContent = offer.collection_name;
+    offerDetailNumber.textContent = offer.gift_number ? `#${offer.gift_number}` : '';
+    offerDetailModelEl.textContent = traitLabel(offer.model_name);
+    offerDetailBackdrop.textContent = traitLabel(offer.backdrop_name);
+    offerDetailSymbol.textContent = traitLabel(offer.symbol_name);
+    offerDetailListingPrice.textContent = `💎 ${offer.listing_price}`;
+    offerDetailOfferPrice.textContent = `💎 ${offer.max_price}`;
+
+    offerDetailAcceptBtn.dataset.listingId = offer.listing_id;
+    offerDetailAcceptBtn.dataset.orderId = offer.order_id;
+    offerDetailAcceptBtn.disabled = false;
+
+    offerDetailModal.style.display = 'flex';
+}
+
+if (offerDetailAcceptBtn) {
+    offerDetailAcceptBtn.addEventListener('click', () => {
+        acceptOffer(offerDetailAcceptBtn.dataset.listingId, offerDetailAcceptBtn.dataset.orderId, offerDetailAcceptBtn);
+    });
+}
+
+// "Отклонить" полностью отменяет ЧУЖОЙ ордер на покупку (запрос на сервер —
+// см. /api/my-offers/:orderId/dismiss): деньги возвращаются покупателю, а
+// ордер пропадает из "Предложений" у всех продавцов, не только у вас. Это
+// необратимо, поэтому запрашиваем подтверждение перед отправкой.
+if (offerDetailDeclineBtn) {
+    offerDetailDeclineBtn.addEventListener('click', async () => {
         if (!authToken) {
             alert('Не удалось подтвердить личность. Попробуйте перезайти.');
             return;
         }
-        if (!confirm('Продать этот лот по цене предложения?')) return;
+        if (!confirm('Отклонить это предложение? Ордер покупателя будет полностью отменён, деньги вернутся ему.')) return;
 
-        btn.disabled = true;
+        const listingId = offerDetailAcceptBtn.dataset.listingId;
+        const orderId = offerDetailAcceptBtn.dataset.orderId;
 
+        offerDetailDeclineBtn.disabled = true;
         try {
-            const res = await fetch(`${API_URL}/api/listings/${listingId}/accept-offer`, {
+            const res = await fetch(`${API_URL}/api/my-offers/${orderId}/dismiss`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${authToken}`,
                 },
-                body: JSON.stringify({ orderId }),
+                body: JSON.stringify({ listingId }),
             });
-
             const data = await res.json();
-
             if (!data.ok) {
-                alert(data.error || 'Не удалось продать лот');
-                btn.disabled = false;
+                alert(data.error || 'Не удалось отклонить предложение');
                 return;
             }
-
-            updateBalanceUI(data.balance);
-            alert('Лот продан!');
+            offerDetailModal.style.display = 'none';
             await loadMyOffers();
-            await loadListings();
         } catch (err) {
             alert('Ошибка соединения с сервером');
             console.error(err);
-            btn.disabled = false;
+        } finally {
+            offerDetailDeclineBtn.disabled = false;
         }
+    });
+}
+
+if (closeOfferDetailBtn && offerDetailModal) {
+    closeOfferDetailBtn.addEventListener('click', () => {
+        offerDetailModal.style.display = 'none';
     });
 }
 
@@ -2223,6 +2359,8 @@ if (confirmCreateListingBtn) {
 // =====================================================================
 
 const storageGrid = document.getElementById('storageGrid');
+const storageSummaryCount = document.getElementById('storageSummaryCount');
+const storageSummaryWorth = document.getElementById('storageSummaryWorth');
 const storageItemsById = new Map();
 
 // Полный, неотфильтрованный список товаров пользователя с сервера —
@@ -2288,6 +2426,19 @@ function applyStorageFilters() {
     }
 
     renderStorageGrid(items, allInventoryItems.length === 0);
+    updateStorageSummary();
+}
+
+/** Обновляет сводную плашку над сеткой хранилища: общее количество подарков
+ * и сумму их цен на момент покупки (грубая оценка стоимости инвентаря). */
+function updateStorageSummary() {
+    if (!storageSummaryCount || !storageSummaryWorth) return;
+
+    const count = allInventoryItems.length;
+    const worth = allInventoryItems.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
+
+    storageSummaryCount.textContent = count;
+    storageSummaryWorth.textContent = worth % 1 === 0 ? worth : worth.toFixed(1);
 }
 
 function renderStorageGrid(items, isTrulyEmpty) {
@@ -2311,13 +2462,25 @@ function renderStorageGrid(items, isTrulyEmpty) {
         const bg = item.backdrop_color || '#333';
         const image = item.model_icon || item.collection_image || '';
 
+        // Показываем бейдж редкости только для действительно редких трейтов
+        // (топ ~5% модели) — иначе бейдж превращается в шум на каждой карточке.
+        const rarityPermille = item.model_rarity;
+        const rarityBadge = (typeof rarityPermille === 'number' && rarityPermille > 0 && rarityPermille <= 50)
+            ? `<div class="nft-rarity-badge">★ ${(rarityPermille / 10).toFixed(1)}%</div>`
+            : '';
+
         card.innerHTML = `
             <div class="nft-image-container" style="background-color: ${bg};">
                 ${image ? `<img src="${image}" class="nft-img" alt="${item.collection_name}">` : ''}
+                ${rarityBadge}
             </div>
             <div class="nft-info">
                 <div class="nft-title">${item.collection_name}</div>
                 <div class="nft-number">#${item.gift_number}</div>
+                <div class="nft-bottom">
+                    <div class="nft-price">💎 ${item.price}</div>
+                    <div class="storage-sell-tag">Продать</div>
+                </div>
             </div>
         `;
         storageGrid.appendChild(card);
@@ -2444,7 +2607,10 @@ const tradeFoundUsers = document.getElementById('tradeFoundUsers');
 const tradeSelectionArea = document.getElementById('tradeSelectionArea');
 const tradeSelectedUserBox = document.getElementById('tradeSelectedUserBox');
 const tradeMyItemsList = document.getElementById('tradeMyItemsList');
+const tradeMyCount = document.getElementById('tradeMyCount');
 const tradeTheirItemsTitle = document.getElementById('tradeTheirItemsTitle');
+const tradeTheirItemsTitleText = document.getElementById('tradeTheirItemsTitleText');
+const tradeTheirCount = document.getElementById('tradeTheirCount');
 const tradeTheirItemsList = document.getElementById('tradeTheirItemsList');
 const tradeSubmitBtn = document.getElementById('tradeSubmitBtn');
 const tradeTopupDirection = document.getElementById('tradeTopupDirection');
@@ -2486,6 +2652,8 @@ function resetTradeNewPanel() {
     if (tradeSelectionArea) tradeSelectionArea.style.display = 'none';
     if (tradeMyItemsList) tradeMyItemsList.innerHTML = '';
     if (tradeTheirItemsList) tradeTheirItemsList.innerHTML = '';
+    if (tradeTheirItemsTitleText) tradeTheirItemsTitleText.textContent = 'ВЫ ПОЛУЧАЕТЕ';
+    updateTradeCounts();
     if (tradeTopupAmount) {
         tradeTopupAmount.value = '';
         tradeTopupAmount.style.display = 'none';
@@ -2512,15 +2680,24 @@ if (tradeTopupDirection) {
     });
 }
 
+/** Переключает вкладку экрана "Трейд" программно (используется как обработчиком
+ * кликов по табам, так и кодом, который должен сам открыть нужную вкладку —
+ * например, показать "Мои обмены" сразу после отправки нового предложения). */
+function switchTradeTab(tab) {
+    if (!tradeTabs) return;
+    tradeTabs.querySelectorAll('.orders-tab').forEach(t => {
+        t.classList.toggle('active', t.getAttribute('data-trade-tab') === tab);
+    });
+    tradeNewPanel.style.display = tab === 'new' ? '' : 'none';
+    tradeIncomingList.style.display = tab === 'incoming' ? '' : 'none';
+    tradeMineList.style.display = tab === 'mine' ? '' : 'none';
+}
+
 if (tradeTabs) {
     tradeTabs.addEventListener('click', (e) => {
         const btn = e.target.closest('.orders-tab');
         if (!btn) return;
-        const tab = btn.getAttribute('data-trade-tab');
-        tradeTabs.querySelectorAll('.orders-tab').forEach(t => t.classList.toggle('active', t === btn));
-        tradeNewPanel.style.display = tab === 'new' ? '' : 'none';
-        tradeIncomingList.style.display = tab === 'incoming' ? '' : 'none';
-        tradeMineList.style.display = tab === 'mine' ? '' : 'none';
+        switchTradeTab(btn.getAttribute('data-trade-tab'));
     });
 }
 
@@ -2578,16 +2755,34 @@ async function selectTradeTarget(user) {
     tradeTheirSelected.clear();
     tradeFoundUsers.innerHTML = '';
     tradeRecipientInput.value = '';
-    tradeSelectedUserBox.innerHTML = `Обмен с <b>@${user.username}</b>`;
+    const displayName = [user.first_name, user.last_name].filter(Boolean).join(' ');
+    tradeSelectedUserBox.innerHTML = `
+        <img class="trade-found-avatar" src="${user.photo_url || ''}" alt="">
+        <div class="trade-selected-card-info">
+            <div class="trade-selected-card-name">${displayName ? displayName + ' · ' : ''}@${user.username}</div>
+            <div class="trade-selected-card-hint">Выбран для обмена</div>
+        </div>
+        <button type="button" class="trade-selected-card-clear" id="tradeSelectedClearBtn" title="Сменить получателя">✕</button>
+    `;
+    const clearBtn = document.getElementById('tradeSelectedClearBtn');
+    if (clearBtn) clearBtn.addEventListener('click', resetTradeNewPanel);
     tradeSelectionArea.style.display = '';
-    tradeTheirItemsTitle.textContent = `ПРЕДМЕТЫ @${user.username}`;
+    if (tradeTheirItemsTitleText) tradeTheirItemsTitleText.textContent = `ВЫ ПОЛУЧАЕТЕ ОТ @${user.username}`;
     await Promise.all([loadTradeMyItems(), loadTradeTheirItems()]);
+}
+
+/** Обновляет бейджи-счётчики "N" рядом с заголовками "Вы отдаёте"/"Вы
+ * получаете" по текущему размеру выбранных наборов предметов. */
+function updateTradeCounts() {
+    if (tradeMyCount) tradeMyCount.textContent = tradeMySelected.size;
+    if (tradeTheirCount) tradeTheirCount.textContent = tradeTheirSelected.size;
 }
 
 function renderTradePickList(container, items, selectedSet) {
     container.innerHTML = '';
     if (!items || items.length === 0) {
         container.innerHTML = `<div class="empty-state">Хранилище пусто</div>`;
+        updateTradeCounts();
         return;
     }
     items.forEach(item => {
@@ -2606,9 +2801,12 @@ function renderTradePickList(container, items, selectedSet) {
             </div>
         `;
         const checkbox = li.querySelector('input[type="checkbox"]');
+        li.classList.toggle('is-selected', checkbox.checked);
         checkbox.addEventListener('change', () => {
             if (checkbox.checked) selectedSet.add(item.id);
             else selectedSet.delete(item.id);
+            li.classList.toggle('is-selected', checkbox.checked);
+            updateTradeCounts();
         });
         li.addEventListener('click', (e) => {
             if (e.target === checkbox) return;
@@ -2617,6 +2815,7 @@ function renderTradePickList(container, items, selectedSet) {
         });
         container.appendChild(li);
     });
+    updateTradeCounts();
 }
 
 async function loadTradeMyItems() {
@@ -2723,6 +2922,7 @@ if (tradeSubmitBtn) {
             }
             alert('Предложение обмена отправлено!');
             resetTradeNewPanel();
+            switchTradeTab('mine');
             await Promise.all([loadMyTrades(), refreshBalance()]);
         } catch (e) {
             alert('Ошибка соединения с сервером');
@@ -2779,18 +2979,22 @@ function renderTradeSummaryRow(trade) {
     return li;
 }
 
-async function loadIncomingTrades() {
+async function loadIncomingTrades(opts = {}) {
+    const silent = opts.silent === true;
     if (!tradeIncomingList) return;
     if (!authToken) {
-        tradeIncomingList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
+        if (!silent) tradeIncomingList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
         return;
     }
-    tradeIncomingList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    // При фоновом автообновлении (поллинге) не затираем список текстом
+    // "Загрузка..." — иначе он мигал бы пустым каждые несколько секунд,
+    // пока пользователь просто смотрит на вкладку.
+    if (!silent) tradeIncomingList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
     try {
         const res = await fetch(`${API_URL}/api/trades/incoming`, { headers: { 'Authorization': `Bearer ${authToken}` } });
         const data = await res.json();
         if (!data.ok) {
-            tradeIncomingList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить обмены'}</div>`;
+            if (!silent) tradeIncomingList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить обмены'}</div>`;
             return;
         }
         tradeIncomingCache.clear();
@@ -2804,23 +3008,27 @@ async function loadIncomingTrades() {
             tradeIncomingList.appendChild(renderTradeSummaryRow(trade));
         });
     } catch (e) {
-        tradeIncomingList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        // При тихом фоновом обновлении не заменяем уже показанный список
+        // сообщением об ошибке из-за единичного сбоя сети — просто попробуем
+        // снова на следующем тике поллинга.
+        if (!silent) tradeIncomingList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
         console.error(e);
     }
 }
 
-async function loadMyTrades() {
+async function loadMyTrades(opts = {}) {
+    const silent = opts.silent === true;
     if (!tradeMineList) return;
     if (!authToken) {
-        tradeMineList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
+        if (!silent) tradeMineList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
         return;
     }
-    tradeMineList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    if (!silent) tradeMineList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
     try {
         const res = await fetch(`${API_URL}/api/trades/mine`, { headers: { 'Authorization': `Bearer ${authToken}` } });
         const data = await res.json();
         if (!data.ok) {
-            tradeMineList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить обмены'}</div>`;
+            if (!silent) tradeMineList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить обмены'}</div>`;
             return;
         }
         tradeMineCache.clear();
@@ -2834,7 +3042,7 @@ async function loadMyTrades() {
             tradeMineList.appendChild(renderTradeSummaryRow(trade));
         });
     } catch (e) {
-        tradeMineList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        if (!silent) tradeMineList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
         console.error(e);
     }
 }
@@ -3827,239 +4035,3 @@ async function bomberSyncActiveGame() {
         console.error(e);
     }
 }
-
-// =====================================================================
-// ИГРА "КОСТИ" (Dice — roll under / roll over)
-// =====================================================================
-// Формулы дублируются на клиенте только для мгновенного отображения шанса
-// и множителя при движении ползунка — реальный бросок и его результат
-// всегда считает сервер (см. server.js), клиент результат не подделывает.
-const DICE_MIN_BET = 0.3;
-const DICE_MAX_BET = 1000;
-const DICE_MIN_TARGET = 2;
-const DICE_MAX_TARGET = 98;
-const DICE_HOUSE_EDGE = 0.05;
-
-function diceWinChanceLocal(target, direction) {
-    return direction === 'over' ? (100 - target) : target;
-}
-function diceMultiplierLocal(target, direction) {
-    const chance = diceWinChanceLocal(target, direction);
-    return (100 / chance) * (1 - DICE_HOUSE_EDGE);
-}
-
-const diceBalanceValueEl = document.getElementById('diceBalanceValue');
-const diceDirectionToggleEl = document.getElementById('diceDirectionToggle');
-const diceChanceValueEl = document.getElementById('diceChanceValue');
-const diceMultiplierValueEl = document.getElementById('diceMultiplierValue');
-const dicePotentialWinValueEl = document.getElementById('dicePotentialWinValue');
-const diceTrackEl = document.getElementById('diceTrack');
-const diceTrackLoseEl = document.getElementById('diceTrackLose');
-const diceTrackWinEl = document.getElementById('diceTrackWin');
-const diceTargetDividerEl = document.getElementById('diceTargetDivider');
-const diceRollMarkerEl = document.getElementById('diceRollMarker');
-const diceTargetSliderEl = document.getElementById('diceTargetSlider');
-const diceTargetValueEl = document.getElementById('diceTargetValue');
-const diceResultEl = document.getElementById('diceResult');
-const diceBetInput = document.getElementById('diceBetInput');
-const diceBetMinusBtn = document.getElementById('diceBetMinusBtn');
-const diceBetPlusBtn = document.getElementById('diceBetPlusBtn');
-const diceRollBtn = document.getElementById('diceRollBtn');
-const openDiceRulesBtn = document.getElementById('openDiceRulesBtn');
-const diceRulesModal = document.getElementById('diceRulesModal');
-const closeDiceRulesModal = document.getElementById('closeDiceRulesModal');
-const closeDiceRulesModalBtn = document.getElementById('closeDiceRulesModalBtn');
-
-let diceDirection = 'under';
-let diceTarget = 50;
-let diceIsRolling = false;
-
-// === Правила ===
-function openDiceRules() {
-    if (diceRulesModal) diceRulesModal.style.display = 'flex';
-}
-function closeDiceRules() {
-    if (diceRulesModal) diceRulesModal.style.display = 'none';
-}
-if (openDiceRulesBtn) openDiceRulesBtn.addEventListener('click', openDiceRules);
-if (closeDiceRulesModal) closeDiceRulesModal.addEventListener('click', closeDiceRules);
-if (closeDiceRulesModalBtn) closeDiceRulesModalBtn.addEventListener('click', closeDiceRules);
-if (diceRulesModal) {
-    diceRulesModal.addEventListener('click', (e) => {
-        if (e.target === diceRulesModal) closeDiceRules();
-    });
-}
-
-// === Ставка (логика идентична остальным играм) ===
-function getDiceBalanceNumber() {
-    const el = document.querySelector('.user-balance');
-    const value = el ? parseFloat(el.textContent) : NaN;
-    return isNaN(value) ? DICE_MAX_BET : value;
-}
-function clampDiceBet(value) {
-    if (isNaN(value)) return DICE_MIN_BET;
-    let v = Math.max(DICE_MIN_BET, Math.min(DICE_MAX_BET, value));
-    v = Math.round(v * 10) / 10;
-    return v;
-}
-function setDiceBetValue(value) {
-    if (diceBetInput) diceBetInput.value = clampDiceBet(value);
-    diceUpdateDisplay();
-}
-if (diceBetInput) {
-    diceBetInput.addEventListener('change', () => {
-        setDiceBetValue(parseFloat(diceBetInput.value));
-    });
-}
-if (diceBetMinusBtn) {
-    diceBetMinusBtn.addEventListener('click', () => {
-        setDiceBetValue(parseFloat(diceBetInput.value) - 0.1);
-    });
-}
-if (diceBetPlusBtn) {
-    diceBetPlusBtn.addEventListener('click', () => {
-        setDiceBetValue(parseFloat(diceBetInput.value) + 0.1);
-    });
-}
-document.querySelectorAll('.dice-bet-quick-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const mode = btn.getAttribute('data-bet-mode');
-        const current = parseFloat(diceBetInput.value) || DICE_MIN_BET;
-        if (mode === 'min') setDiceBetValue(DICE_MIN_BET);
-        if (mode === 'half') setDiceBetValue(current / 2);
-        if (mode === 'double') setDiceBetValue(current * 2);
-        if (mode === 'max') setDiceBetValue(Math.min(getDiceBalanceNumber(), DICE_MAX_BET));
-    });
-});
-
-// === Направление броска ===
-if (diceDirectionToggleEl) {
-    diceDirectionToggleEl.querySelectorAll('.dice-direction-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            if (diceIsRolling) return;
-            diceDirection = btn.getAttribute('data-direction') === 'over' ? 'over' : 'under';
-            diceDirectionToggleEl.querySelectorAll('.dice-direction-btn').forEach(b => {
-                b.classList.toggle('is-active', b === btn);
-            });
-            diceUpdateDisplay();
-        });
-    });
-}
-
-// === Ползунок цели ===
-if (diceTargetSliderEl) {
-    diceTargetSliderEl.addEventListener('input', () => {
-        if (diceIsRolling) return;
-        diceTarget = clampDiceTarget(parseInt(diceTargetSliderEl.value, 10));
-        diceUpdateDisplay();
-    });
-}
-function clampDiceTarget(value) {
-    if (isNaN(value)) return 50;
-    return Math.max(DICE_MIN_TARGET, Math.min(DICE_MAX_TARGET, value));
-}
-
-// === Обновление шкалы, шанса, множителя и потенциального выигрыша ===
-function diceUpdateDisplay() {
-    const chance = diceWinChanceLocal(diceTarget, diceDirection);
-    const multiplier = diceMultiplierLocal(diceTarget, diceDirection);
-    const bet = clampDiceBet(parseFloat(diceBetInput.value)) || DICE_MIN_BET;
-
-    if (diceChanceValueEl) diceChanceValueEl.textContent = `${chance.toFixed(2)}%`;
-    if (diceMultiplierValueEl) diceMultiplierValueEl.textContent = `x${multiplier.toFixed(2)}`;
-    if (dicePotentialWinValueEl) dicePotentialWinValueEl.textContent = `${(bet * multiplier).toFixed(2)} 💎`;
-    if (diceTargetValueEl) diceTargetValueEl.textContent = diceTarget;
-    if (diceTargetSliderEl) diceTargetSliderEl.value = diceTarget;
-
-    // Зелёная зона (выигрыш) и красная зона (проигрыш) на шкале 0-100.
-    const targetPct = diceTarget;
-    if (diceDirection === 'under') {
-        if (diceTrackWinEl) { diceTrackWinEl.style.left = '0%'; diceTrackWinEl.style.width = `${targetPct}%`; }
-        if (diceTrackLoseEl) { diceTrackLoseEl.style.left = `${targetPct}%`; diceTrackLoseEl.style.width = `${100 - targetPct}%`; }
-    } else {
-        if (diceTrackLoseEl) { diceTrackLoseEl.style.left = '0%'; diceTrackLoseEl.style.width = `${targetPct}%`; }
-        if (diceTrackWinEl) { diceTrackWinEl.style.left = `${targetPct}%`; diceTrackWinEl.style.width = `${100 - targetPct}%`; }
-    }
-    if (diceTargetDividerEl) diceTargetDividerEl.style.left = `${targetPct}%`;
-}
-diceUpdateDisplay();
-
-function diceSetControlsDisabled(disabled) {
-    diceIsRolling = disabled;
-    if (diceRollBtn) {
-        diceRollBtn.disabled = disabled;
-        diceRollBtn.classList.toggle('is-spinning', disabled);
-        diceRollBtn.querySelector('.slots-spin-btn-text').textContent = disabled ? '' : 'БРОСИТЬ КОСТИ';
-    }
-    if (diceBetMinusBtn) diceBetMinusBtn.disabled = disabled;
-    if (diceBetPlusBtn) diceBetPlusBtn.disabled = disabled;
-    if (diceBetInput) diceBetInput.disabled = disabled;
-    if (diceTargetSliderEl) diceTargetSliderEl.disabled = disabled;
-    document.querySelectorAll('.dice-bet-quick-btn').forEach(btn => { btn.disabled = disabled; });
-    if (diceDirectionToggleEl) {
-        diceDirectionToggleEl.querySelectorAll('.dice-direction-btn').forEach(btn => { btn.disabled = disabled; });
-    }
-}
-
-async function handleDiceRoll() {
-    if (diceIsRolling) return;
-    if (!authToken) {
-        alert('Не удалось подтвердить личность. Попробуйте перезайти.');
-        return;
-    }
-
-    const bet = clampDiceBet(parseFloat(diceBetInput.value));
-    setDiceBetValue(bet);
-
-    diceSetControlsDisabled(true);
-    diceResultEl.className = 'slots-result';
-    diceResultEl.textContent = 'Бросаем кости...';
-    if (diceRollMarkerEl) diceRollMarkerEl.style.display = 'none';
-
-    try {
-        const res = await fetch(`${API_URL}/api/games/dice/roll`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-            body: JSON.stringify({ bet, target: diceTarget, direction: diceDirection }),
-        });
-        const data = await res.json();
-
-        if (!data.ok) {
-            diceResultEl.textContent = data.error || 'Не удалось бросить кости';
-            diceSetControlsDisabled(false);
-            return;
-        }
-
-        // Показываем маркер результата на шкале с небольшой анимацией.
-        if (diceRollMarkerEl) {
-            diceRollMarkerEl.style.transition = 'none';
-            diceRollMarkerEl.style.left = '0%';
-            diceRollMarkerEl.style.display = 'block';
-            void diceRollMarkerEl.offsetWidth; // force reflow
-            diceRollMarkerEl.style.transition = 'left 0.6s cubic-bezier(0.2, 0.7, 0.3, 1)';
-            diceRollMarkerEl.style.left = `${data.roll}%`;
-            diceRollMarkerEl.classList.toggle('is-win', data.win);
-            diceRollMarkerEl.classList.toggle('is-lose', !data.win);
-        }
-
-        await new Promise(resolve => setTimeout(resolve, 650));
-
-        if (typeof data.balance === 'number') updateBalanceUI(data.balance);
-
-        if (data.win) {
-            diceResultEl.className = 'slots-result is-win';
-            diceResultEl.textContent = `Выпало ${data.roll.toFixed(2)} — выигрыш! x${data.multiplier} — +${data.winAmount} 💎`;
-        } else {
-            diceResultEl.className = 'slots-result is-lose';
-            diceResultEl.textContent = `Выпало ${data.roll.toFixed(2)} — не повезло, попробуйте ещё раз`;
-        }
-
-        diceSetControlsDisabled(false);
-    } catch (e) {
-        console.error(e);
-        diceResultEl.textContent = 'Ошибка соединения с сервером';
-        diceSetControlsDisabled(false);
-    }
-}
-
-if (diceRollBtn) diceRollBtn.addEventListener('click', handleDiceRoll);
