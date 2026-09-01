@@ -1491,6 +1491,12 @@ button:focus-visible, input:focus-visible, .game-tile:focus-visible {
     margin-left: 12px;
 }
 
+.offer-detail-offer-price {
+    color: var(--gold);
+    font-weight: 800;
+    font-size: 15px;
+}
+
 .listing-detail-fee,
 .listing-fee-note {
     text-align: center;
@@ -2033,6 +2039,17 @@ button:focus-visible, input:focus-visible, .game-tile:focus-visible {
     flex-direction: row;
     justify-content: center;
     padding: 14px 0;
+}
+
+#offerDetailAcceptBtn {
+    background: #1c1c1e;
+    color: #ffd700;
+    border: 2px solid #ffd700;
+    font-weight: 700;
+}
+
+#offerDetailAcceptBtn:active {
+    background: rgba(255, 215, 0, 0.12);
 }
 
 .trade-decline-btn {

@@ -1290,6 +1290,7 @@ function renderMyOffers(offers) {
 
         const li = document.createElement('li');
         li.className = 'history-row has-gift';
+        li.dataset.offerId = String(offer.order_id);
 
         li.innerHTML = `
             <div class="history-thumb" style="background-color:${bg};">
@@ -1332,49 +1333,118 @@ async function loadMyOffers(opts = {}) {
     }
 }
 
-if (ordersOffersList) {
-    ordersOffersList.addEventListener('click', async (e) => {
-        const btn = e.target.closest('.offer-accept-btn');
-        if (!btn) return;
+/** Продаёт лот по конкретному предложению (order) — общая логика для кнопки
+ * "Продать" прямо в строке списка и кнопки "Подтвердить" в модалке деталей. */
+async function acceptOffer(listingId, orderId, btn) {
+    if (!authToken) {
+        alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+        return;
+    }
+    if (!confirm('Продать этот лот по цене предложения?')) return;
 
-        const listingId = btn.dataset.listingId;
-        const orderId = btn.dataset.orderId;
+    if (btn) btn.disabled = true;
 
-        if (!authToken) {
-            alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+    try {
+        const res = await fetch(`${API_URL}/api/listings/${listingId}/accept-offer`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`,
+            },
+            body: JSON.stringify({ orderId }),
+        });
+
+        const data = await res.json();
+
+        if (!data.ok) {
+            alert(data.error || 'Не удалось продать лот');
+            if (btn) btn.disabled = false;
             return;
         }
-        if (!confirm('Продать этот лот по цене предложения?')) return;
 
-        btn.disabled = true;
+        updateBalanceUI(data.balance);
+        alert('Лот продан!');
+        if (offerDetailModal) offerDetailModal.style.display = 'none';
+        await loadMyOffers();
+        await loadListings();
+    } catch (err) {
+        alert('Ошибка соединения с сервером');
+        console.error(err);
+        if (btn) btn.disabled = false;
+    }
+}
 
-        try {
-            const res = await fetch(`${API_URL}/api/listings/${listingId}/accept-offer`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`,
-                },
-                body: JSON.stringify({ orderId }),
-            });
-
-            const data = await res.json();
-
-            if (!data.ok) {
-                alert(data.error || 'Не удалось продать лот');
-                btn.disabled = false;
-                return;
-            }
-
-            updateBalanceUI(data.balance);
-            alert('Лот продан!');
-            await loadMyOffers();
-            await loadListings();
-        } catch (err) {
-            alert('Ошибка соединения с сервером');
-            console.error(err);
-            btn.disabled = false;
+if (ordersOffersList) {
+    ordersOffersList.addEventListener('click', async (e) => {
+        const acceptBtn = e.target.closest('.offer-accept-btn');
+        if (acceptBtn) {
+            await acceptOffer(acceptBtn.dataset.listingId, acceptBtn.dataset.orderId, acceptBtn);
+            return;
         }
+        // Клик по остальной части строки (в том числе по картинке подарка) —
+        // открываем детальную карточку предложения.
+        const row = e.target.closest('.history-row.has-gift');
+        if (!row) return;
+        const offer = myOffersById.get(row.dataset.offerId);
+        if (!offer) return;
+        openOfferDetail(offer);
+    });
+}
+
+// === Модалка детального просмотра предложения на лот ===
+const offerDetailModal = document.getElementById('offerDetailModal');
+const closeOfferDetailBtn = document.getElementById('closeOfferDetail');
+const offerDetailImageWrap = document.getElementById('offerDetailImageWrap');
+const offerDetailImage = document.getElementById('offerDetailImage');
+const offerDetailTitle = document.getElementById('offerDetailTitle');
+const offerDetailNumber = document.getElementById('offerDetailNumber');
+const offerDetailModelEl = document.getElementById('offerDetailModel');
+const offerDetailBackdrop = document.getElementById('offerDetailBackdrop');
+const offerDetailSymbol = document.getElementById('offerDetailSymbol');
+const offerDetailListingPrice = document.getElementById('offerDetailListingPrice');
+const offerDetailOfferPrice = document.getElementById('offerDetailOfferPrice');
+const offerDetailAcceptBtn = document.getElementById('offerDetailAcceptBtn');
+const offerDetailDeclineBtn = document.getElementById('offerDetailDeclineBtn');
+
+function openOfferDetail(offer) {
+    const image = offer.model_icon || offer.collection_image || '';
+    offerDetailImageWrap.style.backgroundColor = offer.backdrop_color || '#333';
+    offerDetailImage.src = image;
+    offerDetailTitle.textContent = offer.collection_name;
+    offerDetailNumber.textContent = offer.gift_number ? `#${offer.gift_number}` : '';
+    offerDetailModelEl.textContent = traitLabel(offer.model_name);
+    offerDetailBackdrop.textContent = traitLabel(offer.backdrop_name);
+    offerDetailSymbol.textContent = traitLabel(offer.symbol_name);
+    offerDetailListingPrice.textContent = `💎 ${offer.listing_price}`;
+    offerDetailOfferPrice.textContent = `💎 ${offer.max_price}`;
+
+    offerDetailAcceptBtn.dataset.listingId = offer.listing_id;
+    offerDetailAcceptBtn.dataset.orderId = offer.order_id;
+    offerDetailAcceptBtn.disabled = false;
+
+    offerDetailModal.style.display = 'flex';
+}
+
+if (offerDetailAcceptBtn) {
+    offerDetailAcceptBtn.addEventListener('click', () => {
+        acceptOffer(offerDetailAcceptBtn.dataset.listingId, offerDetailAcceptBtn.dataset.orderId, offerDetailAcceptBtn);
+    });
+}
+
+// "Отклонить" просто закрывает карточку без действий на сервере: показанное
+// здесь предложение — это чей-то общий ордер на покупку (не адресованный
+// лично вам), поэтому "отклонить" для вас означает не более чем "пока не
+// продавать по этой цене" — сам ордер остаётся активным и виден другим
+// продавцам с подходящим лотом.
+if (offerDetailDeclineBtn) {
+    offerDetailDeclineBtn.addEventListener('click', () => {
+        offerDetailModal.style.display = 'none';
+    });
+}
+
+if (closeOfferDetailBtn && offerDetailModal) {
+    closeOfferDetailBtn.addEventListener('click', () => {
+        offerDetailModal.style.display = 'none';
     });
 }
 

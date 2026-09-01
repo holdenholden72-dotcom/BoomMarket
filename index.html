@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Telegram NFT Market</title>
-    <link rel="stylesheet" href="style.css?v=16">
+    <link rel="stylesheet" href="style.css?v=17">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 </head>
@@ -1205,6 +1205,45 @@
             <button class="action-btn listing-detail-cancel" id="listingDetailCancelBtn" style="display: none;">
                 Снять с продажи
             </button>
+        </div>
+    </div>
+
+    <!-- Модальное окно детального просмотра предложения (Ордеры → Предложения на ваши лоты) -->
+    <div id="offerDetailModal" class="modal" style="display: none;">
+        <div class="modal-content listing-detail-content">
+            <button class="close-modal listing-detail-close" id="closeOfferDetail">&times;</button>
+
+            <div class="listing-detail-image-wrap" id="offerDetailImageWrap">
+                <img id="offerDetailImage" class="listing-detail-image" src="" alt="">
+            </div>
+            <div class="listing-detail-title" id="offerDetailTitle"></div>
+            <div class="listing-detail-number" id="offerDetailNumber"></div>
+
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Модель</span>
+                <span class="listing-detail-value" id="offerDetailModel"></span>
+            </div>
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Фон</span>
+                <span class="listing-detail-value" id="offerDetailBackdrop"></span>
+            </div>
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Символ</span>
+                <span class="listing-detail-value" id="offerDetailSymbol"></span>
+            </div>
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Ваша цена лота</span>
+                <span class="listing-detail-value" id="offerDetailListingPrice"></span>
+            </div>
+            <div class="listing-detail-row">
+                <span class="listing-detail-label">Предлагают</span>
+                <span class="listing-detail-value offer-detail-offer-price" id="offerDetailOfferPrice"></span>
+            </div>
+
+            <div class="trade-detail-actions">
+                <button class="action-btn" id="offerDetailAcceptBtn">Подтвердить</button>
+                <button class="action-btn trade-decline-btn" id="offerDetailDeclineBtn">Отклонить</button>
+            </div>
         </div>
     </div>
 
