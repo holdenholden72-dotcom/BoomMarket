@@ -1431,14 +1431,43 @@ if (offerDetailAcceptBtn) {
     });
 }
 
-// "Отклонить" просто закрывает карточку без действий на сервере: показанное
-// здесь предложение — это чей-то общий ордер на покупку (не адресованный
-// лично вам), поэтому "отклонить" для вас означает не более чем "пока не
-// продавать по этой цене" — сам ордер остаётся активным и виден другим
-// продавцам с подходящим лотом.
+// "Отклонить" прячет предложение из ВАШЕГО списка (запрос на сервер —
+// см. /api/my-offers/:orderId/dismiss). Сам ордер на покупку при этом
+// остаётся активным: он не адресован лично вам, это общий ордер, который
+// сервер сопоставил с вашим лотом по трейтам — другой продавец с похожим
+// лотом всё ещё может его увидеть и продать по нему.
 if (offerDetailDeclineBtn) {
-    offerDetailDeclineBtn.addEventListener('click', () => {
-        offerDetailModal.style.display = 'none';
+    offerDetailDeclineBtn.addEventListener('click', async () => {
+        if (!authToken) {
+            alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+            return;
+        }
+        const listingId = offerDetailAcceptBtn.dataset.listingId;
+        const orderId = offerDetailAcceptBtn.dataset.orderId;
+
+        offerDetailDeclineBtn.disabled = true;
+        try {
+            const res = await fetch(`${API_URL}/api/my-offers/${orderId}/dismiss`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`,
+                },
+                body: JSON.stringify({ listingId }),
+            });
+            const data = await res.json();
+            if (!data.ok) {
+                alert(data.error || 'Не удалось отклонить предложение');
+                return;
+            }
+            offerDetailModal.style.display = 'none';
+            await loadMyOffers();
+        } catch (err) {
+            alert('Ошибка соединения с сервером');
+            console.error(err);
+        } finally {
+            offerDetailDeclineBtn.disabled = false;
+        }
     });
 }
 
