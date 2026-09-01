@@ -4276,7 +4276,7 @@ async function plinkoAnimateDrop(path, slotIndex) {
     plinkoBallEl.style.display = 'block';
     plinkoBallEl.classList.remove('is-win', 'is-lose', 'is-settled');
     plinkoBallEl.style.transition = 'none';
-    plinkoBallEl.style.left = `${(positions[0] / PLINKO_BINS) * 100}%`;
+    plinkoBallEl.style.left = `${((positions[0] + 0.5) / PLINKO_BINS) * 100}%`;
     plinkoBallEl.style.top = '0%';
     plinkoBallEl.style.transform = 'rotate(0deg)';
     void plinkoBallEl.offsetWidth; // force reflow
@@ -4289,7 +4289,7 @@ async function plinkoAnimateDrop(path, slotIndex) {
         const goingRight = positions[row] > positions[row - 1];
         rotation += goingRight ? 55 : -55;
         plinkoBallEl.style.transition = `left ${rowDurationMs}ms ease-in-out, top ${rowDurationMs}ms ease-in, transform ${rowDurationMs}ms ease-in-out`;
-        plinkoBallEl.style.left = `${(positions[row] / PLINKO_BINS) * 100}%`;
+        plinkoBallEl.style.left = `${((positions[row] + 0.5) / PLINKO_BINS) * 100}%`;
         plinkoBallEl.style.top = `${(row / PLINKO_ROWS) * 100}%`;
         plinkoBallEl.style.transform = `rotate(${rotation}deg)`;
         await new Promise(resolve => setTimeout(resolve, rowDurationMs));
