@@ -30,61 +30,83 @@ body {
 
 /* Шапка маркетплейса */
 .header {
-    padding: 12px 16px;
+    padding: 14px 16px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 8px;
+    background: linear-gradient(180deg, rgba(28, 20, 46, 0.55) 0%, rgba(15, 15, 15, 0) 100%);
 }
 
 .user-profile {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 10px;
 }
 
 .avatar {
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     object-fit: cover;
     cursor: pointer;
     background-color: #333;
+    box-shadow: 0 0 0 2px rgba(124, 92, 255, 0.55), 0 2px 8px rgba(0, 0, 0, 0.35);
+    transition: transform 0.15s ease;
+    flex-shrink: 0;
 }
+
+.avatar:active {
+    transform: scale(0.94);
+}
+
 .balance {
-    background: #1c1c1e;
-    padding: 4px 9px 4px 7px;
+    background: linear-gradient(135deg, #241c3d 0%, #1c1c1e 100%);
+    padding: 6px 9px 6px 10px;
     border-radius: 18px;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
     font-size: 13px;
     font-weight: 600;
-    margin-top: -3px;
+    border: 1px solid rgba(124, 92, 255, 0.25);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
 .balance .balance-num {
     font-size: 14px;
+    letter-spacing: 0.2px;
 }
 
 .balance .diamond-icon {
     font-size: 13px;
+    filter: drop-shadow(0 0 4px rgba(124, 92, 255, 0.5));
 }
 
 .add-btn {
-    background: #2c2c2e;
+    background: linear-gradient(135deg, #8a6bff 0%, #5b3fd9 100%);
     color: #fff;
     border: none;
-    width: 18px;
-    height: 18px;
+    width: 19px;
+    height: 19px;
     border-radius: 50%;
     font-weight: bold;
+    font-size: 12px;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(90, 63, 217, 0.5);
+    transition: transform 0.12s ease;
+}
+
+.add-btn:active {
+    transform: scale(0.9);
 }
 
 /* Фильтры и поиск */
 .filter-section {
-    padding: 0 16px 12px;
+    padding: 0 16px 14px;
 }
 
 .search-box {
@@ -94,13 +116,19 @@ body {
 
 .search-box input {
     width: 100%;
-    background: #1c1c1e;
-    border: none;
-    border-radius: 12px;
+    background: #18181b;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
     padding: 12px 12px 12px 40px;
     color: #fff;
     font-size: 14px;
     outline: none;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.search-box input:focus {
+    border-color: rgba(124, 92, 255, 0.55);
+    background: #1c1c20;
 }
 
 .search-icon {
@@ -124,7 +152,7 @@ body {
 
 .sort-trigger-btn, .dropdown-filter {
     background: #1c1c1e;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.05);
     color: #fff;
     padding: 8px 12px;
     border-radius: 10px;
@@ -135,6 +163,7 @@ body {
     display: flex;
     align-items: center;
     gap: 4px;
+    transition: background 0.15s ease, transform 0.1s ease;
 }
 
 .sort-trigger-btn {
@@ -142,21 +171,33 @@ body {
     fill: #fff;
 }
 
+.sort-trigger-btn:active, .dropdown-filter:active {
+    transform: scale(0.94);
+    background: #232326;
+}
+
 /* Сетка карточек */
 .market-grid {
     padding: 0 16px;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    gap: 14px;
 }
 
 .nft-card {
-    background: #1c1c1e;
-    border-radius: 16px;
+    background: #18181b;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 18px;
     overflow: hidden;
     position: relative;
     display: flex;
     flex-direction: column;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.nft-card:active {
+    transform: scale(0.97);
+    border-color: rgba(124, 92, 255, 0.3);
 }
 
 #storageGrid.market-grid {
@@ -185,16 +226,19 @@ body {
     height: 160px;
     position: relative;
     overflow: hidden;
+    background: radial-gradient(circle at 50% 30%, rgba(124, 92, 255, 0.16) 0%, rgba(255, 255, 255, 0) 70%), #121214;
 }
 
 .nft-badge {
     position: absolute;
     top: 8px;
     right: 8px;
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(4px);
     padding: 4px;
     border-radius: 8px;
     z-index: 2;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 .nft-img {
@@ -203,6 +247,11 @@ body {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform 0.2s ease;
+}
+
+.nft-card:active .nft-img {
+    transform: scale(1.04);
 }
 
 .nft-info {
@@ -211,7 +260,8 @@ body {
 
 .nft-title {
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
+    letter-spacing: 0.1px;
 }
 
 .nft-number {
@@ -228,14 +278,15 @@ body {
 
 .nft-price {
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 700;
     display: flex;
     align-items: center;
     gap: 4px;
+    color: #d9c8ff;
 }
 
 .cart-btn {
-    background: #2c2c2e;
+    background: linear-gradient(135deg, #8a6bff 0%, #5b3fd9 100%);
     border: none;
     width: 32px;
     height: 32px;
@@ -245,6 +296,12 @@ body {
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    box-shadow: 0 3px 8px rgba(90, 63, 217, 0.4);
+    transition: transform 0.12s ease;
+}
+
+.cart-btn:active {
+    transform: scale(0.9);
 }
 
 .nft-actions {
@@ -582,8 +639,8 @@ body {
 }
 
 .wallet-btn {
-    background: #1c1c1e;
-    border: none;
+    background: linear-gradient(135deg, #241c3d 0%, #1c1c1e 100%);
+    border: 1px solid rgba(124, 92, 255, 0.25);
     width: auto;
     height: auto;
     min-width: 0;
@@ -595,6 +652,12 @@ body {
     justify-content: center;
     cursor: pointer;
     overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    transition: transform 0.12s ease;
+}
+
+.wallet-btn:active {
+    transform: scale(0.95);
 }
 
 .wallet-btn * {
@@ -816,7 +879,7 @@ body {
 /* Кнопки-пилюли фильтров (заменяют старые <select>) */
 .filter-pill {
     background: #1c1c1e;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.05);
     color: #fff;
     padding: 8px 12px;
     border-radius: 10px;
@@ -826,11 +889,17 @@ body {
     display: flex;
     align-items: center;
     gap: 6px;
+    transition: background 0.15s ease, transform 0.1s ease, border-color 0.15s ease;
+}
+
+.filter-pill:active {
+    transform: scale(0.94);
 }
 
 .filter-pill.has-selection {
-    background: #2b2345;
+    background: linear-gradient(135deg, #2b2345 0%, #241c3d 100%);
     color: #d9c8ff;
+    border-color: rgba(124, 92, 255, 0.4);
 }
 
 .filter-pill .pill-count {
