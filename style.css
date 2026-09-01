@@ -2540,16 +2540,21 @@ body {
     padding-bottom: 28px;
 }
 
-.plinko-risk-panel {
-    margin-bottom: 14px;
+/* Строка примеров множителей в модалке правил — переиспользует стили
+   карманов доски (.plinko-bin), просто крупнее и в один ряд без сетки. */
+.plinko-rules-mults {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 12px 0;
 }
 
-.plinko-risk-options {
-    grid-template-columns: repeat(3, 1fr);
-}
-
-.plinko-risk-btn {
-    font-size: 13px;
+.plinko-rules-mults .plinko-bin {
+    flex: 1 1 auto;
+    min-width: 34px;
+    font-size: 11px;
+    padding: 7px 4px;
+    border-radius: 6px;
 }
 
 /* Доска: колышки треугольником + падающий шарик */
@@ -2589,7 +2594,7 @@ body {
 .plinko-board {
     position: relative;
     width: 100%;
-    aspect-ratio: 1 / 0.85;
+    aspect-ratio: 1 / 1.35;
     background: radial-gradient(ellipse at 50% 0%, #1c1c1e 0%, #0f0f0f 70%);
     border: 1px solid rgba(255, 215, 0, 0.15);
     border-radius: 16px;
@@ -2653,17 +2658,17 @@ body {
 /* Корзины множителей внизу доски */
 .plinko-bins {
     display: grid;
-    grid-template-columns: repeat(9, 1fr);
-    gap: 3px;
+    grid-template-columns: repeat(17, 1fr);
+    gap: 2px;
     margin-top: 6px;
 }
 
 .plinko-bin {
     text-align: center;
-    font-size: 9.5px;
+    font-size: 7px;
     font-weight: 800;
-    padding: 6px 0;
-    border-radius: 6px;
+    padding: 5px 0;
+    border-radius: 4px;
     color: #1a1a1a;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }

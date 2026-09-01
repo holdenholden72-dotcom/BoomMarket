@@ -4115,22 +4115,18 @@ function restrictBetInputToOneDecimal(inputEl) {
 [slotsBetInput, rouletteBetInput, bomberBetInput, diceBetInput].forEach(restrictBetInputToOneDecimal);
 
 // =====================================================================
-// ИГРА "ПЛИНКО" (шарик через 8 рядов колышков в одну из 9 корзин)
+// ИГРА "ПЛИНКО" (шарик через 16 рядов колышков в одну из 17 корзин)
 // =====================================================================
 const PLINKO_MIN_BET = 0.3;
 const PLINKO_MAX_BET = 1000;
-const PLINKO_ROWS = 8;
+const PLINKO_ROWS = 16;
+const PLINKO_BINS = PLINKO_ROWS + 1; // 17
 
-// Те же таблицы множителей, что и на сервере — нужны только для отрисовки
+// Та же таблица множителей, что и на сервере — нужна только для отрисовки
 // корзин ДО броска. Итоговый выигрыш и путь шарика всегда определяет сервер.
-const PLINKO_MULTIPLIERS = {
-    low:    [2.8, 1.4, 1.1, 1.0, 0.6, 1.0, 1.1, 1.4, 2.8],
-    medium: [6.4, 2.4, 1.4, 0.8, 0.4, 0.8, 1.4, 2.4, 6.4],
-    high:   [16.0, 4.0, 1.5, 0.4, 0.2, 0.4, 1.5, 4.0, 16.0],
-};
+const PLINKO_MULTIPLIERS = [10, 5, 3, 2.5, 2, 1.5, 1.3, 1.2, 0, 1.2, 1.3, 1.5, 2, 2.5, 3, 5, 10];
 
 const plinkoBalanceValueEl = document.getElementById('plinkoBalanceValue');
-const plinkoRiskOptionsEl = document.getElementById('plinkoRiskOptions');
 const plinkoBoardEl = document.getElementById('plinkoBoard');
 const plinkoPegsLayerEl = document.getElementById('plinkoPegsLayer');
 const plinkoBallEl = document.getElementById('plinkoBall');
@@ -4145,14 +4141,12 @@ const plinkoRulesModal = document.getElementById('plinkoRulesModal');
 const closePlinkoRulesModal = document.getElementById('closePlinkoRulesModal');
 const closePlinkoRulesModalBtn = document.getElementById('closePlinkoRulesModalBtn');
 
-let plinkoSelectedRisk = 'medium';
 let plinkoIsDropping = false;
 
 restrictBetInputToOneDecimal(plinkoBetInput);
 
-// === Строим доску: 8 рядов колышков (треугольником, 1..8 колышков в ряду)
-// и 9 корзин снизу с множителями текущего уровня риска. Строится один раз,
-// корзины перерисовываются при смене риска. ===
+// === Строим доску: 16 рядов колышков (треугольником, 1..16 колышков в ряду)
+// и 17 корзин снизу с фиксированными множителями. Строится один раз. ===
 function plinkoBuildPegs() {
     if (!plinkoPegsLayerEl) return;
     plinkoPegsLayerEl.innerHTML = '';
@@ -4170,22 +4164,22 @@ function plinkoBuildPegs() {
 }
 plinkoBuildPegs();
 
-function plinkoBinTier(idx) {
-    // Индекс 0/8 — крайние (самый высокий множитель), 4 — центр (самый низкий).
-    const distanceFromCenter = Math.abs(idx - 4);
-    if (distanceFromCenter >= 4) return 'extreme';
-    if (distanceFromCenter >= 2) return 'high';
-    if (distanceFromCenter >= 1) return 'mid';
-    return 'low';
+// Переиспользуем 4 готовых цветовых уровня (серый/зелёный/оранжевый/красный)
+// по значению множителя, а не по позиции — так деление получается по смыслу:
+// 0 — проигрыш, 1.2-1.5 — небольшой выигрыш, 2-3 — хороший, 5-10 — джекпот.
+function plinkoBinTier(mult) {
+    if (mult === 0) return 'low';
+    if (mult <= 1.5) return 'mid';
+    if (mult <= 3) return 'high';
+    return 'extreme';
 }
 
 function plinkoRenderBins() {
     if (!plinkoBinsEl) return;
-    const table = PLINKO_MULTIPLIERS[plinkoSelectedRisk];
     plinkoBinsEl.innerHTML = '';
-    table.forEach((mult, idx) => {
+    PLINKO_MULTIPLIERS.forEach((mult, idx) => {
         const bin = document.createElement('div');
-        bin.className = `plinko-bin plinko-bin-${plinkoBinTier(idx)}`;
+        bin.className = `plinko-bin plinko-bin-${plinkoBinTier(mult)}`;
         bin.setAttribute('data-bin-index', String(idx));
         bin.textContent = `x${mult}`;
         plinkoBinsEl.appendChild(bin);
@@ -4206,20 +4200,6 @@ if (closePlinkoRulesModalBtn) closePlinkoRulesModalBtn.addEventListener('click',
 if (plinkoRulesModal) {
     plinkoRulesModal.addEventListener('click', (e) => {
         if (e.target === plinkoRulesModal) closePlinkoRules();
-    });
-}
-
-// === Уровень риска ===
-if (plinkoRiskOptionsEl) {
-    plinkoRiskOptionsEl.querySelectorAll('.plinko-risk-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            if (plinkoIsDropping) return;
-            plinkoSelectedRisk = btn.getAttribute('data-risk');
-            plinkoRiskOptionsEl.querySelectorAll('.plinko-risk-btn').forEach(b => {
-                b.classList.toggle('is-active', b === btn);
-            });
-            plinkoRenderBins();
-        });
     });
 }
 
@@ -4274,22 +4254,20 @@ function plinkoSetControlsDisabled(disabled) {
     if (plinkoBetPlusBtn) plinkoBetPlusBtn.disabled = disabled;
     if (plinkoBetInput) plinkoBetInput.disabled = disabled;
     document.querySelectorAll('.plinko-bet-quick-btn').forEach(btn => { btn.disabled = disabled; });
-    if (plinkoRiskOptionsEl) {
-        plinkoRiskOptionsEl.querySelectorAll('.plinko-risk-btn').forEach(btn => { btn.disabled = disabled; });
-    }
 }
 
 // === Анимация падения шарика по пути, который прислал сервер ===
-// path — массив из 8 true/false (true = вправо). Горизонтальная позиция
-// считается в "единицах корзины" (всего 9 корзин, старт строго по центру
-// доски = 4.5 единицы), каждый ряд сдвигает шарик на ±0.5 единицы — после
-// 8 рядов шарик математически гарантированно оказывается по центру той
-// самой корзины, которую вернул сервер (slotIndex).
+// path — массив из PLINKO_ROWS true/false (true = вправо). Горизонтальная
+// позиция считается в "единицах корзины" (всего PLINKO_BINS корзин, старт
+// строго по центру доски), каждый ряд сдвигает шарик на ±0.5 единицы —
+// после всех рядов шарик математически гарантированно оказывается по
+// центру той самой корзины, которую вернул сервер (slotIndex).
 async function plinkoAnimateDrop(path, slotIndex) {
     if (!plinkoBallEl) return;
 
-    const positions = [4.5];
-    let x = 4.5;
+    const center = (PLINKO_BINS - 1) / 2;
+    const positions = [center];
+    let x = center;
     path.forEach(goRight => {
         x += goRight ? 0.5 : -0.5;
         positions.push(x);
@@ -4298,21 +4276,20 @@ async function plinkoAnimateDrop(path, slotIndex) {
     plinkoBallEl.style.display = 'block';
     plinkoBallEl.classList.remove('is-win', 'is-lose', 'is-settled');
     plinkoBallEl.style.transition = 'none';
-    plinkoBallEl.style.left = `${(positions[0] / 9) * 100}%`;
+    plinkoBallEl.style.left = `${(positions[0] / PLINKO_BINS) * 100}%`;
     plinkoBallEl.style.top = '0%';
     plinkoBallEl.style.transform = 'rotate(0deg)';
     void plinkoBallEl.offsetWidth; // force reflow
 
-    // Каждый ряд шарик проходит за ~340мс — заметно медленнее, чем раньше,
-    // с мягким ускорением/торможением, чтобы падение выглядело более
-    // естественно и его было легко проследить взглядом.
-    const rowDurationMs = 340;
+    // Каждый ряд шарик проходит за ~180мс — при 16 рядах это ~2.9с падения
+    // целиком, сопоставимо по длительности с анимациями других игр.
+    const rowDurationMs = 180;
     let rotation = 0;
     for (let row = 1; row <= PLINKO_ROWS; row++) {
         const goingRight = positions[row] > positions[row - 1];
         rotation += goingRight ? 55 : -55;
         plinkoBallEl.style.transition = `left ${rowDurationMs}ms ease-in-out, top ${rowDurationMs}ms ease-in, transform ${rowDurationMs}ms ease-in-out`;
-        plinkoBallEl.style.left = `${(positions[row] / 9) * 100}%`;
+        plinkoBallEl.style.left = `${(positions[row] / PLINKO_BINS) * 100}%`;
         plinkoBallEl.style.top = `${(row / PLINKO_ROWS) * 100}%`;
         plinkoBallEl.style.transform = `rotate(${rotation}deg)`;
         await new Promise(resolve => setTimeout(resolve, rowDurationMs));
@@ -4349,7 +4326,7 @@ async function handlePlinkoDrop() {
         const res = await fetch(`${API_URL}/api/games/plinko/drop`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-            body: JSON.stringify({ bet, risk: plinkoSelectedRisk }),
+            body: JSON.stringify({ bet }),
         });
         const data = await res.json();
 

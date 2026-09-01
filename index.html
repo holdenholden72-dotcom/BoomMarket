@@ -927,16 +927,6 @@
                 <span class="slots-balance-value"><span id="plinkoBalanceValue" class="user-balance">0</span> 💎</span>
             </div>
 
-            <!-- Уровень риска -->
-            <div class="bomber-bombs-panel plinko-risk-panel">
-                <div class="bomber-bombs-label">Уровень риска</div>
-                <div class="bomber-bombs-options plinko-risk-options" id="plinkoRiskOptions">
-                    <button class="bomber-bombs-btn plinko-risk-btn" data-risk="low" type="button">Низкий</button>
-                    <button class="bomber-bombs-btn plinko-risk-btn is-active" data-risk="medium" type="button">Средний</button>
-                    <button class="bomber-bombs-btn plinko-risk-btn" data-risk="high" type="button">Высокий</button>
-                </div>
-            </div>
-
             <!-- Доска с колышками, шариком и корзинами множителей -->
             <div class="plinko-board-wrap">
                 <div class="plinko-launcher" id="plinkoLauncher">
@@ -950,7 +940,7 @@
                 <div class="plinko-bins" id="plinkoBins"></div>
             </div>
 
-            <div class="slots-result" id="plinkoResult">Выберите риск, сделайте ставку и нажмите «Бросить шарик»</div>
+            <div class="slots-result" id="plinkoResult">Сделайте ставку и нажмите «Бросить шарик»</div>
 
             <div class="slots-bet-panel">
                 <div class="slots-bet-label">Ставка</div>
@@ -982,37 +972,26 @@
             <button class="close-modal" id="closePlinkoRulesModal">&times;</button>
             <h2>Правила игры «Плинко»</h2>
             <p class="slots-rules-desc">
-                Выберите уровень риска и сделайте ставку. Шарик падает через 8 рядов колышков,
-                на каждом ряду случайно уходя влево или вправо, и попадает в одну из 9 корзин
-                внизу — у каждой корзины свой множитель.
+                Сделайте ставку и уроните шарик. Он падает через 16 рядов колышков
+                и попадает в одну из 17 корзин внизу — у каждой свой множитель,
+                таблица фиксирована и одинакова для всех.
             </p>
             <p class="slots-rules-desc">
-                Выигрыш = ставка × множитель корзины, в которую попал шарик. Крайние корзины
-                (слева и справа) дают самый большой множитель, но шанс попасть в них ниже
-                всего — центральные корзины выпадают чаще всего, но множитель там ниже
-                (при низком и среднем риске может быть и меньше 1×).
-            </p>
-            <p class="slots-rules-desc">
-                Чем выше выбранный риск, тем больше разброс между крайними и центральными
-                множителями — выше шанс на крупный выигрыш, но и выше шанс потерять
-                большую часть ставки.
+                Выигрыш = ставка × множитель корзины, в которую попал шарик. Крайние
+                корзины дают самый большой множитель (x5, x10), но шанс попасть
+                в них ниже всего — центральная корзина (x0) выпадает чаще всего.
             </p>
 
-            <div class="bomber-rules-table plinko-rules-table">
-                <div class="bomber-rules-row bomber-rules-head">
-                    <span>Риск</span>
-                    <span>Мин. множитель</span>
-                    <span>Макс. множитель</span>
-                </div>
-                <div class="bomber-rules-row">
-                    <span>Низкий</span><span class="bomber-risk-low">0.6×</span><span class="bomber-risk-low">2.8×</span>
-                </div>
-                <div class="bomber-rules-row">
-                    <span>Средний</span><span class="bomber-risk-mid">0.4×</span><span class="bomber-risk-mid">6.4×</span>
-                </div>
-                <div class="bomber-rules-row">
-                    <span>Высокий</span><span class="bomber-risk-high">0.2×</span><span class="bomber-risk-high">16×</span>
-                </div>
+            <div class="plinko-rules-mults">
+                <span class="plinko-bin plinko-bin-extreme">x10</span>
+                <span class="plinko-bin plinko-bin-extreme">x5</span>
+                <span class="plinko-bin plinko-bin-high">x3</span>
+                <span class="plinko-bin plinko-bin-high">x2.5</span>
+                <span class="plinko-bin plinko-bin-high">x2</span>
+                <span class="plinko-bin plinko-bin-mid">x1.5</span>
+                <span class="plinko-bin plinko-bin-mid">x1.3</span>
+                <span class="plinko-bin plinko-bin-mid">x1.2</span>
+                <span class="plinko-bin plinko-bin-low">x0</span>
             </div>
 
             <div class="slots-rules-bets">
