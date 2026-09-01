@@ -2408,12 +2408,12 @@ body {
 .tower-field {
     width: 100%;
     max-width: 340px;
-    max-height: 380px;
+    max-height: 400px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    background: #0f0f0f;
+    gap: 8px;
+    background: #0a0a0a;
     border: 1px solid rgba(255, 215, 0, 0.2);
     border-radius: 16px;
     padding: 10px;
@@ -2425,35 +2425,35 @@ body {
     display: grid;
     grid-template-columns: 22px 1fr 52px;
     align-items: center;
-    gap: 8px;
-    padding: 6px;
-    border-radius: 10px;
-    background: #17171a;
-    border: 1px solid #232325;
-    opacity: 0.45;
+    gap: 10px;
+    padding: 8px;
+    border-radius: 12px;
+    background: #1c1c1e;
+    border: 1px solid #333336;
+    opacity: 0.5;
     transition: opacity 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 }
 
 .tower-floor-row.is-current {
     opacity: 1;
-    background: linear-gradient(160deg, #241f10 0%, #17171a 100%);
-    border-color: rgba(255, 215, 0, 0.55);
-    box-shadow: 0 0 0 1px rgba(255, 215, 0, 0.15);
+    background: linear-gradient(160deg, #2e2712 0%, #201c10 100%);
+    border-color: #ffd700;
+    box-shadow: 0 0 0 1px rgba(255, 215, 0, 0.35), 0 0 16px rgba(255, 215, 0, 0.12);
 }
 
 .tower-floor-row.is-cleared {
-    opacity: 0.85;
-    border-color: rgba(52, 199, 89, 0.35);
+    opacity: 0.9;
+    border-color: rgba(52, 199, 89, 0.45);
 }
 
 .tower-floor-row.is-locked {
-    opacity: 0.35;
+    opacity: 0.4;
 }
 
 .tower-floor-label {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 800;
-    color: #8e8e93;
+    color: #b8b8bd;
     text-align: center;
 }
 
@@ -2464,22 +2464,30 @@ body {
 .tower-floor-tiles {
     display: grid;
     grid-template-columns: repeat(var(--tower-tiles, 4), 1fr);
-    gap: 5px;
+    gap: 7px;
 }
 
 .tower-tile {
-    background: linear-gradient(160deg, #2c2c2e 0%, #1c1c1e 100%);
-    border: 1px solid #333;
-    border-radius: 8px;
+    background: linear-gradient(160deg, #48484c 0%, #303033 100%);
+    border: 2px solid #5c5c60;
+    border-radius: 10px;
     cursor: pointer;
-    font-size: 14px;
-    height: 34px;
+    font-size: 17px;
+    font-weight: 700;
+    color: #e5e5ea;
+    height: 42px;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
     box-sizing: border-box;
-    transition: transform 0.12s ease, background 0.2s ease;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 2px 6px rgba(0,0,0,0.35);
+    transition: transform 0.12s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.tower-floor-row.is-current .tower-tile {
+    background: linear-gradient(160deg, #5c5c62 0%, #38383c 100%);
+    border-color: rgba(255, 215, 0, 0.75);
 }
 
 .tower-tile:not(:disabled):active {
@@ -2490,23 +2498,27 @@ body {
     cursor: default;
 }
 
-.tower-floor-row.is-current .tower-tile:not(:disabled) {
-    border-color: rgba(255, 215, 0, 0.45);
+.tower-floor-row.is-locked .tower-tile {
+    background: linear-gradient(160deg, #2c2c2e 0%, #1c1c1e 100%);
+    border-color: #3a3a3d;
+    color: #6e6e73;
 }
 
 .tower-tile.is-safe {
-    background: linear-gradient(160deg, #234a2b 0%, #16301c 100%);
-    border-color: rgba(52, 199, 89, 0.55);
+    background: linear-gradient(160deg, #2f6a3c 0%, #1d4425 100%);
+    border-color: #34c759;
+    color: #fff;
     animation: towerTileReveal 0.25s ease;
 }
 
 .tower-tile.is-trap {
-    background: linear-gradient(160deg, #4a2323 0%, #301616 100%);
-    border-color: rgba(255, 69, 58, 0.6);
+    background: linear-gradient(160deg, #6a2f2f 0%, #441d1d 100%);
+    border-color: #ff453a;
+    color: #fff;
 }
 
 .tower-tile.is-trap.is-hit {
-    background: linear-gradient(160deg, #7a1f1f 0%, #4a1010 100%);
+    background: linear-gradient(160deg, #9a2626 0%, #5a1212 100%);
     border-color: #ff453a;
     animation: towerHitFlash 0.5s ease;
 }
@@ -2522,9 +2534,9 @@ body {
 }
 
 .tower-floor-multiplier {
-    font-size: 11px;
-    font-weight: 700;
-    color: #8e8e93;
+    font-size: 12px;
+    font-weight: 800;
+    color: #9a9aa0;
     text-align: right;
 }
 

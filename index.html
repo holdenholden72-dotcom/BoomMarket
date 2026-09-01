@@ -821,15 +821,7 @@
                 <span class="slots-balance-value"><span id="towerBalanceValue" class="user-balance">0</span> 💎</span>
             </div>
 
-            <!-- Выбор сложности — доступно только до старта раунда -->
-            <div class="bomber-bombs-panel tower-difficulty-panel">
-                <div class="bomber-bombs-label">Сложность</div>
-                <div class="bomber-bombs-options tower-difficulty-options" id="towerDifficultyOptions">
-                    <button class="bomber-bombs-btn tower-difficulty-btn is-active" data-difficulty="easy" type="button">Лёгкий</button>
-                    <button class="bomber-bombs-btn tower-difficulty-btn" data-difficulty="medium" type="button">Средний</button>
-                    <button class="bomber-bombs-btn tower-difficulty-btn" data-difficulty="hard" type="button">Сложный</button>
-                </div>
-            </div>
+            <!-- Фиксированная конфигурация этажей — сложность нарастает по мере подъёма -->
 
             <!-- Текущий множитель / потенциальный выигрыш -->
             <div class="bomber-stats-row tower-stats-row">
@@ -887,38 +879,43 @@
             <button class="close-modal" id="closeTowerRulesModal">&times;</button>
             <h2>Правила игры «Башня»</h2>
             <p class="slots-rules-desc">
-                Башня состоит из 8 этажей. Перед стартом выберите сложность и сделайте
-                ставку, затем нажмите «Начать подъём» — на каждом этаже ловушка
-                расставляется случайно и скрыта от вас.
+                Башня состоит из 5 этажей с фиксированной конфигурацией — сделайте
+                ставку и нажмите «Начать подъём». На каждом этаже ловушки
+                расставляются случайно и скрыты от вас.
             </p>
             <p class="slots-rules-desc">
                 На текущем этаже выберите одну из плиток. Если плитка безопасна — вы
                 поднимаетесь на этаж выше, а множитель выигрыша растёт. Чем выше
-                поднимаетесь и чем выше выбранная сложность — тем больше множитель
-                и тем выше риск. В любой момент после подъёма на первый этаж можно
-                нажать «Забрать выигрыш» — ставка × текущий множитель зачислится
-                на баланс.
+                поднимаетесь — тем больше множитель и тем выше риск. В любой момент
+                после подъёма на первый этаж можно нажать «Забрать выигрыш» — ставка
+                × текущий множитель зачислится на баланс.
             </p>
             <p class="slots-rules-desc">
                 Если выбрана плитка с ловушкой — раунд проигран, ставка сгорает.
-                Если пройдены все 8 этажей — выигрыш засчитывается автоматически
+                Если пройдены все 5 этажей — выигрыш засчитывается автоматически
                 по максимальному множителю раунда.
             </p>
 
             <div class="bomber-rules-table">
                 <div class="bomber-rules-row bomber-rules-head">
-                    <span>Сложность</span>
-                    <span>Плиток / шанс этажа</span>
-                    <span>Риск</span>
+                    <span>Этаж</span>
+                    <span>Плиток / ловушек</span>
+                    <span>Шанс пройти</span>
                 </div>
                 <div class="bomber-rules-row">
-                    <span>Лёгкий</span><span>4 плитки, 3/4</span><span class="bomber-risk-low">Низкий</span>
+                    <span>1</span><span>6 плиток, 3 ловушки</span><span class="bomber-risk-mid">50%</span>
                 </div>
                 <div class="bomber-rules-row">
-                    <span>Средний</span><span>3 плитки, 2/3</span><span class="bomber-risk-mid">Средний</span>
+                    <span>2</span><span>5 плиток, 3 ловушки</span><span class="bomber-risk-high">40%</span>
                 </div>
                 <div class="bomber-rules-row">
-                    <span>Сложный</span><span>2 плитки, 1/2</span><span class="bomber-risk-high">Высокий</span>
+                    <span>3</span><span>4 плитки, 2 ловушки</span><span class="bomber-risk-mid">50%</span>
+                </div>
+                <div class="bomber-rules-row">
+                    <span>4</span><span>3 плитки, 2 ловушки</span><span class="bomber-risk-high">≈33%</span>
+                </div>
+                <div class="bomber-rules-row">
+                    <span>5</span><span>2 плитки, 1 ловушка</span><span class="bomber-risk-mid">50%</span>
                 </div>
             </div>
 
