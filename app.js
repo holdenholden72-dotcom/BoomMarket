@@ -16,6 +16,7 @@ const tradeScreen = document.getElementById('tradeScreen');
 const slotsScreen = document.getElementById('slotsScreen');
 const rouletteScreen = document.getElementById('rouletteScreen');
 const bomberScreen = document.getElementById('bomberScreen');
+const towerScreen = document.getElementById('towerScreen');
 const diceScreen = document.getElementById('diceScreen');
 const plinkoScreen = document.getElementById('plinkoScreen');
 const openProfileBtn = document.getElementById('openProfileBtn');
@@ -27,6 +28,7 @@ const backToProfileFromTradeBtn = document.getElementById('backToProfileFromTrad
 const backToProfileFromSlotsBtn = document.getElementById('backToProfileFromSlotsBtn');
 const backToProfileFromRouletteBtn = document.getElementById('backToProfileFromRouletteBtn');
 const backToProfileFromBomberBtn = document.getElementById('backToProfileFromBomberBtn');
+const backToProfileFromTowerBtn = document.getElementById('backToProfileFromTowerBtn');
 const backToProfileFromDiceBtn = document.getElementById('backToProfileFromDiceBtn');
 const backToProfileFromPlinkoBtn = document.getElementById('backToProfileFromPlinkoBtn');
 
@@ -40,6 +42,7 @@ const screensByName = {
     slots: slotsScreen,
     roulette: rouletteScreen,
     bomber: bomberScreen,
+    tower: towerScreen,
     dice: diceScreen,
     plinko: plinkoScreen,
 };
@@ -167,6 +170,12 @@ if (backToProfileFromBomberBtn) {
     });
 }
 
+if (backToProfileFromTowerBtn) {
+    backToProfileFromTowerBtn.addEventListener('click', () => {
+        showScreen('profile');
+    });
+}
+
 if (backToProfileFromDiceBtn) {
     backToProfileFromDiceBtn.addEventListener('click', () => {
         showScreen('profile');
@@ -215,6 +224,11 @@ document.querySelectorAll('.game-tile').forEach(tile => {
         if (game === 'bomber') {
             showScreen('bomber');
             bomberSyncActiveGame();
+            return;
+        }
+        if (game === 'tower') {
+            showScreen('tower');
+            towerSyncActiveGame();
             return;
         }
         if (game === 'dice') {
@@ -3854,6 +3868,429 @@ async function bomberSyncActiveGame() {
         bomberUpdateStatsDisplay(data.game.picks);
         bomberResultEl.className = 'slots-result';
         bomberResultEl.textContent = `Раунд продолжается — открыто ${data.game.picks} из ${data.game.safeCellsTotal}`;
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+
+// =====================================================================
+// ИГРА "БАШНЯ" (подъём по этажам — на каждом свой шанс, чем выше,
+// тем больше множитель и риск)
+// =====================================================================
+// Расчёт множителя (для мгновенного отображения "следующего" множителя
+// до ответа сервера) продублирован здесь по той же формуле, что и на
+// бэкенде — но где именно ловушка на каждом этаже и итоговый результат
+// каждого выбора всегда приходят с сервера, клиент их не подделывает.
+const TOWER_FLOORS = 8;
+const TOWER_HOUSE_EDGE = 0.05;
+const TOWER_DIFFICULTIES_LOCAL = {
+    easy: { tiles: 4, traps: 1 },
+    medium: { tiles: 3, traps: 1 },
+    hard: { tiles: 2, traps: 1 },
+};
+
+function towerFloorFactorLocal(difficulty) {
+    const d = TOWER_DIFFICULTIES_LOCAL[difficulty];
+    return d.tiles / (d.tiles - d.traps);
+}
+function towerMultiplierLocal(difficulty, floorsClimbed) {
+    if (floorsClimbed <= 0) return 1;
+    return Math.pow(towerFloorFactorLocal(difficulty), floorsClimbed) * (1 - TOWER_HOUSE_EDGE);
+}
+
+const towerFieldEl = document.getElementById('towerField');
+const towerResultEl = document.getElementById('towerResult');
+const towerDifficultyOptionsEl = document.getElementById('towerDifficultyOptions');
+const towerFloorValueEl = document.getElementById('towerFloorValue');
+const towerPotentialWinValueEl = document.getElementById('towerPotentialWinValue');
+const towerNextMultiplierValueEl = document.getElementById('towerNextMultiplierValue');
+const towerBetInput = document.getElementById('towerBetInput');
+const towerBetMinusBtn = document.getElementById('towerBetMinusBtn');
+const towerBetPlusBtn = document.getElementById('towerBetPlusBtn');
+const towerBetPanel = document.getElementById('towerBetPanel');
+const towerStartBtn = document.getElementById('towerStartBtn');
+const towerCashoutBtn = document.getElementById('towerCashoutBtn');
+const openTowerRulesBtn = document.getElementById('openTowerRulesBtn');
+const towerRulesModal = document.getElementById('towerRulesModal');
+const closeTowerRulesModal = document.getElementById('closeTowerRulesModal');
+const closeTowerRulesModalBtn = document.getElementById('closeTowerRulesModalBtn');
+
+const TOWER_MIN_BET = 0.3;
+const TOWER_MAX_BET = 1000;
+
+let towerSelectedDifficulty = 'easy';
+let towerGameActive = false;
+let towerBusy = false; // idle-guard пока идёт запрос к серверу
+let towerClimbed = 0;
+
+// === Правила ===
+function openTowerRules() {
+    if (towerRulesModal) towerRulesModal.style.display = 'flex';
+}
+function closeTowerRules() {
+    if (towerRulesModal) towerRulesModal.style.display = 'none';
+}
+if (openTowerRulesBtn) openTowerRulesBtn.addEventListener('click', openTowerRules);
+if (closeTowerRulesModal) closeTowerRulesModal.addEventListener('click', closeTowerRules);
+if (closeTowerRulesModalBtn) closeTowerRulesModalBtn.addEventListener('click', closeTowerRules);
+if (towerRulesModal) {
+    towerRulesModal.addEventListener('click', (e) => {
+        if (e.target === towerRulesModal) closeTowerRules();
+    });
+}
+
+// === Ставка (логика идентична слотам/рулетке/бомберу) ===
+function getTowerBalanceNumber() {
+    const el = document.querySelector('.user-balance');
+    const value = el ? parseFloat(el.textContent) : NaN;
+    return isNaN(value) ? TOWER_MAX_BET : value;
+}
+function clampTowerBet(value) {
+    if (isNaN(value)) return TOWER_MIN_BET;
+    let v = Math.max(TOWER_MIN_BET, Math.min(TOWER_MAX_BET, value));
+    v = Math.round(v * 10) / 10;
+    return v;
+}
+function setTowerBetValue(value) {
+    if (towerBetInput) towerBetInput.value = clampTowerBet(value);
+}
+if (towerBetInput) {
+    towerBetInput.addEventListener('change', () => {
+        setTowerBetValue(parseFloat(towerBetInput.value));
+    });
+}
+if (towerBetMinusBtn) {
+    towerBetMinusBtn.addEventListener('click', () => {
+        setTowerBetValue(parseFloat(towerBetInput.value) - 0.1);
+    });
+}
+if (towerBetPlusBtn) {
+    towerBetPlusBtn.addEventListener('click', () => {
+        setTowerBetValue(parseFloat(towerBetInput.value) + 0.1);
+    });
+}
+document.querySelectorAll('.tower-bet-quick-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const mode = btn.getAttribute('data-bet-mode');
+        const current = parseFloat(towerBetInput.value) || TOWER_MIN_BET;
+        if (mode === 'min') setTowerBetValue(TOWER_MIN_BET);
+        if (mode === 'half') setTowerBetValue(current / 2);
+        if (mode === 'double') setTowerBetValue(current * 2);
+        if (mode === 'max') setTowerBetValue(Math.min(getTowerBalanceNumber(), TOWER_MAX_BET));
+    });
+});
+
+// === Выбор сложности — только пока раунд не начат ===
+if (towerDifficultyOptionsEl) {
+    towerDifficultyOptionsEl.querySelectorAll('.tower-difficulty-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (towerGameActive || towerBusy) return;
+            const difficulty = btn.getAttribute('data-difficulty');
+            if (!TOWER_DIFFICULTIES_LOCAL[difficulty]) return;
+            towerSelectedDifficulty = difficulty;
+            towerDifficultyOptionsEl.querySelectorAll('.tower-difficulty-btn').forEach(b => {
+                b.classList.toggle('is-active', b === btn);
+            });
+            towerBuildField();
+            towerUpdateStatsDisplay(0);
+        });
+    });
+}
+
+// === Отрисовка пустой башни: этажи снизу вверх, этаж 8 — сверху ===
+function towerBuildField() {
+    if (!towerFieldEl) return;
+    towerFieldEl.innerHTML = '';
+    const tiles = TOWER_DIFFICULTIES_LOCAL[towerSelectedDifficulty].tiles;
+
+    for (let floor = TOWER_FLOORS - 1; floor >= 0; floor--) {
+        const row = document.createElement('div');
+        row.className = 'tower-floor-row';
+        row.setAttribute('data-floor', String(floor));
+
+        const label = document.createElement('div');
+        label.className = 'tower-floor-label';
+        label.textContent = String(floor + 1);
+        row.appendChild(label);
+
+        const tilesWrap = document.createElement('div');
+        tilesWrap.className = 'tower-floor-tiles';
+        tilesWrap.style.setProperty('--tower-tiles', tiles);
+        for (let t = 0; t < tiles; t++) {
+            const tileBtn = document.createElement('button');
+            tileBtn.type = 'button';
+            tileBtn.className = 'tower-tile';
+            tileBtn.setAttribute('data-tile', String(t));
+            tileBtn.disabled = true;
+            tileBtn.addEventListener('click', () => towerHandleTileClick(floor, t, tileBtn));
+            tilesWrap.appendChild(tileBtn);
+        }
+        row.appendChild(tilesWrap);
+
+        const mult = document.createElement('div');
+        mult.className = 'tower-floor-multiplier';
+        mult.textContent = `x${towerMultiplierLocal(towerSelectedDifficulty, floor + 1).toFixed(2)}`;
+        row.appendChild(mult);
+
+        towerFieldEl.appendChild(row);
+    }
+    towerUpdateFieldRowStates();
+}
+towerBuildField();
+
+// === Подсвечивает текущий/пройденные/будущие этажи и включает клики
+// только на плитках текущего этажа ===
+function towerUpdateFieldRowStates() {
+    if (!towerFieldEl) return;
+    towerFieldEl.querySelectorAll('.tower-floor-row').forEach(row => {
+        const floor = parseInt(row.getAttribute('data-floor'), 10);
+        row.classList.remove('is-current', 'is-cleared', 'is-locked');
+        const tileButtons = row.querySelectorAll('.tower-tile');
+        if (floor < towerClimbed) {
+            row.classList.add('is-cleared');
+            tileButtons.forEach(btn => { btn.disabled = true; });
+        } else if (floor === towerClimbed && towerGameActive) {
+            row.classList.add('is-current');
+            tileButtons.forEach(btn => {
+                if (!btn.classList.contains('is-safe') && !btn.classList.contains('is-trap')) {
+                    btn.disabled = false;
+                }
+            });
+        } else {
+            row.classList.add('is-locked');
+            tileButtons.forEach(btn => { btn.disabled = true; });
+        }
+    });
+}
+
+function towerSetFieldInteractive(interactive) {
+    if (!towerFieldEl) return;
+    towerFieldEl.querySelectorAll(`.tower-floor-row[data-floor="${towerClimbed}"] .tower-tile`).forEach(btn => {
+        if (interactive) {
+            if (!btn.classList.contains('is-safe') && !btn.classList.contains('is-trap')) {
+                btn.disabled = false;
+            }
+        } else {
+            btn.disabled = true;
+        }
+    });
+}
+
+function towerResetField() {
+    towerClimbed = 0;
+    towerBuildField();
+}
+
+function towerUpdateStatsDisplay(climbed) {
+    towerClimbed = climbed;
+    const multiplier = towerMultiplierLocal(towerSelectedDifficulty, climbed);
+    const nextMultiplier = towerMultiplierLocal(towerSelectedDifficulty, climbed + 1);
+    const bet = clampTowerBet(parseFloat(towerBetInput.value)) || TOWER_MIN_BET;
+    if (towerFloorValueEl) towerFloorValueEl.textContent = `${climbed} / ${TOWER_FLOORS}`;
+    if (towerPotentialWinValueEl) towerPotentialWinValueEl.textContent = `${(bet * multiplier).toFixed(2)} 💎`;
+    if (towerNextMultiplierValueEl) {
+        towerNextMultiplierValueEl.textContent = climbed < TOWER_FLOORS
+            ? `x${nextMultiplier.toFixed(2)}`
+            : '—';
+    }
+    towerUpdateFieldRowStates();
+}
+
+function towerSetControlsForActiveGame(active) {
+    towerGameActive = active;
+    if (towerBetInput) towerBetInput.disabled = active;
+    if (towerBetMinusBtn) towerBetMinusBtn.disabled = active;
+    if (towerBetPlusBtn) towerBetPlusBtn.disabled = active;
+    document.querySelectorAll('.tower-bet-quick-btn').forEach(btn => { btn.disabled = active; });
+    if (towerDifficultyOptionsEl) {
+        towerDifficultyOptionsEl.querySelectorAll('.tower-difficulty-btn').forEach(btn => { btn.disabled = active; });
+    }
+    if (towerBetPanel) towerBetPanel.style.opacity = active ? '0.5' : '1';
+    if (towerStartBtn) towerStartBtn.style.display = active ? 'none' : '';
+    if (towerCashoutBtn) towerCashoutBtn.style.display = active ? '' : 'none';
+    towerUpdateFieldRowStates();
+}
+
+async function towerStartGame() {
+    if (towerBusy || towerGameActive) return;
+    if (!authToken) {
+        alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+        return;
+    }
+    const bet = clampTowerBet(parseFloat(towerBetInput.value));
+    setTowerBetValue(bet);
+
+    towerBusy = true;
+    if (towerStartBtn) towerStartBtn.disabled = true;
+    towerResultEl.className = 'slots-result';
+    towerResultEl.textContent = 'Расставляем ловушки...';
+
+    try {
+        const res = await fetch(`${API_URL}/api/games/tower/start`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+            body: JSON.stringify({ bet, difficulty: towerSelectedDifficulty }),
+        });
+        const data = await res.json();
+
+        if (!data.ok) {
+            towerResultEl.textContent = data.error || 'Не удалось начать игру';
+            towerBusy = false;
+            if (towerStartBtn) towerStartBtn.disabled = false;
+            return;
+        }
+
+        if (typeof data.balance === 'number') updateBalanceUI(data.balance);
+
+        towerResetField();
+        towerSetControlsForActiveGame(true);
+        towerUpdateStatsDisplay(0);
+        towerResultEl.className = 'slots-result';
+        towerResultEl.textContent = 'Башня готова — выбирайте плитку на первом этаже!';
+    } catch (e) {
+        console.error(e);
+        towerResultEl.textContent = 'Ошибка соединения с сервером';
+    } finally {
+        towerBusy = false;
+        if (towerStartBtn) towerStartBtn.disabled = false;
+    }
+}
+
+async function towerHandleTileClick(floor, tileIndex, tileBtn) {
+    if (towerBusy || !towerGameActive) return;
+    if (tileBtn.disabled) return;
+    if (floor !== towerClimbed) return;
+
+    towerBusy = true;
+    towerSetFieldInteractive(false);
+
+    try {
+        const res = await fetch(`${API_URL}/api/games/tower/pick`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+            body: JSON.stringify({ tile: tileIndex }),
+        });
+        const data = await res.json();
+
+        if (!data.ok) {
+            towerResultEl.textContent = data.error || 'Не удалось выбрать плитку';
+            towerSetFieldInteractive(true);
+            towerBusy = false;
+            return;
+        }
+
+        if (data.win === false) {
+            // Ловушка — раунд окончен проигрышем.
+            tileBtn.classList.add('is-trap', 'is-hit');
+            tileBtn.textContent = '💥';
+            towerResultEl.className = 'slots-result is-lose';
+            towerResultEl.textContent = `💥 Ловушка на этаже ${data.floor + 1}! Ставка ${data.betAmount} 💎 сгорела`;
+            towerSetControlsForActiveGame(false);
+            towerUpdateStatsDisplay(0);
+            towerBusy = false;
+            return;
+        }
+
+        tileBtn.classList.add('is-safe');
+        tileBtn.textContent = '✅';
+
+        if (data.cleared) {
+            // Все этажи пройдены — автоматический максимальный выигрыш.
+            if (typeof data.balance === 'number') updateBalanceUI(data.balance);
+            towerResultEl.className = 'slots-result is-win';
+            towerResultEl.textContent = `🎉 Вершина башни! x${data.multiplier} — +${data.winAmount} 💎`;
+            towerSetControlsForActiveGame(false);
+            towerUpdateStatsDisplay(TOWER_FLOORS);
+            towerBusy = false;
+            return;
+        }
+
+        // Безопасная плитка — раунд продолжается на этаже выше.
+        towerUpdateStatsDisplay(data.game.climbed);
+        towerResultEl.className = 'slots-result';
+        towerResultEl.textContent = `Безопасно! Пройдено ${data.game.climbed} из ${TOWER_FLOORS} этажей — продолжайте или заберите выигрыш`;
+    } catch (e) {
+        console.error(e);
+        towerResultEl.textContent = 'Ошибка соединения с сервером';
+        towerSetFieldInteractive(true);
+    } finally {
+        towerBusy = false;
+    }
+}
+
+async function towerCashout() {
+    if (towerBusy || !towerGameActive) return;
+    if (!authToken) {
+        alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+        return;
+    }
+
+    towerBusy = true;
+    towerSetFieldInteractive(false);
+    if (towerCashoutBtn) towerCashoutBtn.disabled = true;
+
+    try {
+        const res = await fetch(`${API_URL}/api/games/tower/cashout`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        });
+        const data = await res.json();
+
+        if (!data.ok) {
+            towerResultEl.textContent = data.error || 'Не удалось забрать выигрыш';
+            towerSetFieldInteractive(true);
+            return;
+        }
+
+        if (typeof data.balance === 'number') updateBalanceUI(data.balance);
+        towerResultEl.className = 'slots-result is-win';
+        towerResultEl.textContent = `✅ Забрано! x${data.multiplier} — +${data.winAmount} 💎`;
+        towerSetControlsForActiveGame(false);
+        towerUpdateStatsDisplay(0);
+    } catch (e) {
+        console.error(e);
+        towerResultEl.textContent = 'Ошибка соединения с сервером';
+        towerSetFieldInteractive(true);
+    } finally {
+        towerBusy = false;
+        if (towerCashoutBtn) towerCashoutBtn.disabled = false;
+    }
+}
+
+if (towerStartBtn) towerStartBtn.addEventListener('click', towerStartGame);
+if (towerCashoutBtn) towerCashoutBtn.addEventListener('click', towerCashout);
+
+// === Восстановление активного раунда, если пользователь ушёл с экрана
+// и вернулся (например, свернул мини-приложение) не завершив игру ===
+async function towerSyncActiveGame() {
+    if (!authToken || towerGameActive) return;
+    try {
+        const res = await fetch(`${API_URL}/api/games/tower/state`, {
+            headers: { 'Authorization': `Bearer ${authToken}` },
+        });
+        const data = await res.json();
+        if (!data.ok || !data.game) return;
+
+        towerSelectedDifficulty = data.game.difficulty;
+        if (towerDifficultyOptionsEl) {
+            towerDifficultyOptionsEl.querySelectorAll('.tower-difficulty-btn').forEach(b => {
+                b.classList.toggle('is-active', b.getAttribute('data-difficulty') === towerSelectedDifficulty);
+            });
+        }
+        setTowerBetValue(data.game.bet);
+        towerBuildField();
+        data.game.path.forEach((tileIndex, floor) => {
+            const tileBtn = towerFieldEl.querySelector(`.tower-floor-row[data-floor="${floor}"] .tower-tile[data-tile="${tileIndex}"]`);
+            if (tileBtn) {
+                tileBtn.classList.add('is-safe');
+                tileBtn.textContent = '✅';
+            }
+        });
+        towerSetControlsForActiveGame(true);
+        towerUpdateStatsDisplay(data.game.climbed);
+        towerResultEl.className = 'slots-result';
+        towerResultEl.textContent = `Раунд продолжается — пройдено ${data.game.climbed} из ${TOWER_FLOORS} этажей`;
     } catch (e) {
         console.error(e);
     }

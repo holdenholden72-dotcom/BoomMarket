@@ -2397,6 +2397,152 @@ body {
 
 
 /* =====================================================================
+   ИГРА "БАШНЯ" (подъём по этажам, чем выше — тем больше множитель и риск)
+   ===================================================================== */
+
+.tower-content {
+    padding-bottom: 28px;
+}
+
+/* Панель этажей: снизу вверх, текущий этаж активен, прокрутка если не влезает */
+.tower-field {
+    width: 100%;
+    max-width: 340px;
+    max-height: 380px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: #0f0f0f;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    border-radius: 16px;
+    padding: 10px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 20px rgba(0,0,0,0.4);
+    scroll-behavior: smooth;
+}
+
+.tower-floor-row {
+    display: grid;
+    grid-template-columns: 22px 1fr 52px;
+    align-items: center;
+    gap: 8px;
+    padding: 6px;
+    border-radius: 10px;
+    background: #17171a;
+    border: 1px solid #232325;
+    opacity: 0.45;
+    transition: opacity 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.tower-floor-row.is-current {
+    opacity: 1;
+    background: linear-gradient(160deg, #241f10 0%, #17171a 100%);
+    border-color: rgba(255, 215, 0, 0.55);
+    box-shadow: 0 0 0 1px rgba(255, 215, 0, 0.15);
+}
+
+.tower-floor-row.is-cleared {
+    opacity: 0.85;
+    border-color: rgba(52, 199, 89, 0.35);
+}
+
+.tower-floor-row.is-locked {
+    opacity: 0.35;
+}
+
+.tower-floor-label {
+    font-size: 12px;
+    font-weight: 800;
+    color: #8e8e93;
+    text-align: center;
+}
+
+.tower-floor-row.is-current .tower-floor-label {
+    color: #ffd700;
+}
+
+.tower-floor-tiles {
+    display: grid;
+    grid-template-columns: repeat(var(--tower-tiles, 4), 1fr);
+    gap: 5px;
+}
+
+.tower-tile {
+    background: linear-gradient(160deg, #2c2c2e 0%, #1c1c1e 100%);
+    border: 1px solid #333;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    box-sizing: border-box;
+    transition: transform 0.12s ease, background 0.2s ease;
+}
+
+.tower-tile:not(:disabled):active {
+    transform: scale(0.9);
+}
+
+.tower-tile:disabled {
+    cursor: default;
+}
+
+.tower-floor-row.is-current .tower-tile:not(:disabled) {
+    border-color: rgba(255, 215, 0, 0.45);
+}
+
+.tower-tile.is-safe {
+    background: linear-gradient(160deg, #234a2b 0%, #16301c 100%);
+    border-color: rgba(52, 199, 89, 0.55);
+    animation: towerTileReveal 0.25s ease;
+}
+
+.tower-tile.is-trap {
+    background: linear-gradient(160deg, #4a2323 0%, #301616 100%);
+    border-color: rgba(255, 69, 58, 0.6);
+}
+
+.tower-tile.is-trap.is-hit {
+    background: linear-gradient(160deg, #7a1f1f 0%, #4a1010 100%);
+    border-color: #ff453a;
+    animation: towerHitFlash 0.5s ease;
+}
+
+@keyframes towerTileReveal {
+    0% { transform: scale(0.7); opacity: 0.4; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes towerHitFlash {
+    0% { box-shadow: 0 0 0 4px rgba(255, 69, 58, 0.6); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 69, 58, 0); }
+}
+
+.tower-floor-multiplier {
+    font-size: 11px;
+    font-weight: 700;
+    color: #8e8e93;
+    text-align: right;
+}
+
+.tower-floor-row.is-current .tower-floor-multiplier {
+    color: #ffd700;
+}
+
+.tower-floor-row.is-cleared .tower-floor-multiplier {
+    color: #34c759;
+}
+
+.tower-actions {
+    width: 100%;
+    max-width: 340px;
+}
+
+
+/* =====================================================================
    ИГРА "КОСТИ" (обычный кубик 1-6, ставка на одно число, x3)
    ===================================================================== */
 

@@ -227,6 +227,10 @@
                     <span class="game-tile-icon">💣</span>
                     <span class="game-tile-name">Бомбер</span>
                 </button>
+                <button class="game-tile" data-game="tower">
+                    <span class="game-tile-icon">🗼</span>
+                    <span class="game-tile-name">Башня</span>
+                </button>
                 <button class="game-tile" data-game="plinko">
                     <span class="game-tile-icon">🎯</span>
                     <span class="game-tile-name">Плинко</span>
@@ -793,6 +797,143 @@
             </div>
 
             <button class="action-btn slots-rules-close-btn" id="closeBomberRulesModalBtn">Понятно</button>
+        </div>
+    </div>
+
+    <!-- ЭКРАН: ИГРА "БАШНЯ" (подъём по этажам, чем выше — тем больше множитель и риск) -->
+    <div id="towerScreen" class="screen">
+        <header class="profile-header slots-header">
+            <button class="back-btn" id="backToProfileFromTowerBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Назад
+            </button>
+            <button class="slots-rules-btn" id="openTowerRulesBtn">
+                <span class="slots-rules-btn-icon">i</span>
+                Правила
+            </button>
+        </header>
+
+        <div class="slots-content tower-content">
+            <div class="slots-title">🗼 Башня</div>
+
+            <div class="slots-balance-pill">
+                <span class="slots-balance-label">Баланс</span>
+                <span class="slots-balance-value"><span id="towerBalanceValue" class="user-balance">0</span> 💎</span>
+            </div>
+
+            <!-- Выбор сложности — доступно только до старта раунда -->
+            <div class="bomber-bombs-panel tower-difficulty-panel">
+                <div class="bomber-bombs-label">Сложность</div>
+                <div class="bomber-bombs-options tower-difficulty-options" id="towerDifficultyOptions">
+                    <button class="bomber-bombs-btn tower-difficulty-btn is-active" data-difficulty="easy" type="button">Лёгкий</button>
+                    <button class="bomber-bombs-btn tower-difficulty-btn" data-difficulty="medium" type="button">Средний</button>
+                    <button class="bomber-bombs-btn tower-difficulty-btn" data-difficulty="hard" type="button">Сложный</button>
+                </div>
+            </div>
+
+            <!-- Текущий множитель / потенциальный выигрыш -->
+            <div class="bomber-stats-row tower-stats-row">
+                <div class="bomber-stat-box">
+                    <span class="bomber-stat-label">Этаж</span>
+                    <span class="bomber-stat-value" id="towerFloorValue">0 / 8</span>
+                </div>
+                <div class="bomber-stat-box">
+                    <span class="bomber-stat-label">Выигрыш</span>
+                    <span class="bomber-stat-value" id="towerPotentialWinValue">0.00 💎</span>
+                </div>
+                <div class="bomber-stat-box">
+                    <span class="bomber-stat-label">Следующий</span>
+                    <span class="bomber-stat-value" id="towerNextMultiplierValue">—</span>
+                </div>
+            </div>
+
+            <!-- Башня: этажи снизу вверх, текущий этаж активен -->
+            <div class="tower-field" id="towerField"></div>
+
+            <div class="slots-result" id="towerResult">Выберите сложность, сделайте ставку и нажмите «Начать подъём»</div>
+
+            <div class="slots-bet-panel" id="towerBetPanel">
+                <div class="slots-bet-label">Ставка</div>
+                <div class="slots-bet-controls">
+                    <button class="slots-bet-step-btn" id="towerBetMinusBtn" type="button">−</button>
+                    <div class="slots-bet-input-wrap">
+                        <input type="number" id="towerBetInput" value="0.3" min="0.3" max="1000" step="0.1" inputmode="decimal">
+                        <span class="slots-bet-diamond">💎</span>
+                    </div>
+                    <button class="slots-bet-step-btn" id="towerBetPlusBtn" type="button">+</button>
+                </div>
+                <div class="slots-bet-quick">
+                    <button class="slots-bet-quick-btn tower-bet-quick-btn" data-bet-mode="min" type="button">MIN</button>
+                    <button class="slots-bet-quick-btn tower-bet-quick-btn" data-bet-mode="half" type="button">1/2</button>
+                    <button class="slots-bet-quick-btn tower-bet-quick-btn" data-bet-mode="double" type="button">x2</button>
+                    <button class="slots-bet-quick-btn tower-bet-quick-btn" data-bet-mode="max" type="button">MAX</button>
+                </div>
+            </div>
+
+            <div class="bomber-actions tower-actions">
+                <button class="slots-spin-btn tower-start-btn" id="towerStartBtn" type="button">
+                    <span class="slots-spin-btn-text">НАЧАТЬ ПОДЪЁМ</span>
+                </button>
+                <button class="slots-spin-btn bomber-cashout-btn tower-cashout-btn" id="towerCashoutBtn" type="button" style="display:none;">
+                    <span class="slots-spin-btn-text">ЗАБРАТЬ ВЫИГРЫШ</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно правил игры "Башня" -->
+    <div id="towerRulesModal" class="modal" style="display: none;">
+        <div class="modal-content slots-rules-content">
+            <button class="close-modal" id="closeTowerRulesModal">&times;</button>
+            <h2>Правила игры «Башня»</h2>
+            <p class="slots-rules-desc">
+                Башня состоит из 8 этажей. Перед стартом выберите сложность и сделайте
+                ставку, затем нажмите «Начать подъём» — на каждом этаже ловушка
+                расставляется случайно и скрыта от вас.
+            </p>
+            <p class="slots-rules-desc">
+                На текущем этаже выберите одну из плиток. Если плитка безопасна — вы
+                поднимаетесь на этаж выше, а множитель выигрыша растёт. Чем выше
+                поднимаетесь и чем выше выбранная сложность — тем больше множитель
+                и тем выше риск. В любой момент после подъёма на первый этаж можно
+                нажать «Забрать выигрыш» — ставка × текущий множитель зачислится
+                на баланс.
+            </p>
+            <p class="slots-rules-desc">
+                Если выбрана плитка с ловушкой — раунд проигран, ставка сгорает.
+                Если пройдены все 8 этажей — выигрыш засчитывается автоматически
+                по максимальному множителю раунда.
+            </p>
+
+            <div class="bomber-rules-table">
+                <div class="bomber-rules-row bomber-rules-head">
+                    <span>Сложность</span>
+                    <span>Плиток / шанс этажа</span>
+                    <span>Риск</span>
+                </div>
+                <div class="bomber-rules-row">
+                    <span>Лёгкий</span><span>4 плитки, 3/4</span><span class="bomber-risk-low">Низкий</span>
+                </div>
+                <div class="bomber-rules-row">
+                    <span>Средний</span><span>3 плитки, 2/3</span><span class="bomber-risk-mid">Средний</span>
+                </div>
+                <div class="bomber-rules-row">
+                    <span>Сложный</span><span>2 плитки, 1/2</span><span class="bomber-risk-high">Высокий</span>
+                </div>
+            </div>
+
+            <div class="slots-rules-bets">
+                <div class="slots-rules-bet-item">
+                    <span>Мин. ставка</span>
+                    <b>0.3 💎</b>
+                </div>
+                <div class="slots-rules-bet-item">
+                    <span>Макс. ставка</span>
+                    <b>1 000 💎</b>
+                </div>
+            </div>
+
+            <button class="action-btn slots-rules-close-btn" id="closeTowerRulesModalBtn">Понятно</button>
         </div>
     </div>
 
