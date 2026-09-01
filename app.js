@@ -1234,7 +1234,10 @@ async function loadActiveOrders(opts = {}) {
     // иначе он мигал бы пустым на каждом тике поллинга.
     if (!silent) ordersActiveList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
     try {
-        const res = await fetch(`${API_URL}/api/orders`, { headers: { 'Authorization': `Bearer ${authToken}` } });
+        const res = await fetch(`${API_URL}/api/orders`, {
+            headers: { 'Authorization': `Bearer ${authToken}` },
+            cache: 'no-store',
+        });
         const data = await res.json();
         if (!data.ok) {
             if (!silent) ordersActiveList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить ордера'}</div>`;
@@ -1259,7 +1262,10 @@ async function loadOrderHistory(opts = {}) {
     }
     if (!silent) ordersHistoryList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
     try {
-        const res = await fetch(`${API_URL}/api/orders/history`, { headers: { 'Authorization': `Bearer ${authToken}` } });
+        const res = await fetch(`${API_URL}/api/orders/history`, {
+            headers: { 'Authorization': `Bearer ${authToken}` },
+            cache: 'no-store',
+        });
         const data = await res.json();
         if (!data.ok) {
             if (!silent) ordersHistoryList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить историю ордеров'}</div>`;
