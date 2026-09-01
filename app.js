@@ -117,6 +117,20 @@ setInterval(() => {
     }
 }, TRADE_POLL_INTERVAL_MS);
 
+// === Автообновление ордеров, пока пользователь на этом экране ===
+// Та же логика, что и для маркета/трейда: без поллинга статус ордера
+// (например, "исполнен" после того, как кто-то продал/купил по нему)
+// появлялся только после ухода с вкладки и возврата на неё.
+const ORDERS_POLL_INTERVAL_MS = 5000;
+
+setInterval(() => {
+    if (currentScreenName === 'orders' && document.visibilityState === 'visible') {
+        loadActiveOrders({ silent: true });
+        loadOrderHistory({ silent: true });
+        loadMyOffers({ silent: true });
+    }
+}, ORDERS_POLL_INTERVAL_MS);
+
 // На случай, если Telegram просто "разбудил" уже открытое мини-приложение
 // (свернули/развернули), а не выполнил полную перезагрузку — досверяем баланс
 // и, если пользователь как раз смотрит на Трейд, сразу подтягиваем обмены,
@@ -127,6 +141,11 @@ document.addEventListener('visibilitychange', () => {
         if (currentScreenName === 'trade') {
             loadIncomingTrades({ silent: true });
             loadMyTrades({ silent: true });
+        }
+        if (currentScreenName === 'orders') {
+            loadActiveOrders({ silent: true });
+            loadOrderHistory({ silent: true });
+            loadMyOffers({ silent: true });
         }
     }
 });
@@ -1204,18 +1223,21 @@ async function refreshOrdersStat() {
     }
 }
 
-async function loadActiveOrders() {
+async function loadActiveOrders(opts = {}) {
+    const silent = opts.silent === true;
     if (!ordersActiveList) return;
     if (!authToken) {
-        ordersActiveList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
+        if (!silent) ordersActiveList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
         return;
     }
-    ordersActiveList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    // При фоновом автообновлении не затираем список текстом "Загрузка..." —
+    // иначе он мигал бы пустым на каждом тике поллинга.
+    if (!silent) ordersActiveList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
     try {
         const res = await fetch(`${API_URL}/api/orders`, { headers: { 'Authorization': `Bearer ${authToken}` } });
         const data = await res.json();
         if (!data.ok) {
-            ordersActiveList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить ордера'}</div>`;
+            if (!silent) ordersActiveList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить ордера'}</div>`;
             return;
         }
         renderOrdersList(ordersActiveList, ordersActiveById, data.orders, { showCancel: true });
@@ -1223,28 +1245,29 @@ async function loadActiveOrders() {
         // счётчик в профиле заодно, без лишнего запроса.
         setOrdersStatValue(data.orders.length);
     } catch (e) {
-        ordersActiveList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        if (!silent) ordersActiveList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
         console.error(e);
     }
 }
 
-async function loadOrderHistory() {
+async function loadOrderHistory(opts = {}) {
+    const silent = opts.silent === true;
     if (!ordersHistoryList) return;
     if (!authToken) {
-        ordersHistoryList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
+        if (!silent) ordersHistoryList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
         return;
     }
-    ordersHistoryList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    if (!silent) ordersHistoryList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
     try {
         const res = await fetch(`${API_URL}/api/orders/history`, { headers: { 'Authorization': `Bearer ${authToken}` } });
         const data = await res.json();
         if (!data.ok) {
-            ordersHistoryList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить историю ордеров'}</div>`;
+            if (!silent) ordersHistoryList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить историю ордеров'}</div>`;
             return;
         }
         renderOrdersList(ordersHistoryList, ordersHistoryById, data.orders, { showCancel: false });
     } catch (e) {
-        ordersHistoryList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        if (!silent) ordersHistoryList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
         console.error(e);
     }
 }
@@ -1287,23 +1310,24 @@ function renderMyOffers(offers) {
     });
 }
 
-async function loadMyOffers() {
+async function loadMyOffers(opts = {}) {
+    const silent = opts.silent === true;
     if (!ordersOffersList) return;
     if (!authToken) {
-        ordersOffersList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
+        if (!silent) ordersOffersList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
         return;
     }
-    ordersOffersList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    if (!silent) ordersOffersList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
     try {
         const res = await fetch(`${API_URL}/api/my-offers`, { headers: { 'Authorization': `Bearer ${authToken}` } });
         const data = await res.json();
         if (!data.ok) {
-            ordersOffersList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить предложения'}</div>`;
+            if (!silent) ordersOffersList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить предложения'}</div>`;
             return;
         }
         renderMyOffers(data.offers);
     } catch (e) {
-        ordersOffersList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        if (!silent) ordersOffersList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
         console.error(e);
     }
 }
