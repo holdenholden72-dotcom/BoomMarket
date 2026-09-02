@@ -1047,12 +1047,45 @@ if (listingDetailOfferSellBtn) {
 }
 
 if (listingDetailOfferCancelBtn) {
-    listingDetailOfferCancelBtn.addEventListener('click', () => {
-        // Просто закрывает карточку — ничего не отменяет и не отклоняет,
-        // предложение остаётся активным в списке.
-        listingDetailModal.style.display = 'none';
-        currentDetailListingId = null;
-        currentDetailOffer = null;
+    listingDetailOfferCancelBtn.addEventListener('click', async () => {
+        if (!currentDetailOffer) return;
+
+        if (!authToken) {
+            alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+            return;
+        }
+        if (!confirm('Отклонить это предложение? Деньги вернутся покупателю.')) return;
+
+        listingDetailOfferCancelBtn.disabled = true;
+
+        try {
+            const res = await fetch(`${API_URL}/api/listings/${currentDetailOffer.listingId}/decline-offer`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`,
+                },
+                body: JSON.stringify({ orderId: currentDetailOffer.orderId }),
+            });
+
+            const data = await res.json();
+
+            if (!data.ok) {
+                alert(data.error || 'Не удалось отклонить предложение');
+                listingDetailOfferCancelBtn.disabled = false;
+                return;
+            }
+
+            listingDetailModal.style.display = 'none';
+            currentDetailListingId = null;
+            currentDetailOffer = null;
+            await loadMyOffers();
+        } catch (err) {
+            alert('Ошибка соединения с сервером');
+            console.error(err);
+        } finally {
+            listingDetailOfferCancelBtn.disabled = false;
+        }
     });
 }
 
