@@ -2110,10 +2110,9 @@ function updateMarketOrdersButton() {
     marketOrdersBtn.style.display = activeFilters.collectionIds.length === 1 ? 'inline-flex' : 'none';
 }
 
-/** Схлопывает плоский список ордеров в строки по комбинации модель/фон/символ —
- * так же, как отображается ордербук на реальных маркетах: одна строка на
- * трейт-комбинацию, суммарное количество и диапазон цены (мин–макс) среди
- * всех ордеров этой комбинации. */
+/** Схлопывает плоский список ордеров в строки по комбинации модель/фон/символ,
+ * затем оставляет только 10 САМЫХ ДОРОГИХ (по максимальной цене в группе) —
+ * ордербук по коллекции показывает не всё подряд, а именно топ-10 предложений. */
 function groupCollectionOrders(items) {
     const groups = new Map();
 
@@ -2143,7 +2142,11 @@ function groupCollectionOrders(items) {
         group.orders.push(item);
     });
 
-    const list = Array.from(groups.values());
+    let list = Array.from(groups.values());
+    // Всегда только 10 самых дорогих — сортировка по кнопке "Цена" ниже
+    // переупорядочивает уже эту десятку, а не весь список.
+    list.sort((a, b) => b.maxPrice - a.maxPrice);
+    list = list.slice(0, 10);
     if (collectionOrdersSortDir) {
         list.sort((a, b) => collectionOrdersSortDir === 'asc' ? a.minPrice - b.minPrice : b.maxPrice - a.maxPrice);
     }
