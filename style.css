@@ -3460,6 +3460,8 @@ body {
     font-weight: 800;
     line-height: 1;
     cursor: pointer;
+    box-shadow: 0 6px 16px rgba(255, 159, 10, 0.28);
+    transition: transform 0.1s ease;
 }
 
 .collection-orders-add-btn:active {
@@ -3470,22 +3472,33 @@ body {
     display: grid;
     grid-template-columns: minmax(0, 1.3fr) 72px 96px;
     gap: 8px;
-    padding: 0 4px 10px;
-    font-size: 12px;
-    color: #8e8e93;
+    padding: 0 6px 10px;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #6b6b70;
 }
 
 .collection-orders-price-sort {
     background: none;
     border: none;
     padding: 0;
-    color: #8e8e93;
-    font-size: 12px;
+    color: #6b6b70;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
     display: flex;
     align-items: center;
     justify-content: flex-end;
     gap: 4px;
     cursor: pointer;
+    transition: color 0.12s ease;
+}
+
+.collection-orders-price-sort:active {
+    color: #ffd700;
 }
 
 .collection-orders-list {
@@ -3504,10 +3517,26 @@ body {
     border-radius: 14px;
     padding: 10px 12px;
     margin-bottom: 8px;
+    position: relative;
+    overflow: hidden;
 }
 
+/* Свои ордеры выделены не только рамкой, но и лёгким золотым свечением
+   слева — так их видно с одного взгляда даже во вкладке "Все ордеры",
+   не читая цену. */
 .collection-order-row.is-mine {
     border-color: rgba(255, 215, 0, 0.35);
+    background: linear-gradient(90deg, rgba(255, 215, 0, 0.08) 0%, #16161a 22%);
+}
+
+.collection-order-row.is-mine::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, #ffe066 0%, #ff9f0a 100%);
 }
 
 .collection-order-col-name {
@@ -3524,6 +3553,7 @@ body {
     flex-shrink: 0;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07);
 }
 
 .collection-order-thumb img {
@@ -3545,26 +3575,28 @@ body {
 .collection-order-col-qty {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 5px;
     font-size: 12px;
+    font-weight: 600;
     color: #cfcfd2;
 }
 
 .collection-order-progress {
-    height: 3px;
+    height: 4px;
     border-radius: 2px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
     overflow: hidden;
 }
 
 .collection-order-progress-fill {
     height: 100%;
-    background: #8e8e93;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #ffd700 0%, #ff9f0a 100%);
 }
 
 .collection-order-col-price {
-    font-size: 12px;
-    font-weight: 700;
+    font-size: 13px;
+    font-weight: 800;
     color: #d9c8ff;
     text-align: right;
     white-space: nowrap;
