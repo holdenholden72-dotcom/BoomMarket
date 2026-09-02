@@ -670,7 +670,7 @@ function renderGrid(listings) {
                 <div class="nft-title">${item.collection_name}</div>
                 <div class="nft-number">#${item.gift_number}</div>
                 <div class="nft-bottom">
-                    <div class="nft-price">💎 ${item.price}</div>
+                    <div class="nft-price">💎 ${formatGram(item.price)}</div>
                     <div class="nft-actions">
                         <button class="order-quick-btn" data-listing-id="${item.id}" title="Создать ордер на этот трейт">🧾</button>
                         <button class="cart-btn" data-listing-id="${item.id}">🛒</button>
@@ -731,7 +731,7 @@ function openListingDetail(item, opts = {}) {
     listingDetailModel.textContent = traitLabel(item.model_name);
     listingDetailBackdrop.textContent = traitLabel(item.backdrop_name);
     listingDetailSymbol.textContent = traitLabel(item.symbol_name);
-    listingDetailPrice.textContent = item.price;
+    listingDetailPrice.textContent = formatGram(item.price);
 
     if (currentDetailOffer) {
         // Открыто по клику на предложение в "Ордеры → Предложения":
@@ -1165,9 +1165,16 @@ function formatHistoryDate(isoString) {
     return `${datePart} · ${timePart}`;
 }
 
+// Единый формат отображения сумм GRAM по всему маркету (листинги, ордера,
+// трейды, история) — всегда один знак после запятой. Баланс — исключение,
+// у него отдельная логика с двумя знаками (см. updateBalanceUI).
+function formatGram(amount) {
+    return Number(amount).toFixed(1);
+}
+
 function formatAmount(amount) {
     const sign = amount > 0 ? '+' : '';
-    return `${sign}${amount} 💎`;
+    return `${sign}${formatGram(amount)} 💎`;
 }
 
 // "Сегодня" / "Вчера" / "3 сентября" — для группировки истории по дням.
@@ -1419,11 +1426,11 @@ function renderOrdersList(container, cacheMap, items, { showCancel }) {
 
         const rightHtml = showCancel
             ? `<div class="order-row-price">
-                   <span>💎 ${displayPrice}${qtyLabel}</span>
+                   <span>💎 ${formatGram(displayPrice)}${qtyLabel}</span>
                    <button class="order-row-cancel" data-cancel-order-id="${item.id}">Отменить</button>
                </div>`
             : `<div class="order-row-price">
-                   <span>💎 ${displayPrice}${qtyLabel}</span>
+                   <span>💎 ${formatGram(displayPrice)}${qtyLabel}</span>
                    <span class="order-row-status is-${item.status}">${orderStatusLabels[item.status] || item.status}</span>
                </div>`;
 
@@ -1538,11 +1545,11 @@ function renderMyOffers(offers) {
             </div>
             <div class="history-info">
                 <div class="history-name">${offer.collection_name} #${offer.gift_number}</div>
-                <div class="history-meta">Ваша цена: 💎 ${offer.listing_price}</div>
+                <div class="history-meta">Ваша цена: 💎 ${formatGram(offer.listing_price)}</div>
                 <div class="history-meta">${formatHistoryDate(offer.offer_created_at)}</div>
             </div>
             <div class="order-row-price">
-                <span>💎 ${offer.max_price}</span>
+                <span>💎 ${formatGram(offer.max_price)}</span>
                 <button class="offer-accept-btn" data-order-id="${offer.order_id}" data-listing-id="${offer.listing_id}">Продать</button>
             </div>
         `;
@@ -1715,7 +1722,7 @@ function openOrderDetail(item) {
     orderDetailSymbol.textContent = traitLabel(item.symbol_name) === '—' ? 'Любой' : item.symbol_name;
 
     const displayPrice = (item.status === 'filled' && item.matched_price != null) ? item.matched_price : item.max_price;
-    orderDetailPrice.textContent = `💎 ${displayPrice}`;
+    orderDetailPrice.textContent = `💎 ${formatGram(displayPrice)}`;
     orderDetailStatus.textContent = orderStatusLabels[item.status] || item.status;
 
     orderDetailCreated.textContent = formatHistoryDate(item.created_at);
@@ -2074,7 +2081,7 @@ function renderCollectionOrdersList() {
                 <div class="history-meta">Кол-во: ${item.filled_count}/${item.quantity}${isMine ? ' · моя' : ''}</div>
             </div>
             <div class="order-row-price">
-                <span>💎 ${item.max_price}</span>
+                <span>💎 ${formatGram(item.max_price)}</span>
             </div>
         `;
 
@@ -3320,7 +3327,7 @@ function renderTradeSummaryRow(trade) {
     let topupText = '';
     if (trade.ton_amount > 0 && trade.ton_payer) {
         const iAmPayer = (trade.ton_payer === 'initiator' && isInitiator) || (trade.ton_payer === 'recipient' && !isInitiator);
-        topupText = iAmPayer ? ` · доплата −${trade.ton_amount} TON` : ` · доплата +${trade.ton_amount} TON`;
+        topupText = iAmPayer ? ` · доплата −${formatGram(trade.ton_amount)} TON` : ` · доплата +${formatGram(trade.ton_amount)} TON`;
     }
 
     const li = document.createElement('li');
@@ -3453,8 +3460,8 @@ function openTradeDetail(trade) {
         if (trade.ton_amount > 0 && trade.ton_payer) {
             const iAmPayer = (trade.ton_payer === 'initiator' && isInitiator) || (trade.ton_payer === 'recipient' && isRecipient);
             tradeDetailTopupNote.textContent = iAmPayer
-                ? `Вы доплачиваете ${trade.ton_amount} TON`
-                : `Вам доплачивают ${trade.ton_amount} TON`;
+                ? `Вы доплачиваете ${formatGram(trade.ton_amount)} TON`
+                : `Вам доплачивают ${formatGram(trade.ton_amount)} TON`;
             tradeDetailTopupNote.style.display = '';
         } else {
             tradeDetailTopupNote.style.display = 'none';
@@ -3473,7 +3480,7 @@ function openTradeDetail(trade) {
         const acceptBtn = document.createElement('button');
         acceptBtn.className = 'action-btn';
         acceptBtn.textContent = (trade.ton_amount > 0 && trade.ton_payer === 'recipient')
-            ? `Принять и доплатить ${trade.ton_amount} TON`
+            ? `Принять и доплатить ${formatGram(trade.ton_amount)} TON`
             : 'Принять';
         acceptBtn.addEventListener('click', () => resolveTrade(trade.id, 'accept'));
 
