@@ -1358,18 +1358,22 @@ async function refreshOrdersStat() {
     }
 }
 
-async function loadActiveOrders() {
+async function loadActiveOrders(opts = {}) {
     if (!ordersActiveList) return;
     if (!authToken) {
         ordersActiveList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
         return;
     }
-    ordersActiveList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    // silent: true — для фонового автообновления (см. ORDERS_POLL_INTERVAL_MS).
+    // Без этого список каждые 5 секунд на мгновение стирался на "Загрузка..."
+    // и тут же перерисовывался — снаружи это выглядело как "предмет пропадает
+    // и сразу появляется", даже когда в списке ничего не менялось.
+    if (!opts.silent) ordersActiveList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
     try {
         const res = await fetch(`${API_URL}/api/orders`, { headers: { 'Authorization': `Bearer ${authToken}` } });
         const data = await res.json();
         if (!data.ok) {
-            ordersActiveList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить ордера'}</div>`;
+            if (!opts.silent) ordersActiveList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить ордера'}</div>`;
             return;
         }
         renderOrdersList(ordersActiveList, ordersActiveById, data.orders, { showCancel: true });
@@ -1377,28 +1381,28 @@ async function loadActiveOrders() {
         // счётчик в профиле заодно, без лишнего запроса.
         setOrdersStatValue(data.orders.length);
     } catch (e) {
-        ordersActiveList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        if (!opts.silent) ordersActiveList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
         console.error(e);
     }
 }
 
-async function loadOrderHistory() {
+async function loadOrderHistory(opts = {}) {
     if (!ordersHistoryList) return;
     if (!authToken) {
         ordersHistoryList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
         return;
     }
-    ordersHistoryList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    if (!opts.silent) ordersHistoryList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
     try {
         const res = await fetch(`${API_URL}/api/orders/history`, { headers: { 'Authorization': `Bearer ${authToken}` } });
         const data = await res.json();
         if (!data.ok) {
-            ordersHistoryList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить историю ордеров'}</div>`;
+            if (!opts.silent) ordersHistoryList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить историю ордеров'}</div>`;
             return;
         }
         renderOrdersList(ordersHistoryList, ordersHistoryById, data.orders, { showCancel: false });
     } catch (e) {
-        ordersHistoryList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        if (!opts.silent) ordersHistoryList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
         console.error(e);
     }
 }
@@ -1442,23 +1446,23 @@ function renderMyOffers(offers) {
     });
 }
 
-async function loadMyOffers() {
+async function loadMyOffers(opts = {}) {
     if (!ordersOffersList) return;
     if (!authToken) {
         ordersOffersList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
         return;
     }
-    ordersOffersList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    if (!opts.silent) ordersOffersList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
     try {
         const res = await fetch(`${API_URL}/api/my-offers`, { headers: { 'Authorization': `Bearer ${authToken}` } });
         const data = await res.json();
         if (!data.ok) {
-            ordersOffersList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить предложения'}</div>`;
+            if (!opts.silent) ordersOffersList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить предложения'}</div>`;
             return;
         }
         renderMyOffers(data.offers);
     } catch (e) {
-        ordersOffersList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        if (!opts.silent) ordersOffersList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
         console.error(e);
     }
 }
@@ -1566,9 +1570,9 @@ const ORDERS_POLL_INTERVAL_MS = 5000;
 
 setInterval(() => {
     if (currentScreenName !== 'orders' || document.visibilityState !== 'visible') return;
-    if (currentOrdersTab === 'active') loadActiveOrders();
-    else if (currentOrdersTab === 'history') loadOrderHistory();
-    else if (currentOrdersTab === 'offers') loadMyOffers();
+    if (currentOrdersTab === 'active') loadActiveOrders({ silent: true });
+    else if (currentOrdersTab === 'history') loadOrderHistory({ silent: true });
+    else if (currentOrdersTab === 'offers') loadMyOffers({ silent: true });
 }, ORDERS_POLL_INTERVAL_MS);
 
 // === Детальная карточка ордера (открывается по клику на аватарку/строку, в т.ч. в истории) ===
@@ -2751,8 +2755,8 @@ const TRADE_POLL_INTERVAL_MS = 5000;
 
 setInterval(() => {
     if (currentScreenName !== 'trade' || document.visibilityState !== 'visible') return;
-    if (currentTradeTab === 'incoming') loadIncomingTrades();
-    else if (currentTradeTab === 'mine') loadMyTrades();
+    if (currentTradeTab === 'incoming') loadIncomingTrades({ silent: true });
+    else if (currentTradeTab === 'mine') loadMyTrades({ silent: true });
 }, TRADE_POLL_INTERVAL_MS);
 
 async function searchTradeUsers() {
@@ -3010,18 +3014,21 @@ function renderTradeSummaryRow(trade) {
     return li;
 }
 
-async function loadIncomingTrades() {
+async function loadIncomingTrades(opts = {}) {
     if (!tradeIncomingList) return;
     if (!authToken) {
         tradeIncomingList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
         return;
     }
-    tradeIncomingList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    // silent: true — для фонового автообновления (см. TRADE_POLL_INTERVAL_MS),
+    // чтобы список не мигал плейсхолдером "Загрузка..." каждые 5 секунд,
+    // когда в нём на самом деле ничего не изменилось.
+    if (!opts.silent) tradeIncomingList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
     try {
         const res = await fetch(`${API_URL}/api/trades/incoming`, { headers: { 'Authorization': `Bearer ${authToken}` } });
         const data = await res.json();
         if (!data.ok) {
-            tradeIncomingList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить обмены'}</div>`;
+            if (!opts.silent) tradeIncomingList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить обмены'}</div>`;
             return;
         }
         tradeIncomingCache.clear();
@@ -3035,23 +3042,23 @@ async function loadIncomingTrades() {
             tradeIncomingList.appendChild(renderTradeSummaryRow(trade));
         });
     } catch (e) {
-        tradeIncomingList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        if (!opts.silent) tradeIncomingList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
         console.error(e);
     }
 }
 
-async function loadMyTrades() {
+async function loadMyTrades(opts = {}) {
     if (!tradeMineList) return;
     if (!authToken) {
         tradeMineList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
         return;
     }
-    tradeMineList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    if (!opts.silent) tradeMineList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
     try {
         const res = await fetch(`${API_URL}/api/trades/mine`, { headers: { 'Authorization': `Bearer ${authToken}` } });
         const data = await res.json();
         if (!data.ok) {
-            tradeMineList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить обмены'}</div>`;
+            if (!opts.silent) tradeMineList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить обмены'}</div>`;
             return;
         }
         tradeMineCache.clear();
@@ -3065,7 +3072,7 @@ async function loadMyTrades() {
             tradeMineList.appendChild(renderTradeSummaryRow(trade));
         });
     } catch (e) {
-        tradeMineList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        if (!opts.silent) tradeMineList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
         console.error(e);
     }
 }
