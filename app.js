@@ -2566,6 +2566,14 @@ if (tradeTabs) {
         tradeNewPanel.style.display = tab === 'new' ? '' : 'none';
         tradeIncomingList.style.display = tab === 'incoming' ? '' : 'none';
         tradeMineList.style.display = tab === 'mine' ? '' : 'none';
+
+        // Списки грузятся один раз при входе на экран "Трейд" (showScreen),
+        // поэтому если новое предложение прилетело, пока пользователь уже
+        // стоял на экране, переключение подвкладки раньше показывало старые
+        // (пустые) данные — приходилось уходить на другой экран и возвращаться.
+        // Перезапрашиваем список при каждом переключении на него.
+        if (tab === 'incoming') loadIncomingTrades();
+        if (tab === 'mine') loadMyTrades();
     });
 }
 

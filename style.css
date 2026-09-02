@@ -1813,15 +1813,17 @@ body {
 }
 
 .trade-topup-note {
+    /* display:table (а не inline-block) — чтобы margin:auto реально центрировал
+       саму плашку в родителе с text-align:left, а не только текст внутри неё. */
+    display: table;
+    margin: 0 auto 12px;
     text-align: center;
     color: #1c1c1e;
     background: linear-gradient(135deg, #ffe066 0%, #ffd700 45%, #ff9f0a 100%);
-    display: inline-block;
     padding: 6px 14px;
     border-radius: 10px;
     font-size: 12px;
     font-weight: 700;
-    margin-bottom: 12px;
 }
 
 /* Кнопка "Предложить обмен" — приводим в один регистр с "Купить"/"Создать
