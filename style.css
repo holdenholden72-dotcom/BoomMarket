@@ -1345,6 +1345,12 @@ body {
 }
 
 /* === Экран "Ордеры" === */
+#ordersScreen .section-title {
+    font-size: 12px;
+    letter-spacing: 0.4px;
+    color: #8e8e93;
+}
+
 .orders-create-btn {
     width: 100%;
     flex-direction: row;
@@ -1375,13 +1381,18 @@ body {
     font-size: 15px;
 }
 
+/* Капсула вкладок приподнята над фоном, активный пункт светится золотом —
+   это парная (но самостоятельная) версия капсулы из #tradeTabs, где активный
+   пункт светится фиолетовым. Так "Ордеры" (сделки за 💎) и "Трейд" (сделки
+   с людьми) визуально различимы, оставаясь одной системой. */
 .orders-tabs {
     display: flex;
-    gap: 6px;
-    background: #1c1c1e;
-    border-radius: 12px;
-    padding: 4px;
-    margin-bottom: 12px;
+    gap: 5px;
+    background: #141416;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 14px;
+    padding: 5px;
+    margin-bottom: 14px;
 }
 
 .orders-tab {
@@ -1391,15 +1402,49 @@ body {
     color: #8e8e93;
     font-size: 12px;
     font-weight: 600;
-    padding: 10px 2px;
-    border-radius: 9px;
+    padding: 11px 2px;
+    border-radius: 10px;
     cursor: pointer;
     white-space: nowrap;
+    letter-spacing: 0.2px;
+    transition: color 0.15s ease, background 0.15s ease;
 }
 
 .orders-tab.active {
-    background: #2c2c2e;
-    color: #fff;
+    background: linear-gradient(135deg, #3a2f14 0%, #211c1a 100%);
+    color: #ffd700;
+    box-shadow: inset 0 0 0 1px rgba(255, 215, 0, 0.3);
+}
+
+/* Строки списков ордеров/предложений — приподнятые карточки вместо плоских
+   строк с чертой снизу, в том же языке, что и у списков "Трейда". */
+#ordersActiveList .history-row,
+#ordersHistoryList .history-row,
+#ordersOffersList .history-row {
+    background: #16161a;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 14px;
+    padding: 12px;
+    margin-bottom: 8px;
+    border-bottom: none;
+    transition: border-color 0.15s ease, transform 0.1s ease;
+}
+
+#ordersActiveList .history-row.has-gift:active,
+#ordersHistoryList .history-row.has-gift:active {
+    transform: scale(0.98);
+    border-color: rgba(255, 215, 0, 0.3);
+}
+
+#ordersScreen .history-thumb {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+#ordersScreen .empty-state {
+    text-align: center;
+    color: #6b6b70;
+    font-size: 13px;
+    padding: 32px 0;
 }
 
 .order-row-price {
@@ -1410,31 +1455,31 @@ body {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 4px;
+    gap: 6px;
 }
 
 .order-row-status {
     font-size: 10px;
-    font-weight: 600;
-    padding: 2px 7px;
-    border-radius: 8px;
-    background: #2c2c2e;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.06);
     color: #8e8e93;
 }
 
 .order-row-status.is-active {
-    background: #2b3a2b;
+    background: rgba(52, 199, 89, 0.15);
     color: #34c759;
 }
 
 .order-row-status.is-filled {
-    background: #2b2345;
+    background: rgba(138, 107, 255, 0.18);
     color: #d9c8ff;
 }
 
 .order-row-status.is-cancelled {
-    background: #2c2c2e;
-    color: #8e8e93;
+    background: rgba(255, 255, 255, 0.06);
+    color: #6b6b70;
 }
 
 .order-detail-cancel-btn {
@@ -1452,14 +1497,19 @@ body {
 }
 
 .order-row-cancel {
-    background: #2c2c2e;
-    color: #ff453a;
-    border: none;
+    background: #201417;
+    color: #ff6961;
+    border: 1px solid rgba(255, 69, 58, 0.3);
     font-size: 11px;
-    font-weight: 600;
-    padding: 6px 10px;
+    font-weight: 700;
+    padding: 6px 11px;
     border-radius: 8px;
     cursor: pointer;
+    transition: transform 0.1s ease;
+}
+
+.order-row-cancel:active {
+    transform: scale(0.95);
 }
 
 .offer-accept-btn {
@@ -1468,9 +1518,11 @@ body {
     border: none;
     font-size: 11px;
     font-weight: 700;
-    padding: 6px 12px;
+    padding: 7px 13px;
     border-radius: 8px;
     cursor: pointer;
+    box-shadow: 0 4px 10px rgba(255, 159, 10, 0.25);
+    transition: transform 0.1s ease;
 }
 
 .offer-accept-btn:active {
