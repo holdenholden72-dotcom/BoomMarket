@@ -3032,7 +3032,6 @@ function renderStorageGrid(items, isTrulyEmpty) {
                 <div class="nft-title">${item.collection_name}</div>
                 <div class="nft-number">#${item.gift_number}</div>
             </div>
-            <div class="storage-card-hint">Выставить на продажу</div>
         `;
         storageGrid.appendChild(card);
     });

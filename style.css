@@ -216,7 +216,7 @@ body {
 }
 
 #storageGrid .nft-image-container {
-    height: 176px;
+    height: 150px;
 }
 
 #storageGrid .nft-title {
@@ -225,6 +225,11 @@ body {
 
 #storageGrid .nft-number {
     font-size: 13px;
+    margin-bottom: 0;
+}
+
+#storageGrid .nft-info {
+    padding: 12px 12px 14px;
 }
 
 .nft-image-container {
@@ -3962,18 +3967,8 @@ body {
     max-width: 100%;
 }
 
-/* Подсказка "Выставить на продажу" — появляется как полоска снизу карточки,
-   не требует отдельной кнопки (вся карточка кликабельна). */
-.storage-card-hint {
-    margin-top: auto;
-    padding: 8px 10px;
-    font-size: 11px;
-    font-weight: 600;
-    text-align: center;
-    color: #0a84ff;
-    background: rgba(10, 132, 255, 0.08);
-    border-top: 1px solid rgba(10, 132, 255, 0.15);
-}
+/* Подсказку "Выставить на продажу" убрали — вся карточка и так кликабельна
+   и открывает то же самое окно выставления на продажу. */
 
 /* Пустое состояние Хранилища — крупнее и дружелюбнее, как в Истории */
 .storage-empty-state {
