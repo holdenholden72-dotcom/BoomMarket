@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Telegram NFT Market</title>
-    <link rel="stylesheet" href="style.css?v=10">
+    <link rel="stylesheet" href="style.css?v=11">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 </head>
@@ -274,6 +274,13 @@
 
         <div class="profile-content">
             <div class="section-title">ИСТОРИЯ ОПЕРАЦИЙ</div>
+
+            <div class="history-filters" id="historyFilters">
+                <button class="history-filter-btn active" data-history-filter="all" type="button">Все</button>
+                <button class="history-filter-btn" data-history-filter="balance" type="button">Баланс</button>
+                <button class="history-filter-btn" data-history-filter="gifts" type="button">Подарки</button>
+                <button class="history-filter-btn" data-history-filter="games" type="button">Игры</button>
+            </div>
 
             <ul class="history-list" id="historyList">
                 <!-- Строки генерируются через JS (см. loadHistory/renderHistoryList в app.js) -->
@@ -1634,6 +1641,6 @@
     </div>
 
     <!-- Скрипт подключаем один раз в самом конце -->
-    <script src="app.js?v=11"></script>
+    <script src="app.js?v=12"></script>
 </body>
 </html>

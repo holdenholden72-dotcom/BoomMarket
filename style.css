@@ -3242,3 +3242,177 @@ body {
 .order-qty-controls .slots-bet-input-wrap input {
     text-align: center;
 }
+
+/* =====================================================================
+   ЭКРАН "ИСТОРИЯ ОПЕРАЦИЙ" — редизайн (фильтры, группировка по дням,
+   карточки вместо плоских строк). Всё заскоуплено под #historyList /
+   #historyFilters, чтобы не задеть .history-row в других местах
+   (Ордеры, Трейд, карточка коллекции), где используется тот же класс.
+   ===================================================================== */
+
+.history-filters {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.history-filters::-webkit-scrollbar {
+    display: none;
+}
+
+.history-filter-btn {
+    flex-shrink: 0;
+    background: #1c1c1e;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: #b8b8bd;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.history-filter-btn:active {
+    transform: scale(0.95);
+}
+
+.history-filter-btn.active {
+    background: linear-gradient(135deg, #2b2345 0%, #241c3d 100%);
+    border-color: rgba(124, 92, 255, 0.5);
+    color: #fff;
+}
+
+#historyList {
+    padding-bottom: 90px;
+}
+
+#historyList .history-date-sep {
+    list-style: none;
+    font-size: 12px;
+    font-weight: 700;
+    color: #8e8e93;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 14px 2px 8px;
+}
+
+#historyList .history-date-sep:first-child {
+    padding-top: 0;
+}
+
+/* Карточка вместо плоской строки с нижней чертой */
+#historyList .history-row {
+    background: #1c1c1e;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 16px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    gap: 12px;
+}
+
+#historyList .history-row.has-gift:active {
+    background: #232326;
+    transform: scale(0.99);
+}
+
+/* Цветной ободок иконки в зависимости от категории операции */
+#historyList .history-thumb.is-icon {
+    font-size: 20px;
+    background: #2c2c2e;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+#historyList .history-row.is-in .history-thumb.is-icon {
+    background: rgba(52, 199, 89, 0.14);
+    box-shadow: inset 0 0 0 1px rgba(52, 199, 89, 0.35);
+}
+
+#historyList .history-row.is-out .history-thumb.is-icon {
+    background: rgba(255, 69, 58, 0.12);
+    box-shadow: inset 0 0 0 1px rgba(255, 69, 58, 0.3);
+}
+
+#historyList .history-row.is-game .history-thumb.is-icon {
+    background: rgba(255, 215, 0, 0.14);
+    box-shadow: inset 0 0 0 1px rgba(255, 215, 0, 0.4);
+}
+
+#historyList .history-row.is-gift .history-thumb {
+    box-shadow: inset 0 0 0 1px rgba(124, 92, 255, 0.35);
+}
+
+#historyList .history-name {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+#historyList .history-meta {
+    font-size: 12px;
+    color: #8e8e93;
+    margin-top: 3px;
+}
+
+/* Сумма — теперь пилюля с мягкой подложкой вместо голого текста */
+.history-amount-pill {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 13px;
+    font-weight: 800;
+    white-space: nowrap;
+    padding: 6px 10px;
+    border-radius: 10px;
+}
+
+.history-amount-arrow {
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+.history-amount-pill.positive {
+    color: #34c759;
+    background: rgba(52, 199, 89, 0.12);
+}
+
+.history-amount-pill.negative {
+    color: #ff453a;
+    background: rgba(255, 69, 58, 0.1);
+}
+
+/* Пустое состояние — крупнее и дружелюбнее */
+.history-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 70px 30px 40px;
+    color: #8e8e93;
+}
+
+.history-empty-icon {
+    font-size: 40px;
+    margin-bottom: 14px;
+    opacity: 0.6;
+}
+
+.history-empty-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 6px;
+}
+
+.history-empty-sub {
+    font-size: 13px;
+    line-height: 1.5;
+    max-width: 260px;
+}
+
+/* Небольшая полировка суммы в детальной карточке операции */
+.history-detail-amount {
+    padding: 10px 0;
+}

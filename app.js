@@ -1108,12 +1108,49 @@ const historyTypeLabels = {
     trade_fee_refund: 'Возврат резерва обмена',
     trade_topup_in: 'Доплата в обмене (получено)',
     trade_topup_out: 'Доплата в обмене (отдано)',
+    game_slots: 'Слоты',
+    game_roulette: 'Рулетка',
+    game_bomber: 'Бомбер',
+    game_tower: 'Башня',
+    game_dice: 'Кости',
+    game_plinko: 'Плинко',
 };
 
 const historyTypeIcons = {
     deposit: '➕',
     withdraw: '➖',
+    buy: '🛍️',
+    sell: '💰',
+    trade_in: '🔄',
+    trade_out: '🔄',
+    trade_fee: '⚙️',
+    trade_fee_refund: '↩️',
+    trade_topup_in: '➕',
+    trade_topup_out: '➖',
+    game_slots: '🎰',
+    game_roulette: '🎡',
+    game_bomber: '💣',
+    game_tower: '🗼',
+    game_dice: '🎲',
+    game_plinko: '⚪',
 };
+
+// Категория определяет цвет "ободка" иконки в списке — чисто визуальная
+// группировка, не влияет на данные.
+function getHistoryCategory(type) {
+    if (type === 'deposit' || type === 'trade_topup_in') return 'in';
+    if (type === 'withdraw' || type === 'trade_topup_out' || type === 'trade_fee') return 'out';
+    if (type === 'buy' || type === 'sell' || type === 'trade_in' || type === 'trade_out') return 'gift';
+    if (type && type.startsWith('game_')) return 'game';
+    return 'other';
+}
+
+function getHistoryFilterGroup(type) {
+    if (type === 'deposit' || type === 'withdraw') return 'balance';
+    if (type === 'buy' || type === 'sell' || type === 'trade_in' || type === 'trade_out') return 'gifts';
+    if (type && type.startsWith('game_')) return 'games';
+    return 'balance';
+}
 
 /** Сервер отдаёт время в UTC как "YYYY-MM-DD HH:MM:SS" (SQLite datetime('now')) —
  * добавляем "T"/"Z", чтобы Date() распознал строку как UTC, а не как локальное время. */
@@ -1133,14 +1170,43 @@ function formatAmount(amount) {
     return `${sign}${amount} 💎`;
 }
 
+// "Сегодня" / "Вчера" / "3 сентября" — для группировки истории по дням.
+function getHistoryDayLabel(isoString) {
+    if (!isoString) return '';
+    const iso = isoString.includes('T') ? isoString : isoString.replace(' ', 'T') + 'Z';
+    const date = new Date(iso);
+    if (isNaN(date.getTime())) return '';
+
+    const now = new Date();
+    const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    const diffDays = Math.round((startOfDay(now) - startOfDay(date)) / 86400000);
+
+    if (diffDays === 0) return 'Сегодня';
+    if (diffDays === 1) return 'Вчера';
+
+    const opts = { day: 'numeric', month: 'long' };
+    if (date.getFullYear() !== now.getFullYear()) opts.year = 'numeric';
+    return date.toLocaleDateString('ru-RU', opts);
+}
+
+let historyAllItems = [];
+let historyActiveFilter = 'all';
+
 function renderHistoryList(items) {
     historyList.innerHTML = '';
     historyById.clear();
 
     if (!items || items.length === 0) {
-        historyList.innerHTML = `<div class="empty-state">Пока нет операций</div>`;
+        historyList.innerHTML = `
+            <div class="empty-state history-empty-state">
+                <div class="history-empty-icon">🕘</div>
+                <div class="history-empty-title">Пока пусто</div>
+                <div class="history-empty-sub">Операции появятся здесь, как только вы пополните баланс, купите подарок или сыграете в игру</div>
+            </div>`;
         return;
     }
+
+    let lastDayLabel = null;
 
     items.forEach(item => {
         historyById.set(String(item.id), item);
@@ -1148,9 +1214,19 @@ function renderHistoryList(items) {
         // "Картинка подарка" и клик на полную карточку доступны только для покупок/продаж —
         // у пополнения/вывода нет привязанного NFT.
         const isGift = item.type === 'buy' || item.type === 'sell' || item.type === 'trade_in' || item.type === 'trade_out';
+        const category = getHistoryCategory(item.type);
+
+        const dayLabel = getHistoryDayLabel(item.created_at);
+        if (dayLabel && dayLabel !== lastDayLabel) {
+            const sep = document.createElement('li');
+            sep.className = 'history-date-sep';
+            sep.textContent = dayLabel;
+            historyList.appendChild(sep);
+            lastDayLabel = dayLabel;
+        }
 
         const li = document.createElement('li');
-        li.className = 'history-row' + (isGift ? ' has-gift' : '');
+        li.className = `history-row is-${category}` + (isGift ? ' has-gift' : '');
         if (isGift) li.dataset.historyId = item.id;
 
         let thumbHtml;
@@ -1168,9 +1244,14 @@ function renderHistoryList(items) {
         const title = isGift ? item.collection_name : (historyTypeLabels[item.type] || item.type);
         const metaParts = [];
         if (isGift && item.gift_number) metaParts.push(`#${item.gift_number}`);
-        metaParts.push(formatHistoryDate(item.created_at));
+        const iso = item.created_at && item.created_at.includes('T') ? item.created_at : (item.created_at ? item.created_at.replace(' ', 'T') + 'Z' : '');
+        const timeOnly = iso && !isNaN(new Date(iso).getTime())
+            ? new Date(iso).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+            : '';
+        if (timeOnly) metaParts.push(timeOnly);
 
         const amountClass = item.amount >= 0 ? 'positive' : 'negative';
+        const amountArrow = item.amount >= 0 ? '↓' : '↑';
 
         li.innerHTML = `
             ${thumbHtml}
@@ -1178,10 +1259,31 @@ function renderHistoryList(items) {
                 <div class="history-name">${title}</div>
                 <div class="history-meta">${metaParts.join(' · ')}</div>
             </div>
-            <div class="history-amount ${amountClass}">${formatAmount(item.amount)}</div>
+            <div class="history-amount-pill ${amountClass}">
+                <span class="history-amount-arrow">${amountArrow}</span>${formatAmount(item.amount)}
+            </div>
         `;
 
         historyList.appendChild(li);
+    });
+}
+
+function applyHistoryFilter() {
+    const filtered = historyActiveFilter === 'all'
+        ? historyAllItems
+        : historyAllItems.filter(item => getHistoryFilterGroup(item.type) === historyActiveFilter);
+    renderHistoryList(filtered);
+}
+
+const historyFiltersEl = document.getElementById('historyFilters');
+if (historyFiltersEl) {
+    historyFiltersEl.addEventListener('click', (e) => {
+        const btn = e.target.closest('.history-filter-btn');
+        if (!btn) return;
+        historyFiltersEl.querySelectorAll('.history-filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        historyActiveFilter = btn.getAttribute('data-history-filter');
+        applyHistoryFilter();
     });
 }
 
@@ -1206,7 +1308,8 @@ async function loadHistory() {
             return;
         }
 
-        renderHistoryList(data.history);
+        historyAllItems = data.history || [];
+        applyHistoryFilter();
     } catch (e) {
         historyList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
         console.error(e);
