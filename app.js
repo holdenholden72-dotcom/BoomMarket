@@ -2848,11 +2848,6 @@ function renderStorageGrid(items, isTrulyEmpty) {
             ? `<div class="storage-rarity-badge">🔥 ${(bestRarity / 10).toFixed(1)}%</div>`
             : '';
 
-        const traitChips = [item.model_name, item.backdrop_name].filter(Boolean);
-        const traitsHtml = traitChips.length
-            ? `<div class="storage-traits">${traitChips.map(t => `<span class="storage-trait-chip">${t}</span>`).join('')}</div>`
-            : '';
-
         card.innerHTML = `
             <div class="nft-image-container" style="background-color: ${bg};">
                 ${rarityBadgeHtml}
@@ -2861,7 +2856,6 @@ function renderStorageGrid(items, isTrulyEmpty) {
             <div class="nft-info">
                 <div class="nft-title">${item.collection_name}</div>
                 <div class="nft-number">#${item.gift_number}</div>
-                ${traitsHtml}
             </div>
             <div class="storage-card-hint">Выставить на продажу</div>
         `;
