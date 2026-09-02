@@ -4403,7 +4403,7 @@ async function bomberSyncActiveGame() {
 // итоговый результат каждого выбора всегда приходят с сервера, клиент
 // их не подделывает.
 const TOWER_FLOOR_CONFIG = [
-    { tiles: 6, traps: 3, multiplier: 1.5 }, // этаж 1
+    { tiles: 6, traps: 2, multiplier: 1.5 }, // этаж 1
     { tiles: 5, traps: 3, multiplier: 2 },   // этаж 2
     { tiles: 4, traps: 2, multiplier: 2.5 }, // этаж 3
     { tiles: 3, traps: 1, multiplier: 3 },   // этаж 4
