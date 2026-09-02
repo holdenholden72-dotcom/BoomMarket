@@ -200,18 +200,23 @@ body {
     border-color: rgba(124, 92, 255, 0.3);
 }
 
+/* profile-content уже даёт 16px отступа слева/справа — раньше сетка и
+   фильтры добавляли поверх ещё +10px каждый, из-за чего по краям экрана
+   получалась широкая тёмная полоса. Убираем лишний слой отступа: сетка и
+   фильтры теперь опираются только на padding родителя, карточки при этом
+   становятся немного шире/крупнее. */
 #storageGrid.market-grid {
-    padding: 0 10px;
-    gap: 8px;
+    padding: 0;
+    gap: 10px;
 }
 
-/* На Хранилище .filter-section вложена в .profile-content (у него уже
-   есть padding 16px) — без этой правки поиск/фильтры получают двойной
-   отступ и съезжают правее, чем карточки под ними (у которых padding
-   всего 10px). Выравниваем по левому краю карточек. */
 #storageScreen .filter-section {
-    padding-left: 10px;
-    padding-right: 10px;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+#storageGrid .nft-image-container {
+    height: 176px;
 }
 
 #storageGrid .nft-title {
