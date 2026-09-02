@@ -30,83 +30,61 @@ body {
 
 /* Шапка маркетплейса */
 .header {
-    padding: 14px 16px;
+    padding: 12px 16px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 8px;
-    background: linear-gradient(180deg, rgba(28, 20, 46, 0.55) 0%, rgba(15, 15, 15, 0) 100%);
 }
 
 .user-profile {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 10px;
 }
 
 .avatar {
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     object-fit: cover;
     cursor: pointer;
     background-color: #333;
-    box-shadow: 0 0 0 2px rgba(124, 92, 255, 0.55), 0 2px 8px rgba(0, 0, 0, 0.35);
-    transition: transform 0.15s ease;
-    flex-shrink: 0;
 }
-
-.avatar:active {
-    transform: scale(0.94);
-}
-
 .balance {
-    background: linear-gradient(135deg, #241c3d 0%, #1c1c1e 100%);
-    padding: 6px 9px 6px 10px;
+    background: #1c1c1e;
+    padding: 4px 9px 4px 7px;
     border-radius: 18px;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     font-size: 13px;
     font-weight: 600;
-    border: 1px solid rgba(124, 92, 255, 0.25);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    margin-top: -3px;
 }
 
 .balance .balance-num {
     font-size: 14px;
-    letter-spacing: 0.2px;
 }
 
 .balance .diamond-icon {
     font-size: 13px;
-    filter: drop-shadow(0 0 4px rgba(124, 92, 255, 0.5));
 }
 
 .add-btn {
-    background: linear-gradient(135deg, #8a6bff 0%, #5b3fd9 100%);
+    background: #2c2c2e;
     color: #fff;
     border: none;
-    width: 19px;
-    height: 19px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     font-weight: bold;
-    font-size: 12px;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 6px rgba(90, 63, 217, 0.5);
-    transition: transform 0.12s ease;
-}
-
-.add-btn:active {
-    transform: scale(0.9);
 }
 
 /* Фильтры и поиск */
 .filter-section {
-    padding: 0 16px 14px;
+    padding: 0 16px 12px;
 }
 
 .search-box {
@@ -116,19 +94,13 @@ body {
 
 .search-box input {
     width: 100%;
-    background: #18181b;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 14px;
+    background: #1c1c1e;
+    border: none;
+    border-radius: 12px;
     padding: 12px 12px 12px 40px;
     color: #fff;
     font-size: 14px;
     outline: none;
-    transition: border-color 0.15s ease, background 0.15s ease;
-}
-
-.search-box input:focus {
-    border-color: rgba(124, 92, 255, 0.55);
-    background: #1c1c20;
 }
 
 .search-icon {
@@ -152,7 +124,7 @@ body {
 
 .sort-trigger-btn, .dropdown-filter {
     background: #1c1c1e;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: none;
     color: #fff;
     padding: 8px 12px;
     border-radius: 10px;
@@ -163,7 +135,6 @@ body {
     display: flex;
     align-items: center;
     gap: 4px;
-    transition: background 0.15s ease, transform 0.1s ease;
 }
 
 .sort-trigger-btn {
@@ -171,33 +142,21 @@ body {
     fill: #fff;
 }
 
-.sort-trigger-btn:active, .dropdown-filter:active {
-    transform: scale(0.94);
-    background: #232326;
-}
-
 /* Сетка карточек */
 .market-grid {
     padding: 0 16px;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 14px;
+    gap: 12px;
 }
 
 .nft-card {
-    background: #18181b;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 18px;
+    background: #1c1c1e;
+    border-radius: 16px;
     overflow: hidden;
     position: relative;
     display: flex;
     flex-direction: column;
-    transition: transform 0.15s ease, border-color 0.15s ease;
-}
-
-.nft-card:active {
-    transform: scale(0.97);
-    border-color: rgba(124, 92, 255, 0.3);
 }
 
 #storageGrid.market-grid {
@@ -226,19 +185,16 @@ body {
     height: 160px;
     position: relative;
     overflow: hidden;
-    background: radial-gradient(circle at 50% 30%, rgba(124, 92, 255, 0.16) 0%, rgba(255, 255, 255, 0) 70%), #121214;
 }
 
 .nft-badge {
     position: absolute;
     top: 8px;
     right: 8px;
-    background: rgba(0, 0, 0, 0.35);
-    backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.2);
     padding: 4px;
     border-radius: 8px;
     z-index: 2;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 .nft-img {
@@ -247,11 +203,6 @@ body {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.2s ease;
-}
-
-.nft-card:active .nft-img {
-    transform: scale(1.04);
 }
 
 .nft-info {
@@ -260,8 +211,7 @@ body {
 
 .nft-title {
     font-size: 14px;
-    font-weight: 600;
-    letter-spacing: 0.1px;
+    font-weight: 500;
 }
 
 .nft-number {
@@ -278,15 +228,14 @@ body {
 
 .nft-price {
     font-size: 14px;
-    font-weight: 700;
+    font-weight: 600;
     display: flex;
     align-items: center;
     gap: 4px;
-    color: #d9c8ff;
 }
 
 .cart-btn {
-    background: linear-gradient(135deg, #8a6bff 0%, #5b3fd9 100%);
+    background: #2c2c2e;
     border: none;
     width: 32px;
     height: 32px;
@@ -296,12 +245,6 @@ body {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 3px 8px rgba(90, 63, 217, 0.4);
-    transition: transform 0.12s ease;
-}
-
-.cart-btn:active {
-    transform: scale(0.9);
 }
 
 .nft-actions {
@@ -639,8 +582,8 @@ body {
 }
 
 .wallet-btn {
-    background: linear-gradient(135deg, #241c3d 0%, #1c1c1e 100%);
-    border: 1px solid rgba(124, 92, 255, 0.25);
+    background: #1c1c1e;
+    border: none;
     width: auto;
     height: auto;
     min-width: 0;
@@ -652,12 +595,6 @@ body {
     justify-content: center;
     cursor: pointer;
     overflow: hidden;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-    transition: transform 0.12s ease;
-}
-
-.wallet-btn:active {
-    transform: scale(0.95);
 }
 
 .wallet-btn * {
@@ -879,7 +816,7 @@ body {
 /* Кнопки-пилюли фильтров (заменяют старые <select>) */
 .filter-pill {
     background: #1c1c1e;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: none;
     color: #fff;
     padding: 8px 12px;
     border-radius: 10px;
@@ -889,17 +826,11 @@ body {
     display: flex;
     align-items: center;
     gap: 6px;
-    transition: background 0.15s ease, transform 0.1s ease, border-color 0.15s ease;
-}
-
-.filter-pill:active {
-    transform: scale(0.94);
 }
 
 .filter-pill.has-selection {
-    background: linear-gradient(135deg, #2b2345 0%, #241c3d 100%);
+    background: #2b2345;
     color: #d9c8ff;
-    border-color: rgba(124, 92, 255, 0.4);
 }
 
 .filter-pill .pill-count {
@@ -1345,12 +1276,6 @@ body {
 }
 
 /* === Экран "Ордеры" === */
-#ordersScreen .section-title {
-    font-size: 12px;
-    letter-spacing: 0.4px;
-    color: #8e8e93;
-}
-
 .orders-create-btn {
     width: 100%;
     flex-direction: row;
@@ -1381,18 +1306,13 @@ body {
     font-size: 15px;
 }
 
-/* Капсула вкладок приподнята над фоном, активный пункт светится золотом —
-   это парная (но самостоятельная) версия капсулы из #tradeTabs, где активный
-   пункт светится фиолетовым. Так "Ордеры" (сделки за 💎) и "Трейд" (сделки
-   с людьми) визуально различимы, оставаясь одной системой. */
 .orders-tabs {
     display: flex;
-    gap: 5px;
-    background: #141416;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 14px;
-    padding: 5px;
-    margin-bottom: 14px;
+    gap: 6px;
+    background: #1c1c1e;
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 12px;
 }
 
 .orders-tab {
@@ -1402,49 +1322,15 @@ body {
     color: #8e8e93;
     font-size: 12px;
     font-weight: 600;
-    padding: 11px 2px;
-    border-radius: 10px;
+    padding: 10px 2px;
+    border-radius: 9px;
     cursor: pointer;
     white-space: nowrap;
-    letter-spacing: 0.2px;
-    transition: color 0.15s ease, background 0.15s ease;
 }
 
 .orders-tab.active {
-    background: linear-gradient(135deg, #3a2f14 0%, #211c1a 100%);
-    color: #ffd700;
-    box-shadow: inset 0 0 0 1px rgba(255, 215, 0, 0.3);
-}
-
-/* Строки списков ордеров/предложений — приподнятые карточки вместо плоских
-   строк с чертой снизу, в том же языке, что и у списков "Трейда". */
-#ordersActiveList .history-row,
-#ordersHistoryList .history-row,
-#ordersOffersList .history-row {
-    background: #16161a;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 14px;
-    padding: 12px;
-    margin-bottom: 8px;
-    border-bottom: none;
-    transition: border-color 0.15s ease, transform 0.1s ease;
-}
-
-#ordersActiveList .history-row.has-gift:active,
-#ordersHistoryList .history-row.has-gift:active {
-    transform: scale(0.98);
-    border-color: rgba(255, 215, 0, 0.3);
-}
-
-#ordersScreen .history-thumb {
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06);
-}
-
-#ordersScreen .empty-state {
-    text-align: center;
-    color: #6b6b70;
-    font-size: 13px;
-    padding: 32px 0;
+    background: #2c2c2e;
+    color: #fff;
 }
 
 .order-row-price {
@@ -1455,31 +1341,31 @@ body {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 6px;
+    gap: 4px;
 }
 
 .order-row-status {
     font-size: 10px;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 7px;
-    background: rgba(255, 255, 255, 0.06);
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 8px;
+    background: #2c2c2e;
     color: #8e8e93;
 }
 
 .order-row-status.is-active {
-    background: rgba(52, 199, 89, 0.15);
+    background: #2b3a2b;
     color: #34c759;
 }
 
 .order-row-status.is-filled {
-    background: rgba(138, 107, 255, 0.18);
+    background: #2b2345;
     color: #d9c8ff;
 }
 
 .order-row-status.is-cancelled {
-    background: rgba(255, 255, 255, 0.06);
-    color: #6b6b70;
+    background: #2c2c2e;
+    color: #8e8e93;
 }
 
 .order-detail-cancel-btn {
@@ -1497,19 +1383,14 @@ body {
 }
 
 .order-row-cancel {
-    background: #201417;
-    color: #ff6961;
-    border: 1px solid rgba(255, 69, 58, 0.3);
+    background: #2c2c2e;
+    color: #ff453a;
+    border: none;
     font-size: 11px;
-    font-weight: 700;
-    padding: 6px 11px;
+    font-weight: 600;
+    padding: 6px 10px;
     border-radius: 8px;
     cursor: pointer;
-    transition: transform 0.1s ease;
-}
-
-.order-row-cancel:active {
-    transform: scale(0.95);
 }
 
 .offer-accept-btn {
@@ -1518,11 +1399,9 @@ body {
     border: none;
     font-size: 11px;
     font-weight: 700;
-    padding: 7px 13px;
+    padding: 6px 12px;
     border-radius: 8px;
     cursor: pointer;
-    box-shadow: 0 4px 10px rgba(255, 159, 10, 0.25);
-    transition: transform 0.1s ease;
 }
 
 .offer-accept-btn:active {
@@ -1534,94 +1413,34 @@ body {
     cursor: default;
 }
 
-/* =====================================================================
-   ЭКРАН "ТРЕЙД" (P2P-обмен подарками)
-   Визуальный язык: тот же тёмный холст (#0f0f0f), что и у всего апп-а,
-   но акцент смещён на фиолетовый (в цвет аватара/баланса в шапке) для
-   всего, что связано с "человеком" в обмене (поиск, выбранный партнёр),
-   и на золотой (в цвет основных CTA) — для самого действия обмена.
-   "Отдаёте" и "получаете" получают устойчивую цветовую кодировку:
-   красноватый для исходящего, изумрудный для входящего — как знаки
-   минуса/плюса в истории транзакций.
-   ===================================================================== */
-
-#tradeScreen .profile-content {
-    padding-top: 4px;
-}
-
-#tradeScreen .section-title {
-    font-size: 12px;
-    letter-spacing: 0.4px;
-    color: #8e8e93;
-}
-
+/* === Экран "Трейд" (P2P-обмен подарками) === */
 .trade-panel {
     padding-bottom: 90px; /* место под фиксированную нижнюю навигацию */
 }
 
-/* Вкладки Новый / Входящие / Мои обмены — приподнятая капсула со свечением
-   активного пункта вместо плоской заливки, только в пределах трейда. */
-#tradeTabs {
-    background: #141416;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    padding: 5px;
-    margin-bottom: 18px;
-}
-
-#tradeTabs .orders-tab {
-    padding: 11px 2px;
-    letter-spacing: 0.2px;
-    transition: color 0.15s ease, background 0.15s ease;
-}
-
-#tradeTabs .orders-tab.active {
-    background: linear-gradient(135deg, #34294f 0%, #211c30 100%);
-    color: #d9c8ff;
-    box-shadow: inset 0 0 0 1px rgba(138, 107, 255, 0.35);
-}
-
-/* --- Поиск получателя --- */
 .trade-search-row {
     display: flex;
     gap: 8px;
-    margin-bottom: 14px;
+    margin-bottom: 10px;
 }
 
 .trade-search-row input {
     flex: 1;
-    background: #16161a;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 14px;
-    padding: 13px 16px;
+    background: #1c1c1e;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 14px;
     color: #fff;
     font-size: 14px;
     outline: none;
-    transition: border-color 0.15s ease;
-}
-
-.trade-search-row input:focus {
-    border-color: rgba(138, 107, 255, 0.55);
-}
-
-.trade-search-row input::placeholder {
-    color: #6b6b70;
 }
 
 .trade-find-btn {
     width: auto;
     flex-direction: row;
-    padding: 0 20px;
+    padding: 0 18px;
     font-size: 13px;
-    font-weight: 700;
-    border-radius: 14px;
-    background: linear-gradient(135deg, #8a6bff 0%, #5b3fd9 100%);
-    color: #fff;
-    box-shadow: 0 6px 16px rgba(90, 63, 217, 0.35);
-    transition: transform 0.1s ease;
-}
-
-.trade-find-btn:active {
-    transform: scale(0.96);
+    border-radius: 12px;
 }
 
 .trade-found-list {
@@ -1632,28 +1451,18 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 11px 12px;
-    margin-bottom: 6px;
-    background: #16161a;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 14px;
+    padding: 10px 0;
+    border-bottom: 1px solid #2c2c2e;
     cursor: pointer;
-    transition: border-color 0.15s ease, transform 0.1s ease;
-}
-
-.trade-found-row:active {
-    transform: scale(0.98);
-    border-color: rgba(138, 107, 255, 0.4);
 }
 
 .trade-found-avatar {
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     background: #2c2c2e;
     object-fit: cover;
     flex-shrink: 0;
-    box-shadow: 0 0 0 2px rgba(138, 107, 255, 0.3);
 }
 
 .trade-found-name {
@@ -1662,30 +1471,16 @@ body {
     font-weight: 600;
 }
 
-.trade-found-row span {
-    color: #6b6b70;
-    font-size: 16px;
-}
-
-/* Карточка выбранного партнёра — тёплая фиолетовая подложка, чтобы было
-   сразу видно "с кем" собирается обмен, отдельно от списков ниже. */
 .trade-selected-user {
     display: flex;
     align-items: center;
     gap: 10px;
-    background: linear-gradient(135deg, rgba(138, 107, 255, 0.16) 0%, rgba(28, 28, 30, 0.6) 65%);
-    border: 1px solid rgba(138, 107, 255, 0.25);
-    border-radius: 14px;
-    padding: 13px 14px;
-    margin: 6px 0 18px;
+    background: #1c1c1e;
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin: 6px 0 14px;
     font-size: 13px;
-    color: #a9a9ae;
-}
-
-.trade-selected-user::before {
-    content: '🔄';
-    font-size: 15px;
-    filter: drop-shadow(0 0 4px rgba(138, 107, 255, 0.6));
+    color: #8e8e93;
 }
 
 .trade-selected-user b {
@@ -1693,22 +1488,7 @@ body {
 }
 
 .trade-subtitle {
-    margin-top: 20px;
-    margin-bottom: 2px;
-    font-size: 11px;
-}
-
-/* Список "Ваши предметы" — нейтральный тон */
-#tradeMyItemsList.trade-pick-list {
-    border-left: 2px solid rgba(255, 255, 255, 0.08);
-    padding-left: 10px;
-}
-
-/* Список "Предметы получателя" — тонкая золотая направляющая, чтобы глаз
-   сразу различал две колонки выбора при быстрой прокрутке. */
-#tradeTheirItemsList.trade-pick-list {
-    border-left: 2px solid rgba(255, 215, 0, 0.25);
-    padding-left: 10px;
+    margin-top: 16px;
 }
 
 .trade-pick-list {
@@ -1719,31 +1499,16 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 8px;
-    margin-bottom: 4px;
-    border-radius: 12px;
-    border-bottom: none;
+    padding: 10px 0;
+    border-bottom: 1px solid #2c2c2e;
     cursor: pointer;
-    transition: background 0.15s ease;
-}
-
-.trade-pick-row:active {
-    background: rgba(255, 255, 255, 0.04);
 }
 
 .trade-pick-row input[type="checkbox"] {
-    width: 19px;
-    height: 19px;
+    width: 18px;
+    height: 18px;
     flex-shrink: 0;
     accent-color: #ffd700;
-}
-
-/* Прогрессивное улучшение: подсвечиваем выбранную строку целиком.
-   Браузеры без поддержки :has() просто не получают подсветку —
-   выбор всё равно виден по чекбоксу. */
-.trade-pick-row:has(input:checked) {
-    background: rgba(255, 215, 0, 0.08);
-    box-shadow: inset 0 0 0 1px rgba(255, 215, 0, 0.25);
 }
 
 .trade-status-badge {
@@ -1761,24 +1526,11 @@ body {
 .trade-status-badge.is-cancelled,
 .trade-status-badge.is-failed { background: rgba(255, 69, 58, 0.15); color: #ff453a; }
 
-/* --- Модалка деталей обмена --- */
-#tradeDetailModal .trade-detail-meta {
+.trade-detail-meta {
     text-align: center;
     color: #8e8e93;
     font-size: 13px;
     margin-bottom: 4px;
-}
-
-#tradeDetailModal #tradeDetailGiveTitle {
-    color: #ff8a80;
-}
-
-#tradeDetailModal #tradeDetailGetTitle {
-    color: #7ee6a8;
-}
-
-#tradeDetailModal .history-list .history-row {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .trade-detail-actions {
@@ -1792,18 +1544,13 @@ body {
     flex-direction: row;
     justify-content: center;
     padding: 14px 0;
-    font-weight: 700;
-    background: linear-gradient(135deg, #ffe066 0%, #ffd700 45%, #ff9f0a 100%);
-    color: #1c1c1e;
 }
 
 .trade-decline-btn {
-    background: #201417 !important;
-    color: #ff6961 !important;
-    border: 1px solid rgba(255, 69, 58, 0.3);
+    background: #2c2c2e;
+    color: #ff453a;
 }
 
-/* --- Доплата TON --- */
 .trade-topup-row {
     margin-top: 10px;
     display: flex;
@@ -1814,8 +1561,7 @@ body {
 .trade-topup-direction {
     display: flex;
     gap: 6px;
-    background: #16161a;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: #1c1c1e;
     border-radius: 12px;
     padding: 4px;
 }
@@ -1831,97 +1577,37 @@ body {
     border-radius: 9px;
     cursor: pointer;
     white-space: nowrap;
-    transition: background 0.15s ease, color 0.15s ease;
 }
 
 .trade-topup-dir-btn.active {
-    background: linear-gradient(135deg, #3a2f14 0%, #2c2c2e 100%);
+    background: #2c2c2e;
     color: #ffd700;
-    box-shadow: inset 0 0 0 1px rgba(255, 215, 0, 0.25);
 }
 
 #tradeTopupAmount {
     width: 100%;
-    background: #16161a;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: #1c1c1e;
+    border: 1px solid #2c2c2e;
     border-radius: 12px;
     padding: 12px 14px;
     color: #fff;
     font-size: 15px;
     box-sizing: border-box;
-    transition: border-color 0.15s ease;
-}
-
-#tradeTopupAmount:focus {
-    outline: none;
-    border-color: rgba(255, 215, 0, 0.4);
 }
 
 .trade-fee-note {
     margin-top: 10px;
     font-size: 11px;
-    color: #6b6b70;
-    line-height: 1.5;
+    color: #8e8e93;
+    line-height: 1.4;
 }
 
 .trade-topup-note {
-    /* display:table (а не inline-block) — чтобы margin:auto реально центрировал
-       саму плашку в родителе с text-align:left, а не только текст внутри неё. */
-    display: table;
-    margin: 0 auto 12px;
     text-align: center;
-    color: #1c1c1e;
-    background: linear-gradient(135deg, #ffe066 0%, #ffd700 45%, #ff9f0a 100%);
-    padding: 6px 14px;
-    border-radius: 10px;
-    font-size: 12px;
-    font-weight: 700;
-}
-
-/* Кнопка "Предложить обмен" — приводим в один регистр с "Купить"/"Создать
-   ордер": та же золотая заливка, чтобы главное действие экрана читалось
-   с первого взгляда, без отдельного класса в HTML. */
-#tradeSubmitBtn {
-    flex-direction: row;
-    justify-content: center;
-    margin-top: 22px;
-    padding: 16px 0;
-    font-size: 15px;
-    font-weight: 700;
-    border-radius: 16px;
-    background: linear-gradient(135deg, #ffe066 0%, #ffd700 45%, #ff9f0a 100%);
-    color: #1c1c1e;
-    box-shadow: 0 8px 20px rgba(255, 159, 10, 0.28);
-    transition: transform 0.1s ease, box-shadow 0.1s ease;
-}
-
-#tradeSubmitBtn:active {
-    transform: scale(0.98);
-    box-shadow: 0 4px 12px rgba(255, 159, 10, 0.22);
-}
-
-/* --- Списки "Входящие" / "Мои обмены" --- */
-#tradeIncomingList.trade-panel .history-row,
-#tradeMineList.trade-panel .history-row {
-    padding: 12px 10px;
-    margin-bottom: 6px;
-    background: #16161a;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 14px;
-    transition: border-color 0.15s ease, transform 0.1s ease;
-}
-
-#tradeIncomingList.trade-panel .history-row:active,
-#tradeMineList.trade-panel .history-row:active {
-    transform: scale(0.98);
-    border-color: rgba(138, 107, 255, 0.35);
-}
-
-#tradeScreen .empty-state {
-    text-align: center;
-    color: #6b6b70;
+    color: #ffd700;
     font-size: 13px;
-    padding: 32px 0;
+    font-weight: 600;
+    margin-bottom: 10px;
 }
 
 /* =====================================================================
@@ -2711,164 +2397,6 @@ body {
 
 
 /* =====================================================================
-   ИГРА "БАШНЯ" (подъём по этажам, чем выше — тем больше множитель и риск)
-   ===================================================================== */
-
-.tower-content {
-    padding-bottom: 28px;
-}
-
-/* Панель этажей: снизу вверх, текущий этаж активен, прокрутка если не влезает */
-.tower-field {
-    width: 100%;
-    max-width: 340px;
-    max-height: 400px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    background: #0a0a0a;
-    border: 1px solid rgba(255, 215, 0, 0.2);
-    border-radius: 16px;
-    padding: 10px;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 20px rgba(0,0,0,0.4);
-    scroll-behavior: smooth;
-}
-
-.tower-floor-row {
-    display: grid;
-    grid-template-columns: 22px 1fr 52px;
-    align-items: center;
-    gap: 10px;
-    padding: 8px;
-    border-radius: 12px;
-    background: #1c1c1e;
-    border: 1px solid #333336;
-    opacity: 0.5;
-    transition: opacity 0.2s ease, border-color 0.2s ease, background 0.2s ease;
-}
-
-.tower-floor-row.is-current {
-    opacity: 1;
-    background: linear-gradient(160deg, #2e2712 0%, #201c10 100%);
-    border-color: #ffd700;
-    box-shadow: 0 0 0 1px rgba(255, 215, 0, 0.35), 0 0 16px rgba(255, 215, 0, 0.12);
-}
-
-.tower-floor-row.is-cleared {
-    opacity: 0.9;
-    border-color: rgba(52, 199, 89, 0.45);
-}
-
-.tower-floor-row.is-locked {
-    opacity: 0.4;
-}
-
-.tower-floor-label {
-    font-size: 13px;
-    font-weight: 800;
-    color: #b8b8bd;
-    text-align: center;
-}
-
-.tower-floor-row.is-current .tower-floor-label {
-    color: #ffd700;
-}
-
-.tower-floor-tiles {
-    display: grid;
-    grid-template-columns: repeat(var(--tower-tiles, 4), 1fr);
-    gap: 7px;
-}
-
-.tower-tile {
-    background: linear-gradient(160deg, #48484c 0%, #303033 100%);
-    border: 2px solid #5c5c60;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 17px;
-    font-weight: 700;
-    color: #e5e5ea;
-    height: 42px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    box-sizing: border-box;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 2px 6px rgba(0,0,0,0.35);
-    transition: transform 0.12s ease, background 0.2s ease, border-color 0.2s ease;
-}
-
-.tower-floor-row.is-current .tower-tile {
-    background: linear-gradient(160deg, #5c5c62 0%, #38383c 100%);
-    border-color: rgba(255, 215, 0, 0.75);
-}
-
-.tower-tile:not(:disabled):active {
-    transform: scale(0.9);
-}
-
-.tower-tile:disabled {
-    cursor: default;
-}
-
-.tower-floor-row.is-locked .tower-tile {
-    background: linear-gradient(160deg, #2c2c2e 0%, #1c1c1e 100%);
-    border-color: #3a3a3d;
-    color: #6e6e73;
-}
-
-.tower-tile.is-safe {
-    background: linear-gradient(160deg, #2f6a3c 0%, #1d4425 100%);
-    border-color: #34c759;
-    color: #fff;
-    animation: towerTileReveal 0.25s ease;
-}
-
-.tower-tile.is-trap {
-    background: linear-gradient(160deg, #6a2f2f 0%, #441d1d 100%);
-    border-color: #ff453a;
-    color: #fff;
-}
-
-.tower-tile.is-trap.is-hit {
-    background: linear-gradient(160deg, #9a2626 0%, #5a1212 100%);
-    border-color: #ff453a;
-    animation: towerHitFlash 0.5s ease;
-}
-
-@keyframes towerTileReveal {
-    0% { transform: scale(0.7); opacity: 0.4; }
-    100% { transform: scale(1); opacity: 1; }
-}
-
-@keyframes towerHitFlash {
-    0% { box-shadow: 0 0 0 4px rgba(255, 69, 58, 0.6); }
-    100% { box-shadow: 0 0 0 0 rgba(255, 69, 58, 0); }
-}
-
-.tower-floor-multiplier {
-    font-size: 12px;
-    font-weight: 800;
-    color: #9a9aa0;
-    text-align: right;
-}
-
-.tower-floor-row.is-current .tower-floor-multiplier {
-    color: #ffd700;
-}
-
-.tower-floor-row.is-cleared .tower-floor-multiplier {
-    color: #34c759;
-}
-
-.tower-actions {
-    width: 100%;
-    max-width: 340px;
-}
-
-
-/* =====================================================================
    ИГРА "КОСТИ" (обычный кубик 1-6, ставка на одно число, x3)
    ===================================================================== */
 
@@ -3012,21 +2540,16 @@ body {
     padding-bottom: 28px;
 }
 
-/* Строка примеров множителей в модалке правил — переиспользует стили
-   карманов доски (.plinko-bin), просто крупнее и в один ряд без сетки. */
-.plinko-rules-mults {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin: 12px 0;
+.plinko-risk-panel {
+    margin-bottom: 14px;
 }
 
-.plinko-rules-mults .plinko-bin {
-    flex: 1 1 auto;
-    min-width: 34px;
-    font-size: 11px;
-    padding: 7px 4px;
-    border-radius: 6px;
+.plinko-risk-options {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.plinko-risk-btn {
+    font-size: 13px;
 }
 
 /* Доска: колышки треугольником + падающий шарик */
@@ -3066,7 +2589,7 @@ body {
 .plinko-board {
     position: relative;
     width: 100%;
-    aspect-ratio: 1 / 1.35;
+    aspect-ratio: 1 / 0.85;
     background: radial-gradient(ellipse at 50% 0%, #1c1c1e 0%, #0f0f0f 70%);
     border: 1px solid rgba(255, 215, 0, 0.15);
     border-radius: 16px;
@@ -3089,8 +2612,8 @@ body {
 }
 
 .plinko-peg {
-    width: 5px;
-    height: 5px;
+    width: 4px;
+    height: 4px;
     border-radius: 50%;
     background: #5a5a5e;
     box-shadow: 0 0 3px rgba(255,255,255,0.15);
@@ -3127,45 +2650,29 @@ body {
     100% { transform: scale(1); }
 }
 
-/* Корзины множителей внизу доски */
+/* Корзины множителей внизу доски — форма "флажка" с острым низом,
+   тёплый градиент по позиции (жёлтый в центре -> красный по краям),
+   похоже на референс, но не копия. */
 .plinko-bins {
     display: grid;
-    grid-template-columns: repeat(17, 1fr);
+    grid-template-columns: repeat(9, 1fr);
     gap: 2px;
-    margin-top: 6px;
+    margin-top: 8px;
 }
 
 .plinko-bin {
     text-align: center;
-    font-size: 7px;
+    font-size: 9px;
     font-weight: 800;
-    padding: 5px 0;
-    border-radius: 4px;
+    padding: 6px 0 9px;
     color: #1a1a1a;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.plinko-bin-low {
-    background: linear-gradient(160deg, #8e8e93, #6b6b70);
-    color: #fff;
-}
-
-.plinko-bin-mid {
-    background: linear-gradient(160deg, #4ee08a, #34c759);
-}
-
-.plinko-bin-high {
-    background: linear-gradient(160deg, #ffb347, #ff9f0a);
-}
-
-.plinko-bin-extreme {
-    background: linear-gradient(160deg, #ff6b6b, #ff453a);
-    color: #fff;
+    clip-path: polygon(0% 0%, 100% 0%, 100% 65%, 50% 100%, 0% 65%);
+    transition: transform 0.2s ease, filter 0.2s ease;
 }
 
 .plinko-bin.is-landed {
-    transform: scale(1.18) translateY(-3px);
-    box-shadow: 0 4px 14px rgba(255, 215, 0, 0.6);
+    transform: scale(1.2) translateY(-3px);
+    filter: brightness(1.25) drop-shadow(0 4px 10px rgba(255, 215, 0, 0.6));
 }
 
 .plinko-drop-btn {

@@ -16,7 +16,6 @@ const tradeScreen = document.getElementById('tradeScreen');
 const slotsScreen = document.getElementById('slotsScreen');
 const rouletteScreen = document.getElementById('rouletteScreen');
 const bomberScreen = document.getElementById('bomberScreen');
-const towerScreen = document.getElementById('towerScreen');
 const diceScreen = document.getElementById('diceScreen');
 const plinkoScreen = document.getElementById('plinkoScreen');
 const openProfileBtn = document.getElementById('openProfileBtn');
@@ -28,7 +27,6 @@ const backToProfileFromTradeBtn = document.getElementById('backToProfileFromTrad
 const backToProfileFromSlotsBtn = document.getElementById('backToProfileFromSlotsBtn');
 const backToProfileFromRouletteBtn = document.getElementById('backToProfileFromRouletteBtn');
 const backToProfileFromBomberBtn = document.getElementById('backToProfileFromBomberBtn');
-const backToProfileFromTowerBtn = document.getElementById('backToProfileFromTowerBtn');
 const backToProfileFromDiceBtn = document.getElementById('backToProfileFromDiceBtn');
 const backToProfileFromPlinkoBtn = document.getElementById('backToProfileFromPlinkoBtn');
 
@@ -42,7 +40,6 @@ const screensByName = {
     slots: slotsScreen,
     roulette: rouletteScreen,
     bomber: bomberScreen,
-    tower: towerScreen,
     dice: diceScreen,
     plinko: plinkoScreen,
 };
@@ -170,12 +167,6 @@ if (backToProfileFromBomberBtn) {
     });
 }
 
-if (backToProfileFromTowerBtn) {
-    backToProfileFromTowerBtn.addEventListener('click', () => {
-        showScreen('profile');
-    });
-}
-
 if (backToProfileFromDiceBtn) {
     backToProfileFromDiceBtn.addEventListener('click', () => {
         showScreen('profile');
@@ -209,7 +200,7 @@ if (ordersStatCard) {
 }
 
 // Игровой хаб в профиле — "Слоты" и "Рулетка" ведут в реальные игры,
-// остальные плитки (Кости) пока чисто визуальные заглушки.
+// остальные плитки (Coinflip, Кости) пока чисто визуальные заглушки.
 document.querySelectorAll('.game-tile').forEach(tile => {
     tile.addEventListener('click', () => {
         const game = tile.getAttribute('data-game');
@@ -224,11 +215,6 @@ document.querySelectorAll('.game-tile').forEach(tile => {
         if (game === 'bomber') {
             showScreen('bomber');
             bomberSyncActiveGame();
-            return;
-        }
-        if (game === 'tower') {
-            showScreen('tower');
-            towerSyncActiveGame();
             return;
         }
         if (game === 'dice') {
@@ -699,15 +685,8 @@ const listingDetailSymbol = document.getElementById('listingDetailSymbol');
 const listingDetailPrice = document.getElementById('listingDetailPrice');
 const listingDetailBuyBtn = document.getElementById('listingDetailBuyBtn');
 const listingDetailCancelBtn = document.getElementById('listingDetailCancelBtn');
-const listingDetailOfferSellBtn = document.getElementById('listingDetailOfferSellBtn');
-const listingDetailOfferCancelBtn = document.getElementById('listingDetailOfferCancelBtn');
 
 let currentDetailListingId = null;
-// Заполняется, когда карточка открыта из "Ордеры → Предложения": там вместо
-// "Купить"/"Снять с продажи" показываются "Продать"/"Отмена", а действие
-// "Продать" должно принять конкретное предложение (order), а не просто
-// удалить лот.
-let currentDetailOffer = null;
 
 function traitLabel(name) {
     return name || '—';
@@ -715,7 +694,6 @@ function traitLabel(name) {
 
 function openListingDetail(item, opts = {}) {
     currentDetailListingId = item.id;
-    currentDetailOffer = opts.offer || null;
 
     // Разные ручки бэкенда называют картинку модели по-разному
     // (model_icon у листингов маркета/инвентаря, model_image у деталей
@@ -732,28 +710,12 @@ function openListingDetail(item, opts = {}) {
     listingDetailSymbol.textContent = traitLabel(item.symbol_name);
     listingDetailPrice.textContent = item.price;
 
-    if (currentDetailOffer) {
-        // Открыто по клику на предложение в "Ордеры → Предложения":
-        // обычные "Купить"/"Снять с продажи" не подходят — вместо них
-        // показываем "Продать" (принять именно это предложение) и "Отмена"
-        // (просто закрыть карточку, ничего не отменяя на сервере).
+    // Режим просмотра (например, предмет обмена, который не выставлен на
+    // продажу): показываем только трейты, без кнопок "Купить"/"Снять с продажи".
+    if (opts.viewOnly) {
         if (listingDetailBuyBtn) listingDetailBuyBtn.style.display = 'none';
         if (listingDetailCancelBtn) listingDetailCancelBtn.style.display = 'none';
-        if (listingDetailOfferSellBtn) {
-            listingDetailOfferSellBtn.style.display = '';
-            listingDetailOfferSellBtn.disabled = false;
-        }
-        if (listingDetailOfferCancelBtn) listingDetailOfferCancelBtn.style.display = '';
-    } else if (opts.viewOnly) {
-        // Режим просмотра (например, предмет обмена, который не выставлен на
-        // продажу): показываем только трейты, без кнопок "Купить"/"Снять с продажи".
-        if (listingDetailBuyBtn) listingDetailBuyBtn.style.display = 'none';
-        if (listingDetailCancelBtn) listingDetailCancelBtn.style.display = 'none';
-        if (listingDetailOfferSellBtn) listingDetailOfferSellBtn.style.display = 'none';
-        if (listingDetailOfferCancelBtn) listingDetailOfferCancelBtn.style.display = 'none';
     } else {
-        if (listingDetailOfferSellBtn) listingDetailOfferSellBtn.style.display = 'none';
-        if (listingDetailOfferCancelBtn) listingDetailOfferCancelBtn.style.display = 'none';
         // Свой лот нельзя купить — вместо кнопки "Купить" показываем "Снять с продажи".
         const isOwn = currentTgId != null && item.owner_tg_id === currentTgId;
         if (listingDetailBuyBtn) listingDetailBuyBtn.style.display = isOwn ? 'none' : '';
@@ -913,7 +875,6 @@ if (closeListingDetailBtn && listingDetailModal) {
     closeListingDetailBtn.addEventListener('click', () => {
         listingDetailModal.style.display = 'none';
         currentDetailListingId = null;
-        currentDetailOffer = null;
     });
 }
 
@@ -995,96 +956,6 @@ if (listingDetailCancelBtn) {
             console.error(err);
         } finally {
             listingDetailCancelBtn.disabled = false;
-        }
-    });
-}
-
-// "Продать"/"Отмена" — показываются вместо "Купить"/"Снять с продажи", когда
-// карточка открыта из "Ордеры → Предложения" (см. currentDetailOffer).
-if (listingDetailOfferSellBtn) {
-    listingDetailOfferSellBtn.addEventListener('click', async () => {
-        if (!currentDetailOffer) return;
-
-        if (!authToken) {
-            alert('Не удалось подтвердить личность. Попробуйте перезайти.');
-            return;
-        }
-        if (!confirm('Продать этот лот по цене предложения?')) return;
-
-        listingDetailOfferSellBtn.disabled = true;
-
-        try {
-            const res = await fetch(`${API_URL}/api/listings/${currentDetailOffer.listingId}/accept-offer`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`,
-                },
-                body: JSON.stringify({ orderId: currentDetailOffer.orderId }),
-            });
-
-            const data = await res.json();
-
-            if (!data.ok) {
-                alert(data.error || 'Не удалось продать лот');
-                listingDetailOfferSellBtn.disabled = false;
-                return;
-            }
-
-            updateBalanceUI(data.balance);
-            alert('Лот продан!');
-            listingDetailModal.style.display = 'none';
-            currentDetailListingId = null;
-            currentDetailOffer = null;
-            await loadMyOffers();
-            await loadListings();
-        } catch (err) {
-            alert('Ошибка соединения с сервером');
-            console.error(err);
-            listingDetailOfferSellBtn.disabled = false;
-        }
-    });
-}
-
-if (listingDetailOfferCancelBtn) {
-    listingDetailOfferCancelBtn.addEventListener('click', async () => {
-        if (!currentDetailOffer) return;
-
-        if (!authToken) {
-            alert('Не удалось подтвердить личность. Попробуйте перезайти.');
-            return;
-        }
-        if (!confirm('Отклонить это предложение? Деньги вернутся покупателю.')) return;
-
-        listingDetailOfferCancelBtn.disabled = true;
-
-        try {
-            const res = await fetch(`${API_URL}/api/listings/${currentDetailOffer.listingId}/decline-offer`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`,
-                },
-                body: JSON.stringify({ orderId: currentDetailOffer.orderId }),
-            });
-
-            const data = await res.json();
-
-            if (!data.ok) {
-                alert(data.error || 'Не удалось отклонить предложение');
-                listingDetailOfferCancelBtn.disabled = false;
-                return;
-            }
-
-            listingDetailModal.style.display = 'none';
-            currentDetailListingId = null;
-            currentDetailOffer = null;
-            await loadMyOffers();
-        } catch (err) {
-            alert('Ошибка соединения с сервером');
-            console.error(err);
-        } finally {
-            listingDetailOfferCancelBtn.disabled = false;
         }
     });
 }
@@ -1358,22 +1229,18 @@ async function refreshOrdersStat() {
     }
 }
 
-async function loadActiveOrders(opts = {}) {
+async function loadActiveOrders() {
     if (!ordersActiveList) return;
     if (!authToken) {
         ordersActiveList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
         return;
     }
-    // silent: true — для фонового автообновления (см. ORDERS_POLL_INTERVAL_MS).
-    // Без этого список каждые 5 секунд на мгновение стирался на "Загрузка..."
-    // и тут же перерисовывался — снаружи это выглядело как "предмет пропадает
-    // и сразу появляется", даже когда в списке ничего не менялось.
-    if (!opts.silent) ordersActiveList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    ordersActiveList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
     try {
         const res = await fetch(`${API_URL}/api/orders`, { headers: { 'Authorization': `Bearer ${authToken}` } });
         const data = await res.json();
         if (!data.ok) {
-            if (!opts.silent) ordersActiveList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить ордера'}</div>`;
+            ordersActiveList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить ордера'}</div>`;
             return;
         }
         renderOrdersList(ordersActiveList, ordersActiveById, data.orders, { showCancel: true });
@@ -1381,28 +1248,28 @@ async function loadActiveOrders(opts = {}) {
         // счётчик в профиле заодно, без лишнего запроса.
         setOrdersStatValue(data.orders.length);
     } catch (e) {
-        if (!opts.silent) ordersActiveList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        ordersActiveList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
         console.error(e);
     }
 }
 
-async function loadOrderHistory(opts = {}) {
+async function loadOrderHistory() {
     if (!ordersHistoryList) return;
     if (!authToken) {
         ordersHistoryList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
         return;
     }
-    if (!opts.silent) ordersHistoryList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    ordersHistoryList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
     try {
         const res = await fetch(`${API_URL}/api/orders/history`, { headers: { 'Authorization': `Bearer ${authToken}` } });
         const data = await res.json();
         if (!data.ok) {
-            if (!opts.silent) ordersHistoryList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить историю ордеров'}</div>`;
+            ordersHistoryList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить историю ордеров'}</div>`;
             return;
         }
         renderOrdersList(ordersHistoryList, ordersHistoryById, data.orders, { showCancel: false });
     } catch (e) {
-        if (!opts.silent) ordersHistoryList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        ordersHistoryList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
         console.error(e);
     }
 }
@@ -1425,7 +1292,6 @@ function renderMyOffers(offers) {
 
         const li = document.createElement('li');
         li.className = 'history-row has-gift';
-        li.dataset.orderId = offer.order_id;
 
         li.innerHTML = `
             <div class="history-thumb" style="background-color:${bg};">
@@ -1446,23 +1312,23 @@ function renderMyOffers(offers) {
     });
 }
 
-async function loadMyOffers(opts = {}) {
+async function loadMyOffers() {
     if (!ordersOffersList) return;
     if (!authToken) {
         ordersOffersList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
         return;
     }
-    if (!opts.silent) ordersOffersList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    ordersOffersList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
     try {
         const res = await fetch(`${API_URL}/api/my-offers`, { headers: { 'Authorization': `Bearer ${authToken}` } });
         const data = await res.json();
         if (!data.ok) {
-            if (!opts.silent) ordersOffersList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить предложения'}</div>`;
+            ordersOffersList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить предложения'}</div>`;
             return;
         }
         renderMyOffers(data.offers);
     } catch (e) {
-        if (!opts.silent) ordersOffersList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        ordersOffersList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
         console.error(e);
     }
 }
@@ -1470,110 +1336,62 @@ async function loadMyOffers(opts = {}) {
 if (ordersOffersList) {
     ordersOffersList.addEventListener('click', async (e) => {
         const btn = e.target.closest('.offer-accept-btn');
-        if (btn) {
-            const listingId = btn.dataset.listingId;
-            const orderId = btn.dataset.orderId;
+        if (!btn) return;
 
-            if (!authToken) {
-                alert('Не удалось подтвердить личность. Попробуйте перезайти.');
-                return;
-            }
-            if (!confirm('Продать этот лот по цене предложения?')) return;
+        const listingId = btn.dataset.listingId;
+        const orderId = btn.dataset.orderId;
 
-            btn.disabled = true;
-
-            try {
-                const res = await fetch(`${API_URL}/api/listings/${listingId}/accept-offer`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`,
-                    },
-                    body: JSON.stringify({ orderId }),
-                });
-
-                const data = await res.json();
-
-                if (!data.ok) {
-                    alert(data.error || 'Не удалось продать лот');
-                    btn.disabled = false;
-                    return;
-                }
-
-                updateBalanceUI(data.balance);
-                alert('Лот продан!');
-                await loadMyOffers();
-                await loadListings();
-            } catch (err) {
-                alert('Ошибка соединения с сервером');
-                console.error(err);
-                btn.disabled = false;
-            }
+        if (!authToken) {
+            alert('Не удалось подтвердить личность. Попробуйте перезайти.');
             return;
         }
+        if (!confirm('Продать этот лот по цене предложения?')) return;
 
-        // Клик по самой строке (не по кнопке "Продать") — открываем карточку
-        // подарка, на который прислали предложение, в режиме просмотра.
-        const row = e.target.closest('.history-row[data-order-id]');
-        if (!row) return;
-        const offer = myOffersById.get(row.dataset.orderId);
-        if (!offer) return;
+        btn.disabled = true;
 
-        openListingDetail({
-            id: offer.listing_id,
-            price: offer.listing_price,
-            collection_name: offer.collection_name,
-            gift_number: offer.gift_number,
-            model_name: offer.model_name,
-            model_icon: offer.model_icon,
-            backdrop_name: offer.backdrop_name,
-            backdrop_color: offer.backdrop_color,
-            symbol_name: offer.symbol_name,
-            collection_image: offer.collection_image,
-        }, {
-            offer: { orderId: offer.order_id, listingId: offer.listing_id },
-        });
+        try {
+            const res = await fetch(`${API_URL}/api/listings/${listingId}/accept-offer`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`,
+                },
+                body: JSON.stringify({ orderId }),
+            });
+
+            const data = await res.json();
+
+            if (!data.ok) {
+                alert(data.error || 'Не удалось продать лот');
+                btn.disabled = false;
+                return;
+            }
+
+            updateBalanceUI(data.balance);
+            alert('Лот продан!');
+            await loadMyOffers();
+            await loadListings();
+        } catch (err) {
+            alert('Ошибка соединения с сервером');
+            console.error(err);
+            btn.disabled = false;
+        }
     });
 }
 
 // === Переключение вкладок "Активные" / "История" / "Предложения" ===
-let currentOrdersTab = 'active';
-
 if (ordersTabs) {
     ordersTabs.addEventListener('click', (e) => {
         const btn = e.target.closest('.orders-tab');
         if (!btn) return;
 
         const tab = btn.getAttribute('data-orders-tab');
-        currentOrdersTab = tab;
         ordersTabs.querySelectorAll('.orders-tab').forEach(t => t.classList.toggle('active', t === btn));
         ordersActiveList.style.display = tab === 'active' ? '' : 'none';
         ordersHistoryList.style.display = tab === 'history' ? '' : 'none';
         ordersOffersList.style.display = tab === 'offers' ? '' : 'none';
-
-        // Как и на "Трейде": экран "Ордеры" грузит все три списка один раз при
-        // входе (showScreen), поэтому если, например, вам прислали предложение
-        // на лот, пока вы уже стояли на этом экране, вкладка "Предложения"
-        // раньше показывала пусто до полного перезахода. Перезапрашиваем
-        // список при каждом переключении на вкладку.
-        if (tab === 'active') loadActiveOrders();
-        if (tab === 'history') loadOrderHistory();
-        if (tab === 'offers') loadMyOffers();
     });
 }
-
-// Плюс лёгкий фоновый опрос, пока пользователь сидит на экране "Ордеры" и
-// никуда не переключается — тем же способом, что и автообновление маркета
-// (см. MARKET_POLL_INTERVAL_MS выше): опрашиваем только активную подвкладку,
-// чтобы не слать лишние запросы.
-const ORDERS_POLL_INTERVAL_MS = 5000;
-
-setInterval(() => {
-    if (currentScreenName !== 'orders' || document.visibilityState !== 'visible') return;
-    if (currentOrdersTab === 'active') loadActiveOrders({ silent: true });
-    else if (currentOrdersTab === 'history') loadOrderHistory({ silent: true });
-    else if (currentOrdersTab === 'offers') loadMyOffers({ silent: true });
-}, ORDERS_POLL_INTERVAL_MS);
 
 // === Детальная карточка ордера (открывается по клику на аватарку/строку, в т.ч. в истории) ===
 const orderDetailModal = document.getElementById('orderDetailModal');
@@ -2725,39 +2543,17 @@ if (tradeTopupDirection) {
     });
 }
 
-let currentTradeTab = 'new';
-
 if (tradeTabs) {
     tradeTabs.addEventListener('click', (e) => {
         const btn = e.target.closest('.orders-tab');
         if (!btn) return;
         const tab = btn.getAttribute('data-trade-tab');
-        currentTradeTab = tab;
         tradeTabs.querySelectorAll('.orders-tab').forEach(t => t.classList.toggle('active', t === btn));
         tradeNewPanel.style.display = tab === 'new' ? '' : 'none';
         tradeIncomingList.style.display = tab === 'incoming' ? '' : 'none';
         tradeMineList.style.display = tab === 'mine' ? '' : 'none';
-
-        // Списки грузятся один раз при входе на экран "Трейд" (showScreen),
-        // поэтому если новое предложение прилетело, пока пользователь уже
-        // стоял на экране, переключение подвкладки раньше показывало старые
-        // (пустые) данные — приходилось уходить на другой экран и возвращаться.
-        // Перезапрашиваем список при каждом переключении на него.
-        if (tab === 'incoming') loadIncomingTrades();
-        if (tab === 'mine') loadMyTrades();
     });
 }
-
-// Плюс лёгкий фоновый опрос, пока пользователь сидит на экране "Трейд" —
-// тем же способом, что и автообновление маркета/ордеров: опрашиваем только
-// активную подвкладку, чтобы не слать лишние запросы.
-const TRADE_POLL_INTERVAL_MS = 5000;
-
-setInterval(() => {
-    if (currentScreenName !== 'trade' || document.visibilityState !== 'visible') return;
-    if (currentTradeTab === 'incoming') loadIncomingTrades({ silent: true });
-    else if (currentTradeTab === 'mine') loadMyTrades({ silent: true });
-}, TRADE_POLL_INTERVAL_MS);
 
 async function searchTradeUsers() {
     if (!tradeRecipientInput || !tradeFoundUsers) return;
@@ -3014,21 +2810,18 @@ function renderTradeSummaryRow(trade) {
     return li;
 }
 
-async function loadIncomingTrades(opts = {}) {
+async function loadIncomingTrades() {
     if (!tradeIncomingList) return;
     if (!authToken) {
         tradeIncomingList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
         return;
     }
-    // silent: true — для фонового автообновления (см. TRADE_POLL_INTERVAL_MS),
-    // чтобы список не мигал плейсхолдером "Загрузка..." каждые 5 секунд,
-    // когда в нём на самом деле ничего не изменилось.
-    if (!opts.silent) tradeIncomingList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    tradeIncomingList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
     try {
         const res = await fetch(`${API_URL}/api/trades/incoming`, { headers: { 'Authorization': `Bearer ${authToken}` } });
         const data = await res.json();
         if (!data.ok) {
-            if (!opts.silent) tradeIncomingList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить обмены'}</div>`;
+            tradeIncomingList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить обмены'}</div>`;
             return;
         }
         tradeIncomingCache.clear();
@@ -3042,23 +2835,23 @@ async function loadIncomingTrades(opts = {}) {
             tradeIncomingList.appendChild(renderTradeSummaryRow(trade));
         });
     } catch (e) {
-        if (!opts.silent) tradeIncomingList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        tradeIncomingList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
         console.error(e);
     }
 }
 
-async function loadMyTrades(opts = {}) {
+async function loadMyTrades() {
     if (!tradeMineList) return;
     if (!authToken) {
         tradeMineList.innerHTML = `<div class="empty-state">Не удалось подтвердить личность. Попробуйте перезайти.</div>`;
         return;
     }
-    if (!opts.silent) tradeMineList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    tradeMineList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
     try {
         const res = await fetch(`${API_URL}/api/trades/mine`, { headers: { 'Authorization': `Bearer ${authToken}` } });
         const data = await res.json();
         if (!data.ok) {
-            if (!opts.silent) tradeMineList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить обмены'}</div>`;
+            tradeMineList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить обмены'}</div>`;
             return;
         }
         tradeMineCache.clear();
@@ -3072,7 +2865,7 @@ async function loadMyTrades(opts = {}) {
             tradeMineList.appendChild(renderTradeSummaryRow(trade));
         });
     } catch (e) {
-        if (!opts.silent) tradeMineList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        tradeMineList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
         console.error(e);
     }
 }
@@ -4068,418 +3861,6 @@ async function bomberSyncActiveGame() {
 
 
 // =====================================================================
-// ИГРА "БАШНЯ" (подъём по этажам — на каждом свой шанс, чем выше,
-// тем больше множитель и риск). Конфигурация этажей фиксирована.
-// =====================================================================
-// Множитель за каждый этаж задан явно (продублирован здесь по тем же
-// значениям, что и на бэкенде — для мгновенного отображения "следующего"
-// множителя до ответа сервера). Но где именно ловушки на каждом этаже и
-// итоговый результат каждого выбора всегда приходят с сервера, клиент
-// их не подделывает.
-const TOWER_FLOOR_CONFIG = [
-    { tiles: 6, traps: 3, multiplier: 1.5 }, // этаж 1
-    { tiles: 5, traps: 3, multiplier: 2 },   // этаж 2
-    { tiles: 4, traps: 2, multiplier: 2.5 }, // этаж 3
-    { tiles: 3, traps: 1, multiplier: 3 },   // этаж 4
-    { tiles: 2, traps: 1, multiplier: 5 },   // этаж 5 (вершина)
-];
-const TOWER_FLOORS = TOWER_FLOOR_CONFIG.length;
-const TOWER_MIN_BET = 0.3;
-const TOWER_MAX_BET = 1000;
-
-function towerMultiplierLocal(floorsClimbed) {
-    if (floorsClimbed <= 0) return 1;
-    const cfg = TOWER_FLOOR_CONFIG[floorsClimbed - 1];
-    return cfg ? cfg.multiplier : 1;
-}
-
-const towerFieldEl = document.getElementById('towerField');
-const towerResultEl = document.getElementById('towerResult');
-const towerFloorValueEl = document.getElementById('towerFloorValue');
-const towerPotentialWinValueEl = document.getElementById('towerPotentialWinValue');
-const towerNextMultiplierValueEl = document.getElementById('towerNextMultiplierValue');
-const towerBetInput = document.getElementById('towerBetInput');
-const towerBetMinusBtn = document.getElementById('towerBetMinusBtn');
-const towerBetPlusBtn = document.getElementById('towerBetPlusBtn');
-const towerBetPanel = document.getElementById('towerBetPanel');
-const towerStartBtn = document.getElementById('towerStartBtn');
-const towerCashoutBtn = document.getElementById('towerCashoutBtn');
-const openTowerRulesBtn = document.getElementById('openTowerRulesBtn');
-const towerRulesModal = document.getElementById('towerRulesModal');
-const closeTowerRulesModal = document.getElementById('closeTowerRulesModal');
-const closeTowerRulesModalBtn = document.getElementById('closeTowerRulesModalBtn');
-
-let towerGameActive = false;
-let towerBusy = false; // idle-guard пока идёт запрос к серверу
-let towerClimbed = 0;
-
-// === Правила ===
-function openTowerRules() {
-    if (towerRulesModal) towerRulesModal.style.display = 'flex';
-}
-function closeTowerRules() {
-    if (towerRulesModal) towerRulesModal.style.display = 'none';
-}
-if (openTowerRulesBtn) openTowerRulesBtn.addEventListener('click', openTowerRules);
-if (closeTowerRulesModal) closeTowerRulesModal.addEventListener('click', closeTowerRules);
-if (closeTowerRulesModalBtn) closeTowerRulesModalBtn.addEventListener('click', closeTowerRules);
-if (towerRulesModal) {
-    towerRulesModal.addEventListener('click', (e) => {
-        if (e.target === towerRulesModal) closeTowerRules();
-    });
-}
-
-// === Ставка (логика идентична слотам/рулетке/бомберу) ===
-function getTowerBalanceNumber() {
-    const el = document.querySelector('.user-balance');
-    const value = el ? parseFloat(el.textContent) : NaN;
-    return isNaN(value) ? TOWER_MAX_BET : value;
-}
-function clampTowerBet(value) {
-    if (isNaN(value)) return TOWER_MIN_BET;
-    let v = Math.max(TOWER_MIN_BET, Math.min(TOWER_MAX_BET, value));
-    v = Math.round(v * 10) / 10;
-    return v;
-}
-function setTowerBetValue(value) {
-    if (towerBetInput) towerBetInput.value = clampTowerBet(value);
-}
-if (towerBetInput) {
-    towerBetInput.addEventListener('change', () => {
-        setTowerBetValue(parseFloat(towerBetInput.value));
-    });
-}
-if (towerBetMinusBtn) {
-    towerBetMinusBtn.addEventListener('click', () => {
-        setTowerBetValue(parseFloat(towerBetInput.value) - 0.1);
-    });
-}
-if (towerBetPlusBtn) {
-    towerBetPlusBtn.addEventListener('click', () => {
-        setTowerBetValue(parseFloat(towerBetInput.value) + 0.1);
-    });
-}
-document.querySelectorAll('.tower-bet-quick-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const mode = btn.getAttribute('data-bet-mode');
-        const current = parseFloat(towerBetInput.value) || TOWER_MIN_BET;
-        if (mode === 'min') setTowerBetValue(TOWER_MIN_BET);
-        if (mode === 'half') setTowerBetValue(current / 2);
-        if (mode === 'double') setTowerBetValue(current * 2);
-        if (mode === 'max') setTowerBetValue(Math.min(getTowerBalanceNumber(), TOWER_MAX_BET));
-    });
-});
-
-// === Отрисовка пустой башни: этажи снизу вверх, этаж 5 — сверху.
-// Количество плиток на каждом этаже фиксировано (см. TOWER_FLOOR_CONFIG). ===
-function towerBuildField() {
-    if (!towerFieldEl) return;
-    towerFieldEl.innerHTML = '';
-
-    for (let floor = TOWER_FLOORS - 1; floor >= 0; floor--) {
-        const tiles = TOWER_FLOOR_CONFIG[floor].tiles;
-
-        const row = document.createElement('div');
-        row.className = 'tower-floor-row';
-        row.setAttribute('data-floor', String(floor));
-
-        const label = document.createElement('div');
-        label.className = 'tower-floor-label';
-        label.textContent = String(floor + 1);
-        row.appendChild(label);
-
-        const tilesWrap = document.createElement('div');
-        tilesWrap.className = 'tower-floor-tiles';
-        tilesWrap.style.setProperty('--tower-tiles', tiles);
-        for (let t = 0; t < tiles; t++) {
-            const tileBtn = document.createElement('button');
-            tileBtn.type = 'button';
-            tileBtn.className = 'tower-tile';
-            tileBtn.setAttribute('data-tile', String(t));
-            tileBtn.textContent = '?';
-            tileBtn.disabled = true;
-            tileBtn.addEventListener('click', () => towerHandleTileClick(floor, t, tileBtn));
-            tilesWrap.appendChild(tileBtn);
-        }
-        row.appendChild(tilesWrap);
-
-        const mult = document.createElement('div');
-        mult.className = 'tower-floor-multiplier';
-        mult.textContent = `x${towerMultiplierLocal(floor + 1).toFixed(2)}`;
-        row.appendChild(mult);
-
-        towerFieldEl.appendChild(row);
-    }
-    towerUpdateFieldRowStates();
-}
-towerBuildField();
-
-// === Подсвечивает текущий/пройденные/будущие этажи и включает клики
-// только на плитках текущего этажа ===
-function towerUpdateFieldRowStates() {
-    if (!towerFieldEl) return;
-    towerFieldEl.querySelectorAll('.tower-floor-row').forEach(row => {
-        const floor = parseInt(row.getAttribute('data-floor'), 10);
-        row.classList.remove('is-current', 'is-cleared', 'is-locked');
-        const tileButtons = row.querySelectorAll('.tower-tile');
-        if (floor < towerClimbed) {
-            row.classList.add('is-cleared');
-            tileButtons.forEach(btn => { btn.disabled = true; });
-        } else if (floor === towerClimbed && towerGameActive) {
-            row.classList.add('is-current');
-            tileButtons.forEach(btn => {
-                if (!btn.classList.contains('is-safe') && !btn.classList.contains('is-trap')) {
-                    btn.disabled = false;
-                }
-            });
-            // Прокручиваем к текущему этажу, чтобы он всегда был в поле зрения.
-            row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-        } else {
-            row.classList.add('is-locked');
-            tileButtons.forEach(btn => { btn.disabled = true; });
-        }
-    });
-}
-
-function towerSetFieldInteractive(interactive) {
-    if (!towerFieldEl) return;
-    towerFieldEl.querySelectorAll(`.tower-floor-row[data-floor="${towerClimbed}"] .tower-tile`).forEach(btn => {
-        if (interactive) {
-            if (!btn.classList.contains('is-safe') && !btn.classList.contains('is-trap')) {
-                btn.disabled = false;
-            }
-        } else {
-            btn.disabled = true;
-        }
-    });
-}
-
-function towerResetField() {
-    towerClimbed = 0;
-    towerBuildField();
-}
-
-function towerUpdateStatsDisplay(climbed) {
-    towerClimbed = climbed;
-    const multiplier = towerMultiplierLocal(climbed);
-    const nextMultiplier = towerMultiplierLocal(climbed + 1);
-    const bet = clampTowerBet(parseFloat(towerBetInput.value)) || TOWER_MIN_BET;
-    if (towerFloorValueEl) towerFloorValueEl.textContent = `${climbed} / ${TOWER_FLOORS}`;
-    if (towerPotentialWinValueEl) towerPotentialWinValueEl.textContent = `${(bet * multiplier).toFixed(2)} 💎`;
-    if (towerNextMultiplierValueEl) {
-        towerNextMultiplierValueEl.textContent = climbed < TOWER_FLOORS
-            ? `x${nextMultiplier.toFixed(2)}`
-            : '—';
-    }
-    towerUpdateFieldRowStates();
-}
-
-function towerSetControlsForActiveGame(active) {
-    towerGameActive = active;
-    if (towerBetInput) towerBetInput.disabled = active;
-    if (towerBetMinusBtn) towerBetMinusBtn.disabled = active;
-    if (towerBetPlusBtn) towerBetPlusBtn.disabled = active;
-    document.querySelectorAll('.tower-bet-quick-btn').forEach(btn => { btn.disabled = active; });
-    if (towerBetPanel) towerBetPanel.style.opacity = active ? '0.5' : '1';
-    if (towerStartBtn) towerStartBtn.style.display = active ? 'none' : '';
-    if (towerCashoutBtn) towerCashoutBtn.style.display = active ? '' : 'none';
-    towerUpdateFieldRowStates();
-}
-
-async function towerStartGame() {
-    if (towerBusy || towerGameActive) return;
-    if (!authToken) {
-        alert('Не удалось подтвердить личность. Попробуйте перезайти.');
-        return;
-    }
-    const bet = clampTowerBet(parseFloat(towerBetInput.value));
-    setTowerBetValue(bet);
-
-    towerBusy = true;
-    if (towerStartBtn) towerStartBtn.disabled = true;
-    towerResultEl.className = 'slots-result';
-    towerResultEl.textContent = 'Расставляем ловушки...';
-
-    try {
-        const res = await fetch(`${API_URL}/api/games/tower/start`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-            body: JSON.stringify({ bet }),
-        });
-        const data = await res.json();
-
-        if (!data.ok) {
-            towerResultEl.textContent = data.error || 'Не удалось начать игру';
-            towerBusy = false;
-            if (towerStartBtn) towerStartBtn.disabled = false;
-            return;
-        }
-
-        if (typeof data.balance === 'number') updateBalanceUI(data.balance);
-
-        towerResetField();
-        towerSetControlsForActiveGame(true);
-        towerUpdateStatsDisplay(0);
-        towerResultEl.className = 'slots-result';
-        towerResultEl.textContent = 'Башня готова — выбирайте плитку на первом этаже!';
-    } catch (e) {
-        console.error(e);
-        towerResultEl.textContent = 'Ошибка соединения с сервером';
-    } finally {
-        towerBusy = false;
-        if (towerStartBtn) towerStartBtn.disabled = false;
-    }
-}
-
-function towerRevealTrapsOnFloor(floor, trapTiles, hitTile) {
-    if (!towerFieldEl) return;
-    trapTiles.forEach(idx => {
-        const tileBtn = towerFieldEl.querySelector(`.tower-floor-row[data-floor="${floor}"] .tower-tile[data-tile="${idx}"]`);
-        if (!tileBtn) return;
-        tileBtn.classList.add('is-trap');
-        tileBtn.textContent = '💣';
-        if (idx === hitTile) tileBtn.classList.add('is-hit');
-        tileBtn.disabled = true;
-    });
-}
-
-async function towerHandleTileClick(floor, tileIndex, tileBtn) {
-    if (towerBusy || !towerGameActive) return;
-    if (tileBtn.disabled) return;
-    if (floor !== towerClimbed) return;
-
-    towerBusy = true;
-    towerSetFieldInteractive(false);
-
-    try {
-        const res = await fetch(`${API_URL}/api/games/tower/pick`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-            body: JSON.stringify({ tile: tileIndex }),
-        });
-        const data = await res.json();
-
-        if (!data.ok) {
-            towerResultEl.textContent = data.error || 'Не удалось выбрать плитку';
-            towerSetFieldInteractive(true);
-            towerBusy = false;
-            return;
-        }
-
-        if (data.win === false) {
-            // Ловушка — раунд окончен проигрышем.
-            tileBtn.classList.add('is-trap', 'is-hit');
-            tileBtn.textContent = '💥';
-            towerRevealTrapsOnFloor(data.floor, data.trapTiles, data.hitTile);
-            towerResultEl.className = 'slots-result is-lose';
-            towerResultEl.textContent = `💥 Ловушка на этаже ${data.floor + 1}! Ставка ${data.betAmount} 💎 сгорела`;
-            towerSetControlsForActiveGame(false);
-            towerUpdateStatsDisplay(0);
-            towerBusy = false;
-            return;
-        }
-
-        tileBtn.classList.add('is-safe');
-        tileBtn.textContent = '✅';
-
-        if (data.cleared) {
-            // Все этажи пройдены — автоматический максимальный выигрыш.
-            if (typeof data.balance === 'number') updateBalanceUI(data.balance);
-            towerResultEl.className = 'slots-result is-win';
-            towerResultEl.textContent = `🎉 Вершина башни! x${data.multiplier} — +${data.winAmount} 💎`;
-            towerSetControlsForActiveGame(false);
-            towerUpdateStatsDisplay(TOWER_FLOORS);
-            towerBusy = false;
-            return;
-        }
-
-        // Безопасная плитка — раунд продолжается на этаже выше.
-        towerUpdateStatsDisplay(data.game.climbed);
-        towerResultEl.className = 'slots-result';
-        towerResultEl.textContent = `Безопасно! Пройдено ${data.game.climbed} из ${TOWER_FLOORS} этажей — продолжайте или заберите выигрыш`;
-    } catch (e) {
-        console.error(e);
-        towerResultEl.textContent = 'Ошибка соединения с сервером';
-        towerSetFieldInteractive(true);
-    } finally {
-        towerBusy = false;
-    }
-}
-
-async function towerCashout() {
-    if (towerBusy || !towerGameActive) return;
-    if (!authToken) {
-        alert('Не удалось подтвердить личность. Попробуйте перезайти.');
-        return;
-    }
-
-    towerBusy = true;
-    towerSetFieldInteractive(false);
-    if (towerCashoutBtn) towerCashoutBtn.disabled = true;
-
-    try {
-        const res = await fetch(`${API_URL}/api/games/tower/cashout`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-        });
-        const data = await res.json();
-
-        if (!data.ok) {
-            towerResultEl.textContent = data.error || 'Не удалось забрать выигрыш';
-            towerSetFieldInteractive(true);
-            return;
-        }
-
-        if (typeof data.balance === 'number') updateBalanceUI(data.balance);
-        towerResultEl.className = 'slots-result is-win';
-        towerResultEl.textContent = `✅ Забрано! x${data.multiplier} — +${data.winAmount} 💎`;
-        towerSetControlsForActiveGame(false);
-        towerUpdateStatsDisplay(0);
-    } catch (e) {
-        console.error(e);
-        towerResultEl.textContent = 'Ошибка соединения с сервером';
-        towerSetFieldInteractive(true);
-    } finally {
-        towerBusy = false;
-        if (towerCashoutBtn) towerCashoutBtn.disabled = false;
-    }
-}
-
-if (towerStartBtn) towerStartBtn.addEventListener('click', towerStartGame);
-if (towerCashoutBtn) towerCashoutBtn.addEventListener('click', towerCashout);
-
-// === Восстановление активного раунда, если пользователь ушёл с экрана
-// и вернулся (например, свернул мини-приложение) не завершив игру ===
-async function towerSyncActiveGame() {
-    if (!authToken || towerGameActive) return;
-    try {
-        const res = await fetch(`${API_URL}/api/games/tower/state`, {
-            headers: { 'Authorization': `Bearer ${authToken}` },
-        });
-        const data = await res.json();
-        if (!data.ok || !data.game) return;
-
-        setTowerBetValue(data.game.bet);
-        towerBuildField();
-        data.game.path.forEach((tileIndex, floor) => {
-            const tileBtn = towerFieldEl.querySelector(`.tower-floor-row[data-floor="${floor}"] .tower-tile[data-tile="${tileIndex}"]`);
-            if (tileBtn) {
-                tileBtn.classList.add('is-safe');
-                tileBtn.textContent = '✅';
-            }
-        });
-        towerSetControlsForActiveGame(true);
-        towerUpdateStatsDisplay(data.game.climbed);
-        towerResultEl.className = 'slots-result';
-        towerResultEl.textContent = `Раунд продолжается — пройдено ${data.game.climbed} из ${TOWER_FLOORS} этажей`;
-    } catch (e) {
-        console.error(e);
-    }
-}
-
-
-
-// =====================================================================
 // ИГРА "КОСТИ" (обычный кубик 1-6, ставка на одно число, выплата x3)
 // =====================================================================
 const DICE_MIN_BET = 0.3;
@@ -4734,18 +4115,22 @@ function restrictBetInputToOneDecimal(inputEl) {
 [slotsBetInput, rouletteBetInput, bomberBetInput, diceBetInput].forEach(restrictBetInputToOneDecimal);
 
 // =====================================================================
-// ИГРА "ПЛИНКО" (шарик через 16 рядов колышков в одну из 17 корзин)
+// ИГРА "ПЛИНКО" (шарик через 8 рядов колышков в одну из 9 корзин)
 // =====================================================================
 const PLINKO_MIN_BET = 0.3;
 const PLINKO_MAX_BET = 1000;
-const PLINKO_ROWS = 16;
-const PLINKO_BINS = PLINKO_ROWS + 1; // 17
+const PLINKO_ROWS = 8;
 
-// Та же таблица множителей, что и на сервере — нужна только для отрисовки
+// Те же таблицы множителей, что и на сервере — нужны только для отрисовки
 // корзин ДО броска. Итоговый выигрыш и путь шарика всегда определяет сервер.
-const PLINKO_MULTIPLIERS = [10, 5, 3, 2.5, 2, 1.5, 1.3, 1.2, 0, 1.2, 1.3, 1.5, 2, 2.5, 3, 5, 10];
+const PLINKO_MULTIPLIERS = {
+    low:    [2.8, 1.4, 1.1, 1.0, 0.6, 1.0, 1.1, 1.4, 2.8],
+    medium: [6.4, 2.4, 1.4, 0.8, 0.4, 0.8, 1.4, 2.4, 6.4],
+    high:   [16.0, 4.0, 1.5, 0.4, 0.2, 0.4, 1.5, 4.0, 16.0],
+};
 
 const plinkoBalanceValueEl = document.getElementById('plinkoBalanceValue');
+const plinkoRiskOptionsEl = document.getElementById('plinkoRiskOptions');
 const plinkoBoardEl = document.getElementById('plinkoBoard');
 const plinkoPegsLayerEl = document.getElementById('plinkoPegsLayer');
 const plinkoBallEl = document.getElementById('plinkoBall');
@@ -4760,19 +4145,26 @@ const plinkoRulesModal = document.getElementById('plinkoRulesModal');
 const closePlinkoRulesModal = document.getElementById('closePlinkoRulesModal');
 const closePlinkoRulesModalBtn = document.getElementById('closePlinkoRulesModalBtn');
 
+let plinkoSelectedRisk = 'medium';
 let plinkoIsDropping = false;
 
 restrictBetInputToOneDecimal(plinkoBetInput);
 
-// === Строим доску: 16 рядов колышков (треугольником, 1..16 колышков в ряду)
-// и 17 корзин снизу с фиксированными множителями. Строится один раз. ===
+// === Строим доску. Колышки — чисто декоративный слой (на выигрыш не
+// влияет, путь шарика считается отдельно по X-координатам), поэтому здесь
+// делаем более плотную сетку-воронку, похожую на референс: 12 визуальных
+// рядов, от 3 колышков вверху до 14 внизу — сама механика (8 шагов пути,
+// 9 корзин) не меняется. ===
+const PLINKO_VISUAL_ROWS = 12;
+const PLINKO_VISUAL_PEGS_START = 3;
+
 function plinkoBuildPegs() {
     if (!plinkoPegsLayerEl) return;
     plinkoPegsLayerEl.innerHTML = '';
-    for (let row = 0; row < PLINKO_ROWS; row++) {
+    for (let row = 0; row < PLINKO_VISUAL_ROWS; row++) {
         const rowEl = document.createElement('div');
         rowEl.className = 'plinko-peg-row';
-        const pegCount = row + 1;
+        const pegCount = PLINKO_VISUAL_PEGS_START + row;
         for (let p = 0; p < pegCount; p++) {
             const peg = document.createElement('span');
             peg.className = 'plinko-peg';
@@ -4783,22 +4175,23 @@ function plinkoBuildPegs() {
 }
 plinkoBuildPegs();
 
-// Переиспользуем 4 готовых цветовых уровня (серый/зелёный/оранжевый/красный)
-// по значению множителя, а не по позиции — так деление получается по смыслу:
-// 0 — проигрыш, 1.2-1.5 — небольшой выигрыш, 2-3 — хороший, 5-10 — джекпот.
-function plinkoBinTier(mult) {
-    if (mult === 0) return 'low';
-    if (mult <= 1.5) return 'mid';
-    if (mult <= 3) return 'high';
-    return 'extreme';
+// Тёплый градиент по позиции — от жёлтого в центре до красного по краям,
+// как в референсе (без разноцветных категорий "риска").
+const PLINKO_BIN_COLORS = ['#ff3b30', '#ff6b35', '#ff9f2e', '#ffc247', '#ffe066'];
+
+function plinkoBinColor(idx) {
+    const distanceFromCenter = Math.abs(idx - 4); // 0 (центр) .. 4 (край)
+    return PLINKO_BIN_COLORS[4 - distanceFromCenter];
 }
 
 function plinkoRenderBins() {
     if (!plinkoBinsEl) return;
+    const table = PLINKO_MULTIPLIERS[plinkoSelectedRisk];
     plinkoBinsEl.innerHTML = '';
-    PLINKO_MULTIPLIERS.forEach((mult, idx) => {
+    table.forEach((mult, idx) => {
         const bin = document.createElement('div');
-        bin.className = `plinko-bin plinko-bin-${plinkoBinTier(mult)}`;
+        bin.className = 'plinko-bin';
+        bin.style.background = plinkoBinColor(idx);
         bin.setAttribute('data-bin-index', String(idx));
         bin.textContent = `x${mult}`;
         plinkoBinsEl.appendChild(bin);
@@ -4819,6 +4212,20 @@ if (closePlinkoRulesModalBtn) closePlinkoRulesModalBtn.addEventListener('click',
 if (plinkoRulesModal) {
     plinkoRulesModal.addEventListener('click', (e) => {
         if (e.target === plinkoRulesModal) closePlinkoRules();
+    });
+}
+
+// === Уровень риска ===
+if (plinkoRiskOptionsEl) {
+    plinkoRiskOptionsEl.querySelectorAll('.plinko-risk-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (plinkoIsDropping) return;
+            plinkoSelectedRisk = btn.getAttribute('data-risk');
+            plinkoRiskOptionsEl.querySelectorAll('.plinko-risk-btn').forEach(b => {
+                b.classList.toggle('is-active', b === btn);
+            });
+            plinkoRenderBins();
+        });
     });
 }
 
@@ -4873,20 +4280,22 @@ function plinkoSetControlsDisabled(disabled) {
     if (plinkoBetPlusBtn) plinkoBetPlusBtn.disabled = disabled;
     if (plinkoBetInput) plinkoBetInput.disabled = disabled;
     document.querySelectorAll('.plinko-bet-quick-btn').forEach(btn => { btn.disabled = disabled; });
+    if (plinkoRiskOptionsEl) {
+        plinkoRiskOptionsEl.querySelectorAll('.plinko-risk-btn').forEach(btn => { btn.disabled = disabled; });
+    }
 }
 
 // === Анимация падения шарика по пути, который прислал сервер ===
-// path — массив из PLINKO_ROWS true/false (true = вправо). Горизонтальная
-// позиция считается в "единицах корзины" (всего PLINKO_BINS корзин, старт
-// строго по центру доски), каждый ряд сдвигает шарик на ±0.5 единицы —
-// после всех рядов шарик математически гарантированно оказывается по
-// центру той самой корзины, которую вернул сервер (slotIndex).
+// path — массив из 8 true/false (true = вправо). Горизонтальная позиция
+// считается в "единицах корзины" (всего 9 корзин, старт строго по центру
+// доски = 4.5 единицы), каждый ряд сдвигает шарик на ±0.5 единицы — после
+// 8 рядов шарик математически гарантированно оказывается по центру той
+// самой корзины, которую вернул сервер (slotIndex).
 async function plinkoAnimateDrop(path, slotIndex) {
     if (!plinkoBallEl) return;
 
-    const center = (PLINKO_BINS - 1) / 2;
-    const positions = [center];
-    let x = center;
+    const positions = [4.5];
+    let x = 4.5;
     path.forEach(goRight => {
         x += goRight ? 0.5 : -0.5;
         positions.push(x);
@@ -4895,20 +4304,21 @@ async function plinkoAnimateDrop(path, slotIndex) {
     plinkoBallEl.style.display = 'block';
     plinkoBallEl.classList.remove('is-win', 'is-lose', 'is-settled');
     plinkoBallEl.style.transition = 'none';
-    plinkoBallEl.style.left = `${((positions[0] + 0.5) / PLINKO_BINS) * 100}%`;
+    plinkoBallEl.style.left = `${(positions[0] / 9) * 100}%`;
     plinkoBallEl.style.top = '0%';
     plinkoBallEl.style.transform = 'rotate(0deg)';
     void plinkoBallEl.offsetWidth; // force reflow
 
-    // Каждый ряд шарик проходит за ~180мс — при 16 рядах это ~2.9с падения
-    // целиком, сопоставимо по длительности с анимациями других игр.
-    const rowDurationMs = 180;
+    // Каждый ряд шарик проходит за ~340мс — заметно медленнее, чем раньше,
+    // с мягким ускорением/торможением, чтобы падение выглядело более
+    // естественно и его было легко проследить взглядом.
+    const rowDurationMs = 340;
     let rotation = 0;
     for (let row = 1; row <= PLINKO_ROWS; row++) {
         const goingRight = positions[row] > positions[row - 1];
         rotation += goingRight ? 55 : -55;
         plinkoBallEl.style.transition = `left ${rowDurationMs}ms ease-in-out, top ${rowDurationMs}ms ease-in, transform ${rowDurationMs}ms ease-in-out`;
-        plinkoBallEl.style.left = `${((positions[row] + 0.5) / PLINKO_BINS) * 100}%`;
+        plinkoBallEl.style.left = `${(positions[row] / 9) * 100}%`;
         plinkoBallEl.style.top = `${(row / PLINKO_ROWS) * 100}%`;
         plinkoBallEl.style.transform = `rotate(${rotation}deg)`;
         await new Promise(resolve => setTimeout(resolve, rowDurationMs));
@@ -4945,7 +4355,7 @@ async function handlePlinkoDrop() {
         const res = await fetch(`${API_URL}/api/games/plinko/drop`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-            body: JSON.stringify({ bet }),
+            body: JSON.stringify({ bet, risk: plinkoSelectedRisk }),
         });
         const data = await res.json();
 
