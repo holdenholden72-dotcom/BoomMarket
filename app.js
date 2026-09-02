@@ -2794,14 +2794,40 @@ function applyStorageFilters() {
     renderStorageGrid(items, allInventoryItems.length === 0);
 }
 
+// Возвращает самый редкий трейт предмета (минимальный rarity_permille среди
+// модели/фона/символа) — используется для бейджа редкости на карточке.
+function getStorageItemBestRarity(item) {
+    const values = [item.model_rarity, item.backdrop_rarity, item.symbol_rarity]
+        .filter(v => v !== null && v !== undefined && !isNaN(v));
+    if (!values.length) return null;
+    return Math.min(...values);
+}
+
 function renderStorageGrid(items, isTrulyEmpty) {
     storageGrid.innerHTML = '';
     storageItemsById.clear();
 
+    const countBadge = document.getElementById('storageCountBadge');
+    if (countBadge) {
+        countBadge.textContent = allInventoryItems.length
+            ? `${items.length}${items.length !== allInventoryItems.length ? ` / ${allInventoryItems.length}` : ''}`
+            : '0';
+    }
+
     if (!items || items.length === 0) {
         storageGrid.innerHTML = isTrulyEmpty
-            ? `<div class="empty-state">Пока пусто — купленные подарки и снятые с продажи лоты появятся здесь</div>`
-            : `<div class="empty-state">Ничего не найдено по выбранным фильтрам</div>`;
+            ? `
+                <div class="empty-state storage-empty-state">
+                    <div class="storage-empty-icon">🎁</div>
+                    <div class="storage-empty-title">Хранилище пусто</div>
+                    <div class="storage-empty-sub">Купленные подарки и снятые с продажи лоты будут храниться здесь</div>
+                </div>`
+            : `
+                <div class="empty-state storage-empty-state">
+                    <div class="storage-empty-icon">🔍</div>
+                    <div class="storage-empty-title">Ничего не найдено</div>
+                    <div class="storage-empty-sub">Попробуйте изменить или сбросить фильтры</div>
+                </div>`;
         return;
     }
 
@@ -2809,20 +2835,35 @@ function renderStorageGrid(items, isTrulyEmpty) {
         storageItemsById.set(String(item.id), item);
 
         const card = document.createElement('div');
-        card.className = 'nft-card';
+        card.className = 'nft-card storage-card';
         card.dataset.itemId = item.id;
 
         const bg = item.backdrop_color || '#333';
         const image = item.model_icon || item.collection_image || '';
 
+        const bestRarity = getStorageItemBestRarity(item);
+        // Бейдж редкости показываем только для действительно редких трейтов
+        // (≤5%), чтобы не превращать сетку в сплошной "фейерверк" бейджей.
+        const rarityBadgeHtml = (bestRarity !== null && bestRarity <= 50)
+            ? `<div class="storage-rarity-badge">🔥 ${(bestRarity / 10).toFixed(1)}%</div>`
+            : '';
+
+        const traitChips = [item.model_name, item.backdrop_name].filter(Boolean);
+        const traitsHtml = traitChips.length
+            ? `<div class="storage-traits">${traitChips.map(t => `<span class="storage-trait-chip">${t}</span>`).join('')}</div>`
+            : '';
+
         card.innerHTML = `
             <div class="nft-image-container" style="background-color: ${bg};">
+                ${rarityBadgeHtml}
                 ${image ? `<img src="${image}" class="nft-img" alt="${item.collection_name}">` : ''}
             </div>
             <div class="nft-info">
                 <div class="nft-title">${item.collection_name}</div>
                 <div class="nft-number">#${item.gift_number}</div>
+                ${traitsHtml}
             </div>
+            <div class="storage-card-hint">Выставить на продажу</div>
         `;
         storageGrid.appendChild(card);
     });

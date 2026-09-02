@@ -3416,3 +3416,120 @@ body {
 .history-detail-amount {
     padding: 10px 0;
 }
+
+/* =====================================================================
+   ЭКРАН "ХРАНИЛИЩЕ" (инвентарь) — редизайн карточек. Заскоуплено под
+   #storageScreen / .storage-*, .nft-card и .market-grid в Маркете не
+   затрагиваются.
+   ===================================================================== */
+
+.section-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.section-title-row .section-title {
+    margin-bottom: 0;
+}
+
+.storage-count-badge {
+    background: #1c1c1e;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: #b8b8bd;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+/* Карточка предмета — лёгкий градиент-подложка + приподнятие при тапе */
+#storageGrid .storage-card {
+    cursor: pointer;
+    background: linear-gradient(165deg, #1c1c1f 0%, #17171a 100%);
+}
+
+#storageGrid .storage-card:active {
+    transform: scale(0.97);
+    border-color: rgba(255, 215, 0, 0.3);
+}
+
+/* Бейдж редкости — для действительно редких трейтов (≤5%) */
+.storage-rarity-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 2;
+    background: linear-gradient(135deg, #ffe066 0%, #ffd700 45%, #ff9f0a 100%);
+    color: #1a1a1a;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 7px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(255, 165, 0, 0.4);
+    letter-spacing: 0.2px;
+}
+
+/* Трейт-чипы (модель / фон) под номером подарка */
+.storage-traits {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+}
+
+.storage-trait-chip {
+    background: rgba(255, 255, 255, 0.06);
+    color: #b8b8bd;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 7px;
+    border-radius: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+/* Подсказка "Выставить на продажу" — появляется как полоска снизу карточки,
+   не требует отдельной кнопки (вся карточка кликабельна). */
+.storage-card-hint {
+    margin-top: auto;
+    padding: 8px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+    color: #0a84ff;
+    background: rgba(10, 132, 255, 0.08);
+    border-top: 1px solid rgba(10, 132, 255, 0.15);
+}
+
+/* Пустое состояние Хранилища — крупнее и дружелюбнее, как в Истории */
+.storage-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 70px 30px 40px;
+    color: #8e8e93;
+}
+
+.storage-empty-icon {
+    font-size: 40px;
+    margin-bottom: 14px;
+    opacity: 0.6;
+}
+
+.storage-empty-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 6px;
+}
+
+.storage-empty-sub {
+    font-size: 13px;
+    line-height: 1.5;
+    max-width: 260px;
+}
