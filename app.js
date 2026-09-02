@@ -4706,7 +4706,7 @@ async function towerHandleTileClick(floor, tileIndex, tileBtn) {
         }
 
         tileBtn.classList.add('is-safe');
-        tileBtn.textContent = '✅';
+        tileBtn.textContent = '💎';
 
         if (data.cleared) {
             // Все этажи пройдены — автоматический максимальный выигрыш.
@@ -4791,7 +4791,7 @@ async function towerSyncActiveGame() {
             const tileBtn = towerFieldEl.querySelector(`.tower-floor-row[data-floor="${floor}"] .tower-tile[data-tile="${tileIndex}"]`);
             if (tileBtn) {
                 tileBtn.classList.add('is-safe');
-                tileBtn.textContent = '✅';
+                tileBtn.textContent = '💎';
             }
         });
         towerSetControlsForActiveGame(true);
