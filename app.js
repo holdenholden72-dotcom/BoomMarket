@@ -690,14 +690,14 @@ function renderGrid(listings) {
     });
 }
 
-/** Промо-карточка коллекции слева в первом ряду — баланс + "Смотреть ордера" /
- * "Быстрая продажа". Пока чисто визуальная заготовка (см. комментарий выше). */
+/** Промо-карточка коллекции слева в первом ряду — крупная цена лучшего
+ * активного ордера на эту коллекцию (что реально предлагают за неё купить)
+ * + "Смотреть ордера" / "Быстрая продажа". */
 function buildCollectionOfferCard() {
     const card = document.createElement('div');
     card.className = 'nft-card market-offer-card';
     card.innerHTML = `
         <div class="nft-image-container market-offer-image">
-            <div class="nft-badge market-offer-badge">!</div>
             <svg class="market-offer-icon" width="40" height="40" viewBox="0 0 24 24" fill="none">
                 <rect x="5" y="2" width="14" height="20" rx="3" stroke="#1c1408" stroke-width="1.6"/>
                 <rect x="7.5" y="5" width="9" height="6" rx="1" fill="#1c1408"/>
@@ -708,7 +708,7 @@ function buildCollectionOfferCard() {
                 <circle cx="12" cy="18.5" r="1.1" fill="#1c1408"/>
                 <circle cx="15" cy="18.5" r="1.1" fill="#1c1408"/>
             </svg>
-            <div class="market-offer-balance">💎 <span class="user-balance">0.00</span></div>
+            <div class="market-offer-balance"><span class="market-offer-top-bid">💎 …</span></div>
         </div>
         <div class="nft-info market-offer-info">
             <button class="market-offer-btn market-offer-orders-btn" type="button">Смотреть ордера</button>
@@ -725,7 +725,44 @@ function buildCollectionOfferCard() {
         });
     }
 
+    loadTopBidForOfferCard(card);
+
     return card;
+}
+
+/** Подгружает самый большой активный ордер (лучшее предложение на покупку)
+ * по текущей выбранной коллекции и показывает его цену в промо-карточке
+ * вместо баланса пользователя. Использует тот же публичный эндпоинт, что и
+ * модалка "Смотреть ордера" — там список уже отсортирован по max_price DESC,
+ * так что нужен только первый элемент. */
+async function loadTopBidForOfferCard(card) {
+    const bidEl = card.querySelector('.market-offer-top-bid');
+    if (!bidEl) return;
+
+    const collectionId = activeFilters.collectionIds[0];
+    if (!collectionId) {
+        bidEl.textContent = '💎 —';
+        return;
+    }
+
+    try {
+        const params = new URLSearchParams({ collectionId });
+        if (activeFilters.models.length) params.set('model', activeFilters.models[0]);
+        if (activeFilters.backdrops.length) params.set('backdrop', activeFilters.backdrops[0]);
+        if (activeFilters.symbols.length) params.set('symbol', activeFilters.symbols[0]);
+
+        const res = await fetch(`${API_URL}/api/orders/collection?${params.toString()}`);
+        const data = await res.json();
+
+        // Карточка могла успеть уйти из DOM (сменили фильтры/экран), пока шёл запрос.
+        if (!card.isConnected) return;
+
+        const topOrder = data.ok && data.orders && data.orders.length ? data.orders[0] : null;
+        bidEl.textContent = topOrder ? `💎 ${formatGram(topOrder.max_price)}` : '💎 Нет ордеров';
+    } catch (e) {
+        console.error('Не удалось загрузить лучшее предложение по коллекции:', e);
+        if (card.isConnected) bidEl.textContent = '💎 —';
+    }
 }
 
 // Кэш текущих загруженных лотов по id — чтобы открыть детальную карточку
