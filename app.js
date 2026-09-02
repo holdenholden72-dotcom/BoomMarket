@@ -690,15 +690,36 @@ function renderGrid(listings) {
     });
 }
 
+// Кэш последнего известного "лучшего предложения" по комбинации фильтров
+// (коллекция + модель/фон/символ) — карточка пересоздаётся заново при каждом
+// обновлении сетки (в т.ч. фоновом опросе раз в 5с), и без кэша на миг
+// показывала бы placeholder "…" вместо уже известного числа, что выглядело
+// как мигание суммы. С кэшем при пересборке сразу показываем прежнее
+// значение и обновляем его тихо в фоне, только если оно и правда изменилось.
+const topBidCache = new Map();
+
+function topBidCacheKey() {
+    return JSON.stringify([
+        activeFilters.collectionIds[0] || null,
+        activeFilters.models[0] || null,
+        activeFilters.backdrops[0] || null,
+        activeFilters.symbols[0] || null,
+    ]);
+}
+
 /** Промо-карточка коллекции слева в первом ряду — крупная цена лучшего
  * активного ордера на эту коллекцию (что реально предлагают за неё купить)
  * + "Смотреть ордера" / "Быстрая продажа". */
 function buildCollectionOfferCard() {
     const card = document.createElement('div');
     card.className = 'nft-card market-offer-card';
+
+    const cacheKey = topBidCacheKey();
+    const cached = topBidCache.get(cacheKey);
+
     card.innerHTML = `
         <div class="nft-image-container market-offer-image">
-            <svg class="market-offer-icon" width="40" height="40" viewBox="0 0 24 24" fill="none">
+            <svg class="market-offer-icon" width="34" height="34" viewBox="0 0 24 24" fill="none">
                 <rect x="5" y="2" width="14" height="20" rx="3" stroke="#1c1408" stroke-width="1.6"/>
                 <rect x="7.5" y="5" width="9" height="6" rx="1" fill="#1c1408"/>
                 <circle cx="9" cy="15.5" r="1.1" fill="#1c1408"/>
@@ -708,7 +729,11 @@ function buildCollectionOfferCard() {
                 <circle cx="12" cy="18.5" r="1.1" fill="#1c1408"/>
                 <circle cx="15" cy="18.5" r="1.1" fill="#1c1408"/>
             </svg>
-            <div class="market-offer-balance"><span class="market-offer-top-bid">💎 …</span></div>
+            <div class="market-offer-label">Лучшее предложение</div>
+            <div class="market-offer-balance">
+                <span class="market-offer-diamond">💎</span>
+                <span class="market-offer-top-bid">${cached ? cached : '…'}</span>
+            </div>
         </div>
         <div class="nft-info market-offer-info">
             <button class="market-offer-btn market-offer-orders-btn" type="button">Смотреть ордера</button>
@@ -725,7 +750,7 @@ function buildCollectionOfferCard() {
         });
     }
 
-    loadTopBidForOfferCard(card);
+    loadTopBidForOfferCard(card, cacheKey);
 
     return card;
 }
@@ -735,13 +760,13 @@ function buildCollectionOfferCard() {
  * вместо баланса пользователя. Использует тот же публичный эндпоинт, что и
  * модалка "Смотреть ордера" — там список уже отсортирован по max_price DESC,
  * так что нужен только первый элемент. */
-async function loadTopBidForOfferCard(card) {
+async function loadTopBidForOfferCard(card, cacheKey) {
     const bidEl = card.querySelector('.market-offer-top-bid');
     if (!bidEl) return;
 
     const collectionId = activeFilters.collectionIds[0];
     if (!collectionId) {
-        bidEl.textContent = '💎 —';
+        bidEl.textContent = '—';
         return;
     }
 
@@ -754,14 +779,16 @@ async function loadTopBidForOfferCard(card) {
         const res = await fetch(`${API_URL}/api/orders/collection?${params.toString()}`);
         const data = await res.json();
 
-        // Карточка могла успеть уйти из DOM (сменили фильтры/экран), пока шёл запрос.
-        if (!card.isConnected) return;
-
         const topOrder = data.ok && data.orders && data.orders.length ? data.orders[0] : null;
-        bidEl.textContent = topOrder ? `💎 ${formatGram(topOrder.max_price)}` : '💎 Нет ордеров';
+        const text = topOrder ? formatGram(topOrder.max_price) : 'Нет ордеров';
+        topBidCache.set(cacheKey, text);
+
+        // Карточка могла успеть уйти из DOM (сменили фильтры/экран), пока шёл запрос —
+        // тогда просто обновляем кэш, DOM трогать уже незачем.
+        if (card.isConnected) bidEl.textContent = text;
     } catch (e) {
         console.error('Не удалось загрузить лучшее предложение по коллекции:', e);
-        if (card.isConnected) bidEl.textContent = '💎 —';
+        if (card.isConnected && !topBidCache.has(cacheKey)) bidEl.textContent = '—';
     }
 }
 
