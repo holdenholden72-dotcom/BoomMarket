@@ -3621,6 +3621,99 @@ body {
 }
 
 /* =====================================================================
+   МОДАЛКА "СОЗДАТЬ ОРДЕР" — форма собрана из тех же переиспользуемых полей,
+   что и другие модалки (продажа лота, вывод средств), поэтому раньше
+   выглядела разнородно: поле цены было в чужой сине-серой палитре
+   (осталось от формы вывода), а кнопка отправки — обычной серой, как
+   второстепенное действие. Приводим всё к единому языку модалки:
+   тёмные поля с золотым фокусом и золотая кнопка отправки, как у
+   "Предложить обмен"/"Создать ордер" на других экранах. Всё заскоуплено
+   под #createOrderModal, чтобы не задеть форму продажи лота и вывод
+   средств — они используют те же базовые классы.
+   ===================================================================== */
+
+#createOrderModal .listing-field-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #6b6b70;
+}
+
+#createOrderModal .listing-select {
+    background: #16161a;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+    padding: 12px 14px;
+    transition: border-color 0.15s ease;
+}
+
+#createOrderModal .listing-select:not(:disabled):active {
+    border-color: rgba(255, 215, 0, 0.35);
+}
+
+#createOrderModal .withdraw-input-box {
+    margin: 4px 0 0;
+}
+
+#createOrderModal .withdraw-input-box input {
+    background: #16161a;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+    padding: 13px 14px;
+    font-weight: 700;
+    transition: border-color 0.15s ease;
+}
+
+#createOrderModal .withdraw-input-box input:focus {
+    border-color: rgba(255, 215, 0, 0.4);
+}
+
+#createOrderModal .order-qty-controls .slots-bet-step-btn {
+    border-color: rgba(255, 255, 255, 0.07);
+}
+
+#createOrderModal .order-qty-controls .slots-bet-step-btn:active {
+    border-color: rgba(255, 215, 0, 0.35);
+    color: #ffd700;
+}
+
+#createOrderModal .order-qty-controls .slots-bet-input-wrap input {
+    border-color: rgba(255, 255, 255, 0.07);
+}
+
+/* Сноска про списание/возврат денег — раньше просто серый абзац текста,
+   теперь приподнятая карточка-подсказка, чтобы не терялась под кнопкой. */
+#createOrderModal .listing-fee-note {
+    text-align: left;
+    background: #16161a;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 12px 14px;
+    line-height: 1.5;
+    margin: 16px 0;
+}
+
+#confirmCreateOrderBtn {
+    flex-direction: row;
+    justify-content: center;
+    width: 100%;
+    padding: 16px 0;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #ffe066 0%, #ffd700 45%, #ff9f0a 100%);
+    color: #1c1c1e;
+    box-shadow: 0 8px 20px rgba(255, 159, 10, 0.28);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+#confirmCreateOrderBtn:active {
+    transform: scale(0.98);
+    box-shadow: 0 4px 12px rgba(255, 159, 10, 0.22);
+}
+
+/* =====================================================================
    ЭКРАН "ИСТОРИЯ ОПЕРАЦИЙ" — редизайн (фильтры, группировка по дням,
    карточки вместо плоских строк). Всё заскоуплено под #historyList /
    #historyFilters, чтобы не задеть .history-row в других местах
