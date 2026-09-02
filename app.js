@@ -2322,6 +2322,11 @@ if (openCreateOrderFromCollectionBtn) {
         const collectionId = activeFilters.collectionIds[0];
         if (!collectionId) return;
 
+        // Раньше модалка "Создать ордер" открывалась поверх "Ордеров", и они
+        // обе оставались в DOM друг на друге — закрываем "Ордера" явно, чтобы
+        // не было путаницы с "застрявшими" друг на друге окнами.
+        if (collectionOrdersModal) collectionOrdersModal.style.display = 'none';
+
         await openCreateOrderModal({
             collectionId,
             modelName: activeFilters.models[0] || null,
