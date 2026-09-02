@@ -699,8 +699,15 @@ const listingDetailSymbol = document.getElementById('listingDetailSymbol');
 const listingDetailPrice = document.getElementById('listingDetailPrice');
 const listingDetailBuyBtn = document.getElementById('listingDetailBuyBtn');
 const listingDetailCancelBtn = document.getElementById('listingDetailCancelBtn');
+const listingDetailOfferSellBtn = document.getElementById('listingDetailOfferSellBtn');
+const listingDetailOfferCancelBtn = document.getElementById('listingDetailOfferCancelBtn');
 
 let currentDetailListingId = null;
+// Заполняется, когда карточка открыта из "Ордеры → Предложения": там вместо
+// "Купить"/"Снять с продажи" показываются "Продать"/"Отмена", а действие
+// "Продать" должно принять конкретное предложение (order), а не просто
+// удалить лот.
+let currentDetailOffer = null;
 
 function traitLabel(name) {
     return name || '—';
@@ -708,6 +715,7 @@ function traitLabel(name) {
 
 function openListingDetail(item, opts = {}) {
     currentDetailListingId = item.id;
+    currentDetailOffer = opts.offer || null;
 
     // Разные ручки бэкенда называют картинку модели по-разному
     // (model_icon у листингов маркета/инвентаря, model_image у деталей
@@ -724,12 +732,28 @@ function openListingDetail(item, opts = {}) {
     listingDetailSymbol.textContent = traitLabel(item.symbol_name);
     listingDetailPrice.textContent = item.price;
 
-    // Режим просмотра (например, предмет обмена, который не выставлен на
-    // продажу): показываем только трейты, без кнопок "Купить"/"Снять с продажи".
-    if (opts.viewOnly) {
+    if (currentDetailOffer) {
+        // Открыто по клику на предложение в "Ордеры → Предложения":
+        // обычные "Купить"/"Снять с продажи" не подходят — вместо них
+        // показываем "Продать" (принять именно это предложение) и "Отмена"
+        // (просто закрыть карточку, ничего не отменяя на сервере).
         if (listingDetailBuyBtn) listingDetailBuyBtn.style.display = 'none';
         if (listingDetailCancelBtn) listingDetailCancelBtn.style.display = 'none';
+        if (listingDetailOfferSellBtn) {
+            listingDetailOfferSellBtn.style.display = '';
+            listingDetailOfferSellBtn.disabled = false;
+        }
+        if (listingDetailOfferCancelBtn) listingDetailOfferCancelBtn.style.display = '';
+    } else if (opts.viewOnly) {
+        // Режим просмотра (например, предмет обмена, который не выставлен на
+        // продажу): показываем только трейты, без кнопок "Купить"/"Снять с продажи".
+        if (listingDetailBuyBtn) listingDetailBuyBtn.style.display = 'none';
+        if (listingDetailCancelBtn) listingDetailCancelBtn.style.display = 'none';
+        if (listingDetailOfferSellBtn) listingDetailOfferSellBtn.style.display = 'none';
+        if (listingDetailOfferCancelBtn) listingDetailOfferCancelBtn.style.display = 'none';
     } else {
+        if (listingDetailOfferSellBtn) listingDetailOfferSellBtn.style.display = 'none';
+        if (listingDetailOfferCancelBtn) listingDetailOfferCancelBtn.style.display = 'none';
         // Свой лот нельзя купить — вместо кнопки "Купить" показываем "Снять с продажи".
         const isOwn = currentTgId != null && item.owner_tg_id === currentTgId;
         if (listingDetailBuyBtn) listingDetailBuyBtn.style.display = isOwn ? 'none' : '';
@@ -889,6 +913,7 @@ if (closeListingDetailBtn && listingDetailModal) {
     closeListingDetailBtn.addEventListener('click', () => {
         listingDetailModal.style.display = 'none';
         currentDetailListingId = null;
+        currentDetailOffer = null;
     });
 }
 
@@ -971,6 +996,63 @@ if (listingDetailCancelBtn) {
         } finally {
             listingDetailCancelBtn.disabled = false;
         }
+    });
+}
+
+// "Продать"/"Отмена" — показываются вместо "Купить"/"Снять с продажи", когда
+// карточка открыта из "Ордеры → Предложения" (см. currentDetailOffer).
+if (listingDetailOfferSellBtn) {
+    listingDetailOfferSellBtn.addEventListener('click', async () => {
+        if (!currentDetailOffer) return;
+
+        if (!authToken) {
+            alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+            return;
+        }
+        if (!confirm('Продать этот лот по цене предложения?')) return;
+
+        listingDetailOfferSellBtn.disabled = true;
+
+        try {
+            const res = await fetch(`${API_URL}/api/listings/${currentDetailOffer.listingId}/accept-offer`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`,
+                },
+                body: JSON.stringify({ orderId: currentDetailOffer.orderId }),
+            });
+
+            const data = await res.json();
+
+            if (!data.ok) {
+                alert(data.error || 'Не удалось продать лот');
+                listingDetailOfferSellBtn.disabled = false;
+                return;
+            }
+
+            updateBalanceUI(data.balance);
+            alert('Лот продан!');
+            listingDetailModal.style.display = 'none';
+            currentDetailListingId = null;
+            currentDetailOffer = null;
+            await loadMyOffers();
+            await loadListings();
+        } catch (err) {
+            alert('Ошибка соединения с сервером');
+            console.error(err);
+            listingDetailOfferSellBtn.disabled = false;
+        }
+    });
+}
+
+if (listingDetailOfferCancelBtn) {
+    listingDetailOfferCancelBtn.addEventListener('click', () => {
+        // Просто закрывает карточку — ничего не отменяет и не отклоняет,
+        // предложение остаётся активным в списке.
+        listingDetailModal.style.display = 'none';
+        currentDetailListingId = null;
+        currentDetailOffer = null;
     });
 }
 
@@ -1411,7 +1493,9 @@ if (ordersOffersList) {
             backdrop_color: offer.backdrop_color,
             symbol_name: offer.symbol_name,
             collection_image: offer.collection_image,
-        }, { viewOnly: true });
+        }, {
+            offer: { orderId: offer.order_id, listingId: offer.listing_id },
+        });
     });
 }
 
