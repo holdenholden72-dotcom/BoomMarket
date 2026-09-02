@@ -1906,7 +1906,6 @@ if (orderDetailCancelBtn) {
 
 // === Модалка создания ордера ===
 const createOrderModal = document.getElementById('createOrderModal');
-const openCreateOrderBtn = document.getElementById('openCreateOrderBtn');
 const closeCreateOrderModalBtn = document.getElementById('closeCreateOrderModal');
 const orderCollectionSelect = document.getElementById('orderCollectionSelect');
 const orderModelSelect = document.getElementById('orderModelSelect');
@@ -2040,10 +2039,6 @@ async function openCreateOrderModal(preset = null) {
     }
 
     createOrderModal.style.display = 'flex';
-}
-
-if (openCreateOrderBtn && createOrderModal) {
-    openCreateOrderBtn.addEventListener('click', () => openCreateOrderModal());
 }
 
 if (closeCreateOrderModalBtn && createOrderModal) {
