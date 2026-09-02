@@ -3949,28 +3949,3 @@ body {
 .market-offer-sell-btn:active {
     transform: scale(0.97);
 }
-
-/* === Широкая полоса "Купить оптом" на всю ширину сетки маркета === */
-.market-bulk-buy-bar {
-    grid-column: 1 / -1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    background: #1c1c1e;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 14px;
-    padding: 14px 0;
-    color: #fff;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.market-bulk-buy-bar:active {
-    transform: scale(0.98);
-}
-
-.market-bulk-buy-icon {
-    font-size: 16px;
-}

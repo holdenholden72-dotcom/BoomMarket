@@ -654,9 +654,8 @@ function renderGrid(listings) {
     }
 
     // Когда выбрана ровно ОДНА коллекция — показываем перед лотами специальный
-    // промо-блок (баланс + быстрые действия по этой коллекции) и через один ряд
-    // широкую кнопку "Купить оптом". Пока это чисто визуальный макет — логику
-    // "быстрой продажи" и "оптовой покупки" подключим отдельно.
+    // промо-блок (баланс + быстрые действия по этой коллекции). Пока это чисто
+    // визуальный макет — логику "быстрой продажи" подключим отдельно.
     const showCollectionOffer = activeFilters.collectionIds.length === 1;
     if (showCollectionOffer) {
         grid.appendChild(buildCollectionOfferCard());
@@ -688,12 +687,6 @@ function renderGrid(listings) {
             </div>
         `;
         grid.appendChild(card);
-
-        // Сразу после первого ряда (промо-карточка + первый лот) вставляем
-        // широкую полосу "Купить оптом" на всю ширину сетки.
-        if (showCollectionOffer && index === 0) {
-            grid.appendChild(buildBulkBuyBar());
-        }
     });
 }
 
@@ -733,15 +726,6 @@ function buildCollectionOfferCard() {
     }
 
     return card;
-}
-
-/** Широкая полоса "Купить оптом" на всю ширину сетки — пока визуальная заглушка. */
-function buildBulkBuyBar() {
-    const bar = document.createElement('button');
-    bar.type = 'button';
-    bar.className = 'market-bulk-buy-bar';
-    bar.innerHTML = `<span class="market-bulk-buy-icon">🛒</span> Купить оптом`;
-    return bar;
 }
 
 // Кэш текущих загруженных лотов по id — чтобы открыть детальную карточку
