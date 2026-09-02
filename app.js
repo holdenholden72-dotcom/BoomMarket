@@ -745,9 +745,103 @@ function buildCollectionOfferCard() {
         });
     }
 
+    const sellBtn = card.querySelector('.market-offer-sell-btn');
+    if (sellBtn) {
+        sellBtn.addEventListener('click', () => quickSellToTopOrder(sellBtn));
+    }
+
     loadTopBidForOfferCard(card, cacheKey);
 
     return card;
+}
+
+/** "Быстрая продажа" — продаёт подходящий товар прямо из Хранилища в лучший
+ * активный ордер на текущую коллекцию (с учётом выбранных модели/фона/символа),
+ * без промежуточного выставления лота на продажу. */
+async function quickSellToTopOrder(btn) {
+    if (!authToken) {
+        alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+        return;
+    }
+
+    const collectionId = activeFilters.collectionIds[0];
+    if (!collectionId) return;
+
+    btn.disabled = true;
+
+    try {
+        // Тянем актуальный список ордеров заново (не из кэша карточки) — нужен
+        // не только текст цены, но и реальный id лучшего ордера + id его трейтов.
+        const orderParams = new URLSearchParams({ collectionId });
+        if (activeFilters.models.length) orderParams.set('model', activeFilters.models[0]);
+        if (activeFilters.backdrops.length) orderParams.set('backdrop', activeFilters.backdrops[0]);
+        if (activeFilters.symbols.length) orderParams.set('symbol', activeFilters.symbols[0]);
+
+        const ordersRes = await fetch(`${API_URL}/api/orders/collection?${orderParams.toString()}`);
+        const ordersData = await ordersRes.json();
+        const topOrder = ordersData.ok && ordersData.orders && ordersData.orders.length ? ordersData.orders[0] : null;
+
+        if (!topOrder) {
+            alert('Нет активных ордеров на эту коллекцию');
+            return;
+        }
+
+        // Ищем среди СВОИХ товаров в Хранилище (не выставленных на продажу)
+        // подходящий под трейты именно этого ордера.
+        const invRes = await fetch(`${API_URL}/api/inventory`, {
+            headers: { 'Authorization': `Bearer ${authToken}` },
+        });
+        const invData = await invRes.json();
+        if (!invData.ok) {
+            alert(invData.error || 'Не удалось загрузить хранилище');
+            return;
+        }
+
+        const match = (invData.items || []).find(item =>
+            item.collection_id === topOrder.collection_id &&
+            (!topOrder.model_id || item.model_id === topOrder.model_id) &&
+            (!topOrder.backdrop_id || item.backdrop_id === topOrder.backdrop_id) &&
+            (!topOrder.symbol_id || item.symbol_id === topOrder.symbol_id)
+        );
+
+        if (!match) {
+            alert('В вашем Хранилище нет товара, подходящего под этот ордер');
+            return;
+        }
+
+        if (!confirm(`Продать «${match.collection_name} #${match.gift_number}» за ${topOrder.max_price} 💎?`)) {
+            return;
+        }
+
+        const res = await fetch(`${API_URL}/api/listings/${match.id}/accept-offer`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`,
+            },
+            body: JSON.stringify({ orderId: topOrder.id }),
+        });
+        const data = await res.json();
+
+        if (!data.ok) {
+            alert(data.error || 'Не удалось продать товар');
+            return;
+        }
+
+        updateBalanceUI(data.balance);
+        alert('Продано!');
+
+        // Лучшая цена и остальные экраны, зависящие от инвентаря/ордеров,
+        // могли измениться — обновляем то, что сейчас реально видно на экране.
+        topBidCache.delete(topBidCacheKey());
+        await loadListings();
+        if (typeof loadInventory === 'function') loadInventory();
+    } catch (e) {
+        alert('Ошибка соединения с сервером');
+        console.error(e);
+    } finally {
+        btn.disabled = false;
+    }
 }
 
 /** Подгружает самый большой активный ордер (лучшее предложение на покупку)
