@@ -719,16 +719,11 @@ function buildCollectionOfferCard() {
 
     card.innerHTML = `
         <div class="nft-image-container market-offer-image">
-            <svg class="market-offer-icon" width="34" height="34" viewBox="0 0 24 24" fill="none">
-                <rect x="5" y="2" width="14" height="20" rx="3" stroke="#1c1408" stroke-width="1.6"/>
-                <rect x="7.5" y="5" width="9" height="6" rx="1" fill="#1c1408"/>
-                <circle cx="9" cy="15.5" r="1.1" fill="#1c1408"/>
-                <circle cx="12" cy="15.5" r="1.1" fill="#1c1408"/>
-                <circle cx="15" cy="15.5" r="1.1" fill="#1c1408"/>
-                <circle cx="9" cy="18.5" r="1.1" fill="#1c1408"/>
-                <circle cx="12" cy="18.5" r="1.1" fill="#1c1408"/>
-                <circle cx="15" cy="18.5" r="1.1" fill="#1c1408"/>
-            </svg>
+            <div class="market-offer-icon-badge">
+                <svg class="market-offer-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2.5L14.8 9.2L22 10.2L16.8 15L18.2 22L12 18.3L5.8 22L7.2 15L2 10.2L9.2 9.2L12 2.5Z" fill="#1c1408"/>
+                </svg>
+            </div>
             <div class="market-offer-label">Лучшее предложение</div>
             <div class="market-offer-balance">
                 <span class="market-offer-diamond">💎</span>
