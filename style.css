@@ -1482,34 +1482,94 @@ body {
     cursor: default;
 }
 
-/* === Экран "Трейд" (P2P-обмен подарками) === */
+/* =====================================================================
+   ЭКРАН "ТРЕЙД" (P2P-обмен подарками)
+   Визуальный язык: тот же тёмный холст (#0f0f0f), что и у всего апп-а,
+   но акцент смещён на фиолетовый (в цвет аватара/баланса в шапке) для
+   всего, что связано с "человеком" в обмене (поиск, выбранный партнёр),
+   и на золотой (в цвет основных CTA) — для самого действия обмена.
+   "Отдаёте" и "получаете" получают устойчивую цветовую кодировку:
+   красноватый для исходящего, изумрудный для входящего — как знаки
+   минуса/плюса в истории транзакций.
+   ===================================================================== */
+
+#tradeScreen .profile-content {
+    padding-top: 4px;
+}
+
+#tradeScreen .section-title {
+    font-size: 12px;
+    letter-spacing: 0.4px;
+    color: #8e8e93;
+}
+
 .trade-panel {
     padding-bottom: 90px; /* место под фиксированную нижнюю навигацию */
 }
 
+/* Вкладки Новый / Входящие / Мои обмены — приподнятая капсула со свечением
+   активного пункта вместо плоской заливки, только в пределах трейда. */
+#tradeTabs {
+    background: #141416;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 5px;
+    margin-bottom: 18px;
+}
+
+#tradeTabs .orders-tab {
+    padding: 11px 2px;
+    letter-spacing: 0.2px;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+#tradeTabs .orders-tab.active {
+    background: linear-gradient(135deg, #34294f 0%, #211c30 100%);
+    color: #d9c8ff;
+    box-shadow: inset 0 0 0 1px rgba(138, 107, 255, 0.35);
+}
+
+/* --- Поиск получателя --- */
 .trade-search-row {
     display: flex;
     gap: 8px;
-    margin-bottom: 10px;
+    margin-bottom: 14px;
 }
 
 .trade-search-row input {
     flex: 1;
-    background: #1c1c1e;
-    border: none;
-    border-radius: 12px;
-    padding: 12px 14px;
+    background: #16161a;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    padding: 13px 16px;
     color: #fff;
     font-size: 14px;
     outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.trade-search-row input:focus {
+    border-color: rgba(138, 107, 255, 0.55);
+}
+
+.trade-search-row input::placeholder {
+    color: #6b6b70;
 }
 
 .trade-find-btn {
     width: auto;
     flex-direction: row;
-    padding: 0 18px;
+    padding: 0 20px;
     font-size: 13px;
-    border-radius: 12px;
+    font-weight: 700;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #8a6bff 0%, #5b3fd9 100%);
+    color: #fff;
+    box-shadow: 0 6px 16px rgba(90, 63, 217, 0.35);
+    transition: transform 0.1s ease;
+}
+
+.trade-find-btn:active {
+    transform: scale(0.96);
 }
 
 .trade-found-list {
@@ -1520,18 +1580,28 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 0;
-    border-bottom: 1px solid #2c2c2e;
+    padding: 11px 12px;
+    margin-bottom: 6px;
+    background: #16161a;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 14px;
     cursor: pointer;
+    transition: border-color 0.15s ease, transform 0.1s ease;
+}
+
+.trade-found-row:active {
+    transform: scale(0.98);
+    border-color: rgba(138, 107, 255, 0.4);
 }
 
 .trade-found-avatar {
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     background: #2c2c2e;
     object-fit: cover;
     flex-shrink: 0;
+    box-shadow: 0 0 0 2px rgba(138, 107, 255, 0.3);
 }
 
 .trade-found-name {
@@ -1540,16 +1610,30 @@ body {
     font-weight: 600;
 }
 
+.trade-found-row span {
+    color: #6b6b70;
+    font-size: 16px;
+}
+
+/* Карточка выбранного партнёра — тёплая фиолетовая подложка, чтобы было
+   сразу видно "с кем" собирается обмен, отдельно от списков ниже. */
 .trade-selected-user {
     display: flex;
     align-items: center;
     gap: 10px;
-    background: #1c1c1e;
-    border-radius: 12px;
-    padding: 10px 12px;
-    margin: 6px 0 14px;
+    background: linear-gradient(135deg, rgba(138, 107, 255, 0.16) 0%, rgba(28, 28, 30, 0.6) 65%);
+    border: 1px solid rgba(138, 107, 255, 0.25);
+    border-radius: 14px;
+    padding: 13px 14px;
+    margin: 6px 0 18px;
     font-size: 13px;
-    color: #8e8e93;
+    color: #a9a9ae;
+}
+
+.trade-selected-user::before {
+    content: '🔄';
+    font-size: 15px;
+    filter: drop-shadow(0 0 4px rgba(138, 107, 255, 0.6));
 }
 
 .trade-selected-user b {
@@ -1557,7 +1641,22 @@ body {
 }
 
 .trade-subtitle {
-    margin-top: 16px;
+    margin-top: 20px;
+    margin-bottom: 2px;
+    font-size: 11px;
+}
+
+/* Список "Ваши предметы" — нейтральный тон */
+#tradeMyItemsList.trade-pick-list {
+    border-left: 2px solid rgba(255, 255, 255, 0.08);
+    padding-left: 10px;
+}
+
+/* Список "Предметы получателя" — тонкая золотая направляющая, чтобы глаз
+   сразу различал две колонки выбора при быстрой прокрутке. */
+#tradeTheirItemsList.trade-pick-list {
+    border-left: 2px solid rgba(255, 215, 0, 0.25);
+    padding-left: 10px;
 }
 
 .trade-pick-list {
@@ -1568,16 +1667,31 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 0;
-    border-bottom: 1px solid #2c2c2e;
+    padding: 10px 8px;
+    margin-bottom: 4px;
+    border-radius: 12px;
+    border-bottom: none;
     cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.trade-pick-row:active {
+    background: rgba(255, 255, 255, 0.04);
 }
 
 .trade-pick-row input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
+    width: 19px;
+    height: 19px;
     flex-shrink: 0;
     accent-color: #ffd700;
+}
+
+/* Прогрессивное улучшение: подсвечиваем выбранную строку целиком.
+   Браузеры без поддержки :has() просто не получают подсветку —
+   выбор всё равно виден по чекбоксу. */
+.trade-pick-row:has(input:checked) {
+    background: rgba(255, 215, 0, 0.08);
+    box-shadow: inset 0 0 0 1px rgba(255, 215, 0, 0.25);
 }
 
 .trade-status-badge {
@@ -1595,11 +1709,24 @@ body {
 .trade-status-badge.is-cancelled,
 .trade-status-badge.is-failed { background: rgba(255, 69, 58, 0.15); color: #ff453a; }
 
-.trade-detail-meta {
+/* --- Модалка деталей обмена --- */
+#tradeDetailModal .trade-detail-meta {
     text-align: center;
     color: #8e8e93;
     font-size: 13px;
     margin-bottom: 4px;
+}
+
+#tradeDetailModal #tradeDetailGiveTitle {
+    color: #ff8a80;
+}
+
+#tradeDetailModal #tradeDetailGetTitle {
+    color: #7ee6a8;
+}
+
+#tradeDetailModal .history-list .history-row {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .trade-detail-actions {
@@ -1613,13 +1740,18 @@ body {
     flex-direction: row;
     justify-content: center;
     padding: 14px 0;
+    font-weight: 700;
+    background: linear-gradient(135deg, #ffe066 0%, #ffd700 45%, #ff9f0a 100%);
+    color: #1c1c1e;
 }
 
 .trade-decline-btn {
-    background: #2c2c2e;
-    color: #ff453a;
+    background: #201417 !important;
+    color: #ff6961 !important;
+    border: 1px solid rgba(255, 69, 58, 0.3);
 }
 
+/* --- Доплата TON --- */
 .trade-topup-row {
     margin-top: 10px;
     display: flex;
@@ -1630,7 +1762,8 @@ body {
 .trade-topup-direction {
     display: flex;
     gap: 6px;
-    background: #1c1c1e;
+    background: #16161a;
+    border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 12px;
     padding: 4px;
 }
@@ -1646,37 +1779,95 @@ body {
     border-radius: 9px;
     cursor: pointer;
     white-space: nowrap;
+    transition: background 0.15s ease, color 0.15s ease;
 }
 
 .trade-topup-dir-btn.active {
-    background: #2c2c2e;
+    background: linear-gradient(135deg, #3a2f14 0%, #2c2c2e 100%);
     color: #ffd700;
+    box-shadow: inset 0 0 0 1px rgba(255, 215, 0, 0.25);
 }
 
 #tradeTopupAmount {
     width: 100%;
-    background: #1c1c1e;
-    border: 1px solid #2c2c2e;
+    background: #16161a;
+    border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 12px;
     padding: 12px 14px;
     color: #fff;
     font-size: 15px;
     box-sizing: border-box;
+    transition: border-color 0.15s ease;
+}
+
+#tradeTopupAmount:focus {
+    outline: none;
+    border-color: rgba(255, 215, 0, 0.4);
 }
 
 .trade-fee-note {
     margin-top: 10px;
     font-size: 11px;
-    color: #8e8e93;
-    line-height: 1.4;
+    color: #6b6b70;
+    line-height: 1.5;
 }
 
 .trade-topup-note {
     text-align: center;
-    color: #ffd700;
+    color: #1c1c1e;
+    background: linear-gradient(135deg, #ffe066 0%, #ffd700 45%, #ff9f0a 100%);
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+/* Кнопка "Предложить обмен" — приводим в один регистр с "Купить"/"Создать
+   ордер": та же золотая заливка, чтобы главное действие экрана читалось
+   с первого взгляда, без отдельного класса в HTML. */
+#tradeSubmitBtn {
+    flex-direction: row;
+    justify-content: center;
+    margin-top: 22px;
+    padding: 16px 0;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #ffe066 0%, #ffd700 45%, #ff9f0a 100%);
+    color: #1c1c1e;
+    box-shadow: 0 8px 20px rgba(255, 159, 10, 0.28);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+#tradeSubmitBtn:active {
+    transform: scale(0.98);
+    box-shadow: 0 4px 12px rgba(255, 159, 10, 0.22);
+}
+
+/* --- Списки "Входящие" / "Мои обмены" --- */
+#tradeIncomingList.trade-panel .history-row,
+#tradeMineList.trade-panel .history-row {
+    padding: 12px 10px;
+    margin-bottom: 6px;
+    background: #16161a;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 14px;
+    transition: border-color 0.15s ease, transform 0.1s ease;
+}
+
+#tradeIncomingList.trade-panel .history-row:active,
+#tradeMineList.trade-panel .history-row:active {
+    transform: scale(0.98);
+    border-color: rgba(138, 107, 255, 0.35);
+}
+
+#tradeScreen .empty-state {
+    text-align: center;
+    color: #6b6b70;
     font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 10px;
+    padding: 32px 0;
 }
 
 /* =====================================================================
