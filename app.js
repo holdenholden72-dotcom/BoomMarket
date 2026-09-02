@@ -3554,7 +3554,7 @@ const SLOTS_SYMBOLS = {
 const SLOTS_SYMBOL_IDS = Object.keys(SLOTS_SYMBOLS);
 const SLOTS_MIN_BET = 0.3;
 const SLOTS_MAX_BET = 1000;
-const SLOTS_REEL_SYMBOL_HEIGHT = 92; // px, должно совпадать с высотой .slot-reel-window в CSS
+const SLOTS_REEL_SYMBOL_HEIGHT = 100; // px, должно совпадать с высотой .slot-reel-window в CSS
 
 const slotsScreenEl = document.getElementById('slotsScreen');
 const slotsBetInput = document.getElementById('slotsBetInput');

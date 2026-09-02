@@ -2009,16 +2009,24 @@ body {
     color: #ffd700;
 }
 
-/* Корпус автомата */
+/* Корпус автомата — многослойный градиент + хромированная золотая рамка
+   с двойным свечением (внешний мягкий ореол + внутренний бортик), чтобы
+   выглядело как настоящий игровой кабинет, а не плоская панель. */
 .slots-machine {
     position: relative;
     width: 100%;
     max-width: 340px;
-    background: linear-gradient(160deg, #2b2345 0%, #1c1531 55%, #14101f 100%);
-    border: 1px solid rgba(255, 215, 0, 0.35);
-    border-radius: 24px;
-    padding: 22px 16px 18px;
-    box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 12px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.04);
+    background:
+        radial-gradient(120% 90% at 50% -10%, rgba(255, 215, 0, 0.10) 0%, rgba(255, 215, 0, 0) 55%),
+        linear-gradient(160deg, #2f2650 0%, #1c1531 50%, #120c1e 100%);
+    border-radius: 26px;
+    padding: 16px 14px 14px;
+    box-shadow:
+        0 0 0 1px rgba(255, 215, 0, 0.45),
+        0 0 0 5px rgba(20, 14, 32, 0.9),
+        0 0 0 6px rgba(255, 215, 0, 0.18),
+        0 16px 34px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
     transition: box-shadow 0.3s ease;
 }
 
@@ -2027,15 +2035,55 @@ body {
 }
 
 @keyframes slotsWinFlash {
-    0% { box-shadow: 0 0 0 1px rgba(255,215,0,0.9), 0 0 40px 8px rgba(255,215,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08); }
-    100% { box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 12px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.04); }
+    0% {
+        box-shadow:
+            0 0 0 1px rgba(255, 215, 0, 1),
+            0 0 0 5px rgba(20, 14, 32, 0.9),
+            0 0 40px 10px rgba(255, 215, 0, 0.65),
+            0 16px 34px rgba(0, 0, 0, 0.55),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    100% {
+        box-shadow:
+            0 0 0 1px rgba(255, 215, 0, 0.45),
+            0 0 0 5px rgba(20, 14, 32, 0.9),
+            0 0 0 6px rgba(255, 215, 0, 0.18),
+            0 16px 34px rgba(0, 0, 0, 0.55),
+            inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
 }
 
+/* Неоновая вывеска "JACKPOT" сверху корпуса, как маркиза на настоящем автомате */
+.slots-marquee {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.slots-marquee-text {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    color: #fff6d8;
+    text-shadow:
+        0 0 4px rgba(255, 230, 130, 0.9),
+        0 0 12px rgba(255, 215, 0, 0.8),
+        0 0 24px rgba(255, 165, 0, 0.5);
+    animation: slotsMarqueeFlicker 2.4s ease-in-out infinite;
+}
+
+@keyframes slotsMarqueeFlicker {
+    0%, 94%, 100% { opacity: 1; }
+    96% { opacity: 0.55; }
+}
+
+/* Гирлянда ламп по всей ширине — чередуем золото/красный, как на бортике
+   настоящего игрового автомата. */
 .slots-machine-lights {
     display: flex;
     justify-content: space-between;
-    padding: 0 4px;
-    margin-bottom: 14px;
+    padding: 0 2px;
+    margin-bottom: 12px;
 }
 
 .slots-machine-lights span {
@@ -2043,44 +2091,57 @@ body {
     height: 6px;
     border-radius: 50%;
     background: #ffd700;
-    opacity: 0.25;
+    opacity: 0.3;
     animation: slotsLightBlink 1.6s ease-in-out infinite;
-    box-shadow: 0 0 6px rgba(255, 215, 0, 0.6);
+    box-shadow: 0 0 6px rgba(255, 215, 0, 0.7);
 }
 
-.slots-machine-lights span:nth-child(2) { animation-delay: 0.15s; }
-.slots-machine-lights span:nth-child(3) { animation-delay: 0.3s; }
-.slots-machine-lights span:nth-child(4) { animation-delay: 0.45s; }
-.slots-machine-lights span:nth-child(5) { animation-delay: 0.6s; }
-.slots-machine-lights span:nth-child(6) { animation-delay: 0.75s; }
+.slots-machine-lights span:nth-child(odd) {
+    background: #ff6b3d;
+    box-shadow: 0 0 6px rgba(255, 107, 61, 0.7);
+}
+
+.slots-machine-lights span:nth-child(1) { animation-delay: 0s; }
+.slots-machine-lights span:nth-child(2) { animation-delay: 0.1s; }
+.slots-machine-lights span:nth-child(3) { animation-delay: 0.2s; }
+.slots-machine-lights span:nth-child(4) { animation-delay: 0.3s; }
+.slots-machine-lights span:nth-child(5) { animation-delay: 0.4s; }
+.slots-machine-lights span:nth-child(6) { animation-delay: 0.5s; }
+.slots-machine-lights span:nth-child(7) { animation-delay: 0.6s; }
+.slots-machine-lights span:nth-child(8) { animation-delay: 0.7s; }
 
 .slots-machine.is-spinning .slots-machine-lights span {
-    animation-duration: 0.5s;
+    animation-duration: 0.4s;
 }
 
 @keyframes slotsLightBlink {
-    0%, 100% { opacity: 0.25; }
-    50% { opacity: 1; }
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.15); }
 }
 
 .slots-reels {
     position: relative;
     display: flex;
-    gap: 8px;
-    background: #0f0f0f;
-    border-radius: 16px;
-    padding: 8px;
-    box-shadow: inset 0 3px 10px rgba(0, 0, 0, 0.6);
+    gap: 6px;
+    background: #08080a;
+    border-radius: 18px;
+    padding: 10px;
+    box-shadow:
+        inset 0 4px 12px rgba(0, 0, 0, 0.7),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.03);
 }
 
 .slot-reel-window {
     flex: 1;
-    height: 92px;
+    height: 100px;
     overflow: hidden;
     position: relative;
-    background: linear-gradient(180deg, #050505 0%, #161616 20%, #1e1e1e 50%, #161616 80%, #050505 100%);
-    border-radius: 12px;
-    border: 1px solid #2c2c2e;
+    background: linear-gradient(180deg, #050505 0%, #17171a 20%, #201f24 50%, #17171a 80%, #050505 100%);
+    border-radius: 13px;
+    box-shadow:
+        0 0 0 1px #302f36,
+        0 0 0 2px rgba(255, 215, 0, 0.12),
+        inset 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 .slot-reel-window::before,
@@ -2089,19 +2150,34 @@ body {
     position: absolute;
     left: 0;
     right: 0;
-    height: 28px;
+    height: 30px;
     pointer-events: none;
     z-index: 2;
 }
 
 .slot-reel-window::before {
     top: 0;
-    background: linear-gradient(180deg, rgba(0,0,0,0.85), rgba(0,0,0,0));
+    background: linear-gradient(180deg, rgba(0,0,0,0.9), rgba(0,0,0,0));
 }
 
 .slot-reel-window::after {
     bottom: 0;
-    background: linear-gradient(0deg, rgba(0,0,0,0.85), rgba(0,0,0,0));
+    background: linear-gradient(0deg, rgba(0,0,0,0.9), rgba(0,0,0,0));
+}
+
+/* Диагональный глянцевый блик поверх стекла барабана — придаёт объём,
+   как будто перед символами настоящее выпуклое стекло. */
+.slot-reel-shine {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    background: linear-gradient(115deg,
+        rgba(255, 255, 255, 0.10) 0%,
+        rgba(255, 255, 255, 0.03) 22%,
+        rgba(255, 255, 255, 0) 40%,
+        rgba(255, 255, 255, 0) 70%,
+        rgba(255, 255, 255, 0.05) 100%);
 }
 
 .slot-reel-strip {
@@ -2111,13 +2187,13 @@ body {
 }
 
 .slot-symbol {
-    height: 92px;
+    height: 100px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 46px;
+    font-size: 50px;
     line-height: 1;
-    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+    filter: drop-shadow(0 3px 8px rgba(0,0,0,0.55));
 }
 
 .slot-reel-strip.slot-reel-landed .slot-symbol:last-child {
@@ -2125,21 +2201,60 @@ body {
 }
 
 @keyframes slotSymbolLand {
-    0% { transform: scale(1.18); }
+    0% { transform: scale(1.22); }
     100% { transform: scale(1); }
 }
 
-/* Линия выплаты — золотая полоса поперёк центра барабанов */
+/* Линия выплаты — золотая полоса поперёк центра барабанов, с маленькими
+   треугольниками-указателями по бокам, как на настоящих автоматах. */
 .slots-payline {
     position: absolute;
-    left: 6px;
-    right: 6px;
+    left: 4px;
+    right: 4px;
     top: 50%;
     height: 2px;
     transform: translateY(-1px);
-    background: linear-gradient(90deg, rgba(255,215,0,0), rgba(255,215,0,0.85) 15%, rgba(255,215,0,0.85) 85%, rgba(255,215,0,0));
-    z-index: 3;
+    background: linear-gradient(90deg, rgba(255,215,0,0), rgba(255,215,0,0.9) 12%, rgba(255,215,0,0.9) 88%, rgba(255,215,0,0));
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+    z-index: 4;
     pointer-events: none;
+}
+
+.slots-payline-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 9px;
+    color: #ffd700;
+    text-shadow: 0 0 6px rgba(255, 215, 0, 0.8);
+    z-index: 4;
+    pointer-events: none;
+}
+
+.slots-payline-arrow.is-left { left: -3px; }
+.slots-payline-arrow.is-right { right: -3px; }
+
+/* Нижняя табличка корпуса с брендом — как декоративная планка снизу автомата */
+.slots-machine-base {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 215, 0, 0.15);
+}
+
+.slots-machine-base-text {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: rgba(255, 215, 0, 0.55);
+}
+
+.slots-machine-base-gem {
+    font-size: 11px;
+    opacity: 0.7;
 }
 
 .slots-result {

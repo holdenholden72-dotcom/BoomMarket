@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Telegram NFT Market</title>
-    <link rel="stylesheet" href="style.css?v=13">
+    <link rel="stylesheet" href="style.css?v=14">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 </head>
@@ -467,20 +467,33 @@
             </div>
 
             <div class="slots-machine">
+                <div class="slots-marquee">
+                    <span class="slots-marquee-text">JACKPOT</span>
+                </div>
                 <div class="slots-machine-lights">
-                    <span></span><span></span><span></span><span></span><span></span><span></span>
+                    <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
                 </div>
                 <div class="slots-reels">
                     <div class="slot-reel-window">
                         <div class="slot-reel-strip" id="slotReel0"></div>
+                        <div class="slot-reel-shine"></div>
                     </div>
                     <div class="slot-reel-window">
                         <div class="slot-reel-strip" id="slotReel1"></div>
+                        <div class="slot-reel-shine"></div>
                     </div>
                     <div class="slot-reel-window">
                         <div class="slot-reel-strip" id="slotReel2"></div>
+                        <div class="slot-reel-shine"></div>
                     </div>
                     <div class="slots-payline"></div>
+                    <div class="slots-payline-arrow is-left">▶</div>
+                    <div class="slots-payline-arrow is-right">◀</div>
+                </div>
+                <div class="slots-machine-base">
+                    <span class="slots-machine-base-gem">💎</span>
+                    <span class="slots-machine-base-text">BOOM SLOTS</span>
+                    <span class="slots-machine-base-gem">💎</span>
                 </div>
             </div>
 
@@ -1644,6 +1657,6 @@
     </div>
 
     <!-- Скрипт подключаем один раз в самом конце -->
-    <script src="app.js?v=14"></script>
+    <script src="app.js?v=15"></script>
 </body>
 </html>
