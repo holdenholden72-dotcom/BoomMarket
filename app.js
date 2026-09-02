@@ -653,7 +653,16 @@ function renderGrid(listings) {
         return;
     }
 
-    listings.forEach(item => {
+    // Когда выбрана ровно ОДНА коллекция — показываем перед лотами специальный
+    // промо-блок (баланс + быстрые действия по этой коллекции) и через один ряд
+    // широкую кнопку "Купить оптом". Пока это чисто визуальный макет — логику
+    // "быстрой продажи" и "оптовой покупки" подключим отдельно.
+    const showCollectionOffer = activeFilters.collectionIds.length === 1;
+    if (showCollectionOffer) {
+        grid.appendChild(buildCollectionOfferCard());
+    }
+
+    listings.forEach((item, index) => {
         listingsById.set(String(item.id), item);
 
         const card = document.createElement('div');
@@ -679,7 +688,60 @@ function renderGrid(listings) {
             </div>
         `;
         grid.appendChild(card);
+
+        // Сразу после первого ряда (промо-карточка + первый лот) вставляем
+        // широкую полосу "Купить оптом" на всю ширину сетки.
+        if (showCollectionOffer && index === 0) {
+            grid.appendChild(buildBulkBuyBar());
+        }
     });
+}
+
+/** Промо-карточка коллекции слева в первом ряду — баланс + "Смотреть ордера" /
+ * "Быстрая продажа". Пока чисто визуальная заготовка (см. комментарий выше). */
+function buildCollectionOfferCard() {
+    const card = document.createElement('div');
+    card.className = 'nft-card market-offer-card';
+    card.innerHTML = `
+        <div class="nft-image-container market-offer-image">
+            <div class="nft-badge market-offer-badge">!</div>
+            <svg class="market-offer-icon" width="40" height="40" viewBox="0 0 24 24" fill="none">
+                <rect x="5" y="2" width="14" height="20" rx="3" stroke="#1c1408" stroke-width="1.6"/>
+                <rect x="7.5" y="5" width="9" height="6" rx="1" fill="#1c1408"/>
+                <circle cx="9" cy="15.5" r="1.1" fill="#1c1408"/>
+                <circle cx="12" cy="15.5" r="1.1" fill="#1c1408"/>
+                <circle cx="15" cy="15.5" r="1.1" fill="#1c1408"/>
+                <circle cx="9" cy="18.5" r="1.1" fill="#1c1408"/>
+                <circle cx="12" cy="18.5" r="1.1" fill="#1c1408"/>
+                <circle cx="15" cy="18.5" r="1.1" fill="#1c1408"/>
+            </svg>
+            <div class="market-offer-balance">💎 <span class="user-balance">0.00</span></div>
+        </div>
+        <div class="nft-info market-offer-info">
+            <button class="market-offer-btn market-offer-orders-btn" type="button">Смотреть ордера</button>
+            <button class="market-offer-btn market-offer-sell-btn" type="button">Быстрая продажа</button>
+        </div>
+    `;
+
+    // "Смотреть ордера" здесь дублирует уже существующую пилюлю над сеткой —
+    // просто кликаем по ней, чтобы не дублировать логику открытия модалки.
+    const ordersBtn = card.querySelector('.market-offer-orders-btn');
+    if (ordersBtn) {
+        ordersBtn.addEventListener('click', () => {
+            if (marketOrdersBtn) marketOrdersBtn.click();
+        });
+    }
+
+    return card;
+}
+
+/** Широкая полоса "Купить оптом" на всю ширину сетки — пока визуальная заглушка. */
+function buildBulkBuyBar() {
+    const bar = document.createElement('button');
+    bar.type = 'button';
+    bar.className = 'market-bulk-buy-bar';
+    bar.innerHTML = `<span class="market-bulk-buy-icon">🛒</span> Купить оптом`;
+    return bar;
 }
 
 // Кэш текущих загруженных лотов по id — чтобы открыть детальную карточку

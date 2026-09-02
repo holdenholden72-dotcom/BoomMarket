@@ -3771,3 +3771,99 @@ body {
     line-height: 1.5;
     max-width: 260px;
 }
+
+/* === Промо-карточка коллекции в Маркете (когда выбрана ровно 1 коллекция) === */
+.market-offer-card {
+    cursor: default;
+}
+
+.market-offer-image {
+    background: linear-gradient(160deg, #ffe74c 0%, #ffc61f 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.market-offer-badge {
+    font-size: 13px;
+    font-weight: 800;
+    color: #1c1408;
+    background: rgba(255, 255, 255, 0.55);
+}
+
+.market-offer-icon {
+    display: block;
+}
+
+.market-offer-balance {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 22px;
+    font-weight: 800;
+    color: #1c1408;
+}
+
+.market-offer-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.market-offer-btn {
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.market-offer-orders-btn {
+    background: #2c2c2e;
+    color: #fff;
+}
+
+.market-offer-orders-btn:active {
+    transform: scale(0.97);
+}
+
+.market-offer-sell-btn {
+    background: linear-gradient(135deg, #ffe74c 0%, #ffc61f 100%);
+    color: #1c1408;
+}
+
+.market-offer-sell-btn:active {
+    transform: scale(0.97);
+}
+
+/* === Широкая полоса "Купить оптом" на всю ширину сетки маркета === */
+.market-bulk-buy-bar {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #1c1c1e;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    padding: 14px 0;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.market-bulk-buy-bar:active {
+    transform: scale(0.98);
+}
+
+.market-bulk-buy-icon {
+    font-size: 16px;
+}
