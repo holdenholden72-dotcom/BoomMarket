@@ -1469,14 +1469,19 @@
             <button class="close-modal" id="closeCollectionOrdersModal">&times;</button>
             <h2>Ордера</h2>
 
-            <div class="orders-tabs" id="collectionOrdersTabs">
-                <button class="orders-tab active" data-collection-orders-tab="all">Все ордеры</button>
-                <button class="orders-tab" data-collection-orders-tab="mine">Мои ордеры</button>
+            <div class="collection-orders-toolbar">
+                <div class="orders-tabs" id="collectionOrdersTabs">
+                    <button class="orders-tab active" data-collection-orders-tab="all">Все ордеры</button>
+                    <button class="orders-tab" data-collection-orders-tab="mine">Мои ордеры</button>
+                </div>
+                <button class="collection-orders-add-btn" id="openCreateOrderFromCollectionBtn" title="Добавить ордер">+</button>
             </div>
 
-            <button class="action-btn collection-orders-add-btn" id="openCreateOrderFromCollectionBtn">
-                <span>+</span> Добавить ордер
-            </button>
+            <div class="collection-orders-head">
+                <span>Коллекция</span>
+                <span>Кол-во</span>
+                <button type="button" class="collection-orders-price-sort" id="collectionOrdersPriceSort">Цена <span id="collectionOrdersSortIcon">↕</span></button>
+            </div>
 
             <ul class="history-list collection-orders-list" id="collectionOrdersList"></ul>
         </div>

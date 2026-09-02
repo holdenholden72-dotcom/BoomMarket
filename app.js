@@ -2096,10 +2096,12 @@ const closeCollectionOrdersModal = document.getElementById('closeCollectionOrder
 const collectionOrdersTabs = document.getElementById('collectionOrdersTabs');
 const collectionOrdersList = document.getElementById('collectionOrdersList');
 const openCreateOrderFromCollectionBtn = document.getElementById('openCreateOrderFromCollectionBtn');
+const collectionOrdersPriceSort = document.getElementById('collectionOrdersPriceSort');
+const collectionOrdersSortIcon = document.getElementById('collectionOrdersSortIcon');
 
 let collectionOrdersScope = 'all'; // 'all' | 'mine'
+let collectionOrdersSortDir = null; // null | 'asc' | 'desc' — null оставляет порядок с сервера
 let collectionOrdersCache = [];
-const collectionOrdersCacheMap = new Map();
 
 // Кнопка видна, только когда фильтр Маркета сужен ровно до одной коллекции —
 // иначе непонятно, ордербук по какой коллекции показывать.
@@ -2108,10 +2110,49 @@ function updateMarketOrdersButton() {
     marketOrdersBtn.style.display = activeFilters.collectionIds.length === 1 ? 'inline-flex' : 'none';
 }
 
+/** Схлопывает плоский список ордеров в строки по комбинации модель/фон/символ —
+ * так же, как отображается ордербук на реальных маркетах: одна строка на
+ * трейт-комбинацию, суммарное количество и диапазон цены (мин–макс) среди
+ * всех ордеров этой комбинации. */
+function groupCollectionOrders(items) {
+    const groups = new Map();
+
+    items.forEach(item => {
+        const key = [item.model_name || '', item.backdrop_name || '', item.symbol_name || ''].join('||');
+        let group = groups.get(key);
+        if (!group) {
+            group = {
+                key,
+                label: item.model_name || item.collection_name,
+                image: item.model_image || item.collection_image || '',
+                backdropColor: item.backdrop_color || '#333',
+                totalQuantity: 0,
+                totalFilled: 0,
+                minPrice: Infinity,
+                maxPrice: -Infinity,
+                hasMine: false,
+                orders: [],
+            };
+            groups.set(key, group);
+        }
+        group.totalQuantity += item.quantity;
+        group.totalFilled += item.filled_count;
+        group.minPrice = Math.min(group.minPrice, item.max_price);
+        group.maxPrice = Math.max(group.maxPrice, item.max_price);
+        if (String(item.buyer_tg_id) === String(currentTgId)) group.hasMine = true;
+        group.orders.push(item);
+    });
+
+    const list = Array.from(groups.values());
+    if (collectionOrdersSortDir) {
+        list.sort((a, b) => collectionOrdersSortDir === 'asc' ? a.minPrice - b.minPrice : b.maxPrice - a.maxPrice);
+    }
+    return list;
+}
+
 function renderCollectionOrdersList() {
     if (!collectionOrdersList) return;
     collectionOrdersList.innerHTML = '';
-    collectionOrdersCacheMap.clear();
 
     const items = collectionOrdersScope === 'mine'
         ? collectionOrdersCache.filter(o => String(o.buyer_tg_id) === String(currentTgId))
@@ -2122,29 +2163,32 @@ function renderCollectionOrdersList() {
         return;
     }
 
-    items.forEach(item => {
-        collectionOrdersCacheMap.set(String(item.id), item);
+    const groups = groupCollectionOrders(items);
 
-        const image = item.model_image || item.collection_image || '';
-        const bg = item.backdrop_color || '#333';
-        const isMine = String(item.buyer_tg_id) === String(currentTgId);
-
+    groups.forEach(group => {
         const li = document.createElement('li');
-        li.className = 'history-row has-gift';
-        li.dataset.orderId = item.id;
+        li.className = `collection-order-row${group.hasMine ? ' is-mine' : ''}`;
+
+        const fillPct = group.totalQuantity > 0
+            ? Math.min(100, Math.round((group.totalFilled / group.totalQuantity) * 100))
+            : 0;
+
+        const priceText = group.minPrice === group.maxPrice
+            ? `💎 ${formatGram(group.minPrice)}`
+            : `💎 ${formatGram(group.minPrice)} - 💎 ${formatGram(group.maxPrice)}`;
 
         li.innerHTML = `
-            <div class="history-thumb" style="background-color:${bg};">
-                ${image ? `<img src="${image}" alt="">` : ''}
+            <div class="collection-order-col-name">
+                <div class="collection-order-thumb" style="background-color:${group.backdropColor};">
+                    ${group.image ? `<img src="${group.image}" alt="">` : ''}
+                </div>
+                <span class="collection-order-name">${group.label}</span>
             </div>
-            <div class="history-info">
-                <div class="history-name">${item.collection_name}</div>
-                <div class="history-meta">${orderCriteriaLabel(item)}</div>
-                <div class="history-meta">Кол-во: ${item.filled_count}/${item.quantity}${isMine ? ' · моя' : ''}</div>
+            <div class="collection-order-col-qty">
+                <span>${group.totalFilled}/${group.totalQuantity}</span>
+                <div class="collection-order-progress"><div class="collection-order-progress-fill" style="width:${fillPct}%;"></div></div>
             </div>
-            <div class="order-row-price">
-                <span>💎 ${formatGram(item.max_price)}</span>
-            </div>
+            <div class="collection-order-col-price">${priceText}</div>
         `;
 
         collectionOrdersList.appendChild(li);
@@ -2204,6 +2248,22 @@ if (collectionOrdersTabs) {
             });
             renderCollectionOrdersList();
         });
+    });
+}
+
+// Клик по заголовку "Цена" переключает сортировку групп: без сортировки →
+// по возрастанию → по убыванию → снова без сортировки.
+if (collectionOrdersPriceSort) {
+    collectionOrdersPriceSort.addEventListener('click', () => {
+        collectionOrdersSortDir = collectionOrdersSortDir === null ? 'asc'
+            : collectionOrdersSortDir === 'asc' ? 'desc'
+            : null;
+        if (collectionOrdersSortIcon) {
+            collectionOrdersSortIcon.textContent = collectionOrdersSortDir === 'asc' ? '↑'
+                : collectionOrdersSortDir === 'desc' ? '↓'
+                : '↕';
+        }
+        renderCollectionOrdersList();
     });
 }
 
