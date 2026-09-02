@@ -779,10 +779,18 @@ async function quickSellToTopOrder(btn) {
 
         const ordersRes = await fetch(`${API_URL}/api/orders/collection?${orderParams.toString()}`);
         const ordersData = await ordersRes.json();
-        const topOrder = ordersData.ok && ordersData.orders && ordersData.orders.length ? ordersData.orders[0] : null;
+        // Список уже отсортирован по убыванию цены — берём первый ЧУЖОЙ ордер:
+        // свой пропускаем, иначе получилась бы "продажа самому себе" (тот же
+        // товар просто переезжает по кругу, а комиссия площадки съедает деньги).
+        const orders = ordersData.ok ? (ordersData.orders || []) : [];
+        const topOrder = orders.find(o => o.buyer_tg_id !== currentTgId) || null;
 
         if (!topOrder) {
-            alert('Нет активных ордеров на эту коллекцию');
+            alert(
+                orders.length
+                    ? 'Все активные ордера на эту коллекцию — ваши собственные, продать по ним нельзя'
+                    : 'Нет активных ордеров на эту коллекцию'
+            );
             return;
         }
 
@@ -868,7 +876,11 @@ async function loadTopBidForOfferCard(card, cacheKey) {
         const res = await fetch(`${API_URL}/api/orders/collection?${params.toString()}`);
         const data = await res.json();
 
-        const topOrder = data.ok && data.orders && data.orders.length ? data.orders[0] : null;
+        // Показываем цену первого ЧУЖОГО ордера — тот же принцип, что и в
+        // quickSellToTopOrder: свой ордер тут не в счёт, потому что продать
+        // по нему всё равно нельзя, и цена введёт в заблуждение.
+        const orders = data.ok ? (data.orders || []) : [];
+        const topOrder = orders.find(o => o.buyer_tg_id !== currentTgId) || null;
         const text = topOrder ? formatGram(topOrder.max_price) : 'Нет ордеров';
         topBidCache.set(cacheKey, text);
 
