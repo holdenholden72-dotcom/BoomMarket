@@ -574,6 +574,7 @@ filterPickerApply.addEventListener('click', async () => {
     }
 
     await loadListings();
+    updateMarketOrdersButton();
 });
 
 function updateFilterPillUI(type, context = 'market') {
@@ -1311,14 +1312,15 @@ function renderOrdersList(container, cacheMap, items, { showCancel }) {
         li.dataset.orderId = item.id;
 
         const displayPrice = (item.status === 'filled' && item.matched_price != null) ? item.matched_price : item.max_price;
+        const qtyLabel = item.quantity > 1 ? ` · ${item.filled_count}/${item.quantity} шт` : '';
 
         const rightHtml = showCancel
             ? `<div class="order-row-price">
-                   <span>💎 ${displayPrice}</span>
+                   <span>💎 ${displayPrice}${qtyLabel}</span>
                    <button class="order-row-cancel" data-cancel-order-id="${item.id}">Отменить</button>
                </div>`
             : `<div class="order-row-price">
-                   <span>💎 ${displayPrice}</span>
+                   <span>💎 ${displayPrice}${qtyLabel}</span>
                    <span class="order-row-status is-${item.status}">${orderStatusLabels[item.status] || item.status}</span>
                </div>`;
 
@@ -1696,9 +1698,33 @@ const orderModelSelect = document.getElementById('orderModelSelect');
 const orderBackdropSelect = document.getElementById('orderBackdropSelect');
 const orderSymbolSelect = document.getElementById('orderSymbolSelect');
 const orderMaxPriceInput = document.getElementById('orderMaxPrice');
+const orderQtyInput = document.getElementById('orderQtyInput');
+const orderQtyMinusBtn = document.getElementById('orderQtyMinusBtn');
+const orderQtyPlusBtn = document.getElementById('orderQtyPlusBtn');
 const confirmCreateOrderBtn = document.getElementById('confirmCreateOrderBtn');
 
 let orderTraitsCache = { models: [], backdrops: [], symbols: [] };
+
+function clampOrderQty(value) {
+    if (isNaN(value)) return 1;
+    return Math.max(1, Math.min(1000, Math.round(value)));
+}
+
+if (orderQtyInput) {
+    orderQtyInput.addEventListener('change', () => {
+        orderQtyInput.value = clampOrderQty(parseInt(orderQtyInput.value, 10));
+    });
+}
+if (orderQtyMinusBtn) {
+    orderQtyMinusBtn.addEventListener('click', () => {
+        orderQtyInput.value = clampOrderQty(parseInt(orderQtyInput.value, 10) - 1);
+    });
+}
+if (orderQtyPlusBtn) {
+    orderQtyPlusBtn.addEventListener('click', () => {
+        orderQtyInput.value = clampOrderQty(parseInt(orderQtyInput.value, 10) + 1);
+    });
+}
 
 function resetOrderForm() {
     orderCollectionSelect.value = '';
@@ -1709,6 +1735,7 @@ function resetOrderForm() {
     orderBackdropSelect.disabled = true;
     orderSymbolSelect.disabled = true;
     orderMaxPriceInput.value = '';
+    if (orderQtyInput) orderQtyInput.value = '1';
     orderTraitsCache = { models: [], backdrops: [], symbols: [] };
 }
 
@@ -1773,9 +1800,28 @@ async function openCreateOrderModal(preset = null) {
     if (preset && preset.collectionId) {
         orderCollectionSelect.value = String(preset.collectionId);
         await loadOrderTraitsForCollection(preset.collectionId);
-        if (preset.modelId) orderModelSelect.value = String(preset.modelId);
-        if (preset.backdropId) orderBackdropSelect.value = String(preset.backdropId);
-        if (preset.symbolId) orderSymbolSelect.value = String(preset.symbolId);
+
+        // Поддерживаем и preset по id трейта (карточка лота), и по имени
+        // (фильтры Маркета хранят модель/фон/символ как имена, не id) —
+        // подставляем то, что совпадёт после загрузки трейтов коллекции.
+        if (preset.modelId) {
+            orderModelSelect.value = String(preset.modelId);
+        } else if (preset.modelName) {
+            const match = orderTraitsCache.models.find(m => m.name === preset.modelName);
+            if (match) orderModelSelect.value = String(match.id);
+        }
+        if (preset.backdropId) {
+            orderBackdropSelect.value = String(preset.backdropId);
+        } else if (preset.backdropName) {
+            const match = orderTraitsCache.backdrops.find(b => b.name === preset.backdropName);
+            if (match) orderBackdropSelect.value = String(match.id);
+        }
+        if (preset.symbolId) {
+            orderSymbolSelect.value = String(preset.symbolId);
+        } else if (preset.symbolName) {
+            const match = orderTraitsCache.symbols.find(s => s.name === preset.symbolName);
+            if (match) orderSymbolSelect.value = String(match.id);
+        }
     }
 
     createOrderModal.style.display = 'flex';
@@ -1815,6 +1861,7 @@ if (confirmCreateOrderBtn) {
         const backdropId = orderBackdropSelect.value ? parseInt(orderBackdropSelect.value, 10) : null;
         const symbolId = orderSymbolSelect.value ? parseInt(orderSymbolSelect.value, 10) : null;
         const maxPrice = parseFloat(orderMaxPriceInput.value);
+        const quantity = clampOrderQty(parseInt(orderQtyInput?.value, 10));
 
         if (!collectionId) {
             alert('Выберите коллекцию');
@@ -1838,7 +1885,7 @@ if (confirmCreateOrderBtn) {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${authToken}`,
                 },
-                body: JSON.stringify({ collectionId, modelId, backdropId, symbolId, maxPrice }),
+                body: JSON.stringify({ collectionId, modelId, backdropId, symbolId, maxPrice, quantity }),
             });
 
             const data = await res.json();
@@ -1854,6 +1901,11 @@ if (confirmCreateOrderBtn) {
             resetOrderForm();
 
             await loadActiveOrders();
+            // Если ордер создали из модалки "Ордера по коллекции" — обновляем
+            // список сразу, чтобы новый ордер стало видно без переоткрытия.
+            if (collectionOrdersModal && collectionOrdersModal.style.display !== 'none') {
+                await loadCollectionOrders();
+            }
         } catch (e) {
             alert('Ошибка соединения с сервером');
             console.error(e);
@@ -1864,6 +1916,142 @@ if (confirmCreateOrderBtn) {
 }
 
 // =====================================================================
+// ОРДЕРА ПО КОНКРЕТНОЙ КОЛЛЕКЦИИ (кнопка "Смотреть ордера" на Маркете)
+// =====================================================================
+const marketOrdersBtn = document.getElementById('marketOrdersBtn');
+const collectionOrdersModal = document.getElementById('collectionOrdersModal');
+const closeCollectionOrdersModal = document.getElementById('closeCollectionOrdersModal');
+const collectionOrdersTabs = document.getElementById('collectionOrdersTabs');
+const collectionOrdersList = document.getElementById('collectionOrdersList');
+const openCreateOrderFromCollectionBtn = document.getElementById('openCreateOrderFromCollectionBtn');
+
+let collectionOrdersScope = 'all'; // 'all' | 'mine'
+let collectionOrdersCache = [];
+const collectionOrdersCacheMap = new Map();
+
+// Кнопка видна, только когда фильтр Маркета сужен ровно до одной коллекции —
+// иначе непонятно, ордербук по какой коллекции показывать.
+function updateMarketOrdersButton() {
+    if (!marketOrdersBtn) return;
+    marketOrdersBtn.style.display = activeFilters.collectionIds.length === 1 ? 'inline-flex' : 'none';
+}
+
+function renderCollectionOrdersList() {
+    if (!collectionOrdersList) return;
+    collectionOrdersList.innerHTML = '';
+    collectionOrdersCacheMap.clear();
+
+    const items = collectionOrdersScope === 'mine'
+        ? collectionOrdersCache.filter(o => String(o.buyer_tg_id) === String(currentTgId))
+        : collectionOrdersCache;
+
+    if (!items.length) {
+        collectionOrdersList.innerHTML = `<div class="empty-state">Пока нет ордеров по этим фильтрам</div>`;
+        return;
+    }
+
+    items.forEach(item => {
+        collectionOrdersCacheMap.set(String(item.id), item);
+
+        const image = item.model_image || item.collection_image || '';
+        const bg = item.backdrop_color || '#333';
+        const isMine = String(item.buyer_tg_id) === String(currentTgId);
+
+        const li = document.createElement('li');
+        li.className = 'history-row has-gift';
+        li.dataset.orderId = item.id;
+
+        li.innerHTML = `
+            <div class="history-thumb" style="background-color:${bg};">
+                ${image ? `<img src="${image}" alt="">` : ''}
+            </div>
+            <div class="history-info">
+                <div class="history-name">${item.collection_name}</div>
+                <div class="history-meta">${orderCriteriaLabel(item)}</div>
+                <div class="history-meta">Кол-во: ${item.filled_count}/${item.quantity}${isMine ? ' · моя' : ''}</div>
+            </div>
+            <div class="order-row-price">
+                <span>💎 ${item.max_price}</span>
+            </div>
+        `;
+
+        collectionOrdersList.appendChild(li);
+    });
+}
+
+async function loadCollectionOrders() {
+    if (!collectionOrdersList) return;
+    const collectionId = activeFilters.collectionIds[0];
+    if (!collectionId) return;
+
+    collectionOrdersList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+
+    try {
+        const params = new URLSearchParams({ collectionId });
+        if (activeFilters.models.length) params.set('model', activeFilters.models[0]);
+        if (activeFilters.backdrops.length) params.set('backdrop', activeFilters.backdrops[0]);
+        if (activeFilters.symbols.length) params.set('symbol', activeFilters.symbols[0]);
+
+        const res = await fetch(`${API_URL}/api/orders/collection?${params.toString()}`);
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Не удалось загрузить ордера');
+
+        collectionOrdersCache = data.orders;
+        renderCollectionOrdersList();
+    } catch (e) {
+        console.error('Не удалось загрузить ордера коллекции:', e);
+        collectionOrdersList.innerHTML = `<div class="empty-state">Не удалось загрузить ордера. Проверьте соединение.</div>`;
+    }
+}
+
+if (marketOrdersBtn && collectionOrdersModal) {
+    marketOrdersBtn.addEventListener('click', async () => {
+        collectionOrdersScope = 'all';
+        if (collectionOrdersTabs) {
+            collectionOrdersTabs.querySelectorAll('.orders-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.getAttribute('data-collection-orders-tab') === 'all');
+            });
+        }
+        collectionOrdersModal.style.display = 'flex';
+        await loadCollectionOrders();
+    });
+}
+
+if (closeCollectionOrdersModal && collectionOrdersModal) {
+    closeCollectionOrdersModal.addEventListener('click', () => {
+        collectionOrdersModal.style.display = 'none';
+    });
+}
+
+if (collectionOrdersTabs) {
+    collectionOrdersTabs.querySelectorAll('.orders-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            collectionOrdersScope = tab.getAttribute('data-collection-orders-tab');
+            collectionOrdersTabs.querySelectorAll('.orders-tab').forEach(t => {
+                t.classList.toggle('active', t === tab);
+            });
+            renderCollectionOrdersList();
+        });
+    });
+}
+
+// "+ Добавить ордер" — открывает обычную модалку создания ордера, но с
+// предзаполненной коллекцией/моделью/фоном/символом из текущих фильтров
+// Маркета (activeFilters хранит модель/фон/символ как имена, не id —
+// openCreateOrderModal умеет резолвить оба варианта, см. preset.*Name выше).
+if (openCreateOrderFromCollectionBtn) {
+    openCreateOrderFromCollectionBtn.addEventListener('click', async () => {
+        const collectionId = activeFilters.collectionIds[0];
+        if (!collectionId) return;
+
+        await openCreateOrderModal({
+            collectionId,
+            modelName: activeFilters.models[0] || null,
+            backdropName: activeFilters.backdrops[0] || null,
+            symbolName: activeFilters.symbols[0] || null,
+        });
+    });
+}
 // ПОИСК И СОРТИРОВКА
 // =====================================================================
 

@@ -3170,3 +3170,75 @@ body {
 .plinko-drop-btn {
     margin-top: 6px;
 }
+
+/* =====================================================================
+   ОРДЕРА ПО КОЛЛЕКЦИИ ("Смотреть ордера" на Маркете) + количество в
+   форме создания ордера — переиспользует .filter-pill, .orders-tabs,
+   .slots-bet-controls и стили строк .history-row, здесь только то,
+   чего не было: сама кнопка на Маркете, обёртка модалки и список.
+   ===================================================================== */
+
+/* Кнопка-пилюля "Смотреть ордера" в фильтр-баре Маркета — золотая, чтобы
+   выделяться на фоне обычных фильтров (она не фильтрует, а открывает
+   отдельный экран). display переключается из JS (см. updateMarketOrdersButton). */
+.market-orders-btn {
+    background: linear-gradient(135deg, #3a2f14 0%, #211c1a 100%);
+    color: #ffd700;
+    border: 1px solid rgba(255, 215, 0, 0.35);
+    font-weight: 700;
+}
+
+.collection-orders-content {
+    max-height: 82vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.collection-orders-add-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #ffe066 0%, #ffd700 45%, #ff9f0a 100%);
+    color: #1c1c1e;
+}
+
+.collection-orders-add-btn span {
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.collection-orders-list {
+    overflow-y: auto;
+    flex: 1;
+    padding-right: 2px;
+}
+
+.collection-orders-list .history-row {
+    background: #16161a;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 14px;
+    padding: 12px;
+    margin-bottom: 8px;
+    border-bottom: none;
+}
+
+.collection-orders-list .empty-state {
+    text-align: center;
+    color: #6b6b70;
+    font-size: 13px;
+    padding: 32px 0;
+}
+
+/* Степпер количества в форме создания ордера — переиспользует визуал
+   степпера ставки из игр (.slots-bet-controls/.slots-bet-step-btn), просто
+   без диамант-иконки поверх поля ввода. */
+.order-qty-controls {
+    margin-bottom: 12px;
+}
+
+.order-qty-controls .slots-bet-input-wrap input {
+    text-align: center;
+}

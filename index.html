@@ -46,6 +46,8 @@
                 <button class="filter-pill" id="filterModelBtn" data-filter-type="model">Модель</button>
                 <button class="filter-pill" id="filterBgBtn" data-filter-type="backdrop">Фон</button>
                 <button class="filter-pill" id="filterSymbolBtn" data-filter-type="symbol">Символ</button>
+                <!-- Появляется, только когда выбрана ровно одна коллекция (см. updateMarketOrdersButton) -->
+                <button class="filter-pill market-orders-btn" id="marketOrdersBtn" style="display:none;">Смотреть ордера</button>
             </div>
         </div>
 
@@ -1418,12 +1420,42 @@
             </select>
 
             <div class="withdraw-input-box">
-                <input type="number" id="orderMaxPrice" placeholder="Ваша цена 💎" min="0.1" step="0.1">
+                <input type="number" id="orderMaxPrice" placeholder="Цена за 1 шт 💎" min="0.1" step="0.1">
             </div>
 
-            <div class="listing-fee-note">Сумма спишется с баланса сразу и вернётся, если вы отмените ордер. Модель/фон/символ можно оставить пустыми — тогда подойдёт любой вариант.</div>
+            <label class="listing-field-label">Количество</label>
+            <div class="slots-bet-controls order-qty-controls">
+                <button class="slots-bet-step-btn" id="orderQtyMinusBtn" type="button">−</button>
+                <div class="slots-bet-input-wrap">
+                    <input type="number" id="orderQtyInput" value="1" min="1" max="1000" step="1" inputmode="numeric">
+                </div>
+                <button class="slots-bet-step-btn" id="orderQtyPlusBtn" type="button">+</button>
+            </div>
+
+            <div class="listing-fee-note">Сумма спишется с баланса сразу (цена × количество) и вернётся за невыкупленный остаток, если вы отмените ордер. Модель/фон/символ можно оставить пустыми — тогда подойдёт любой вариант.</div>
 
             <button class="action-btn" id="confirmCreateOrderBtn">Создать ордер</button>
+        </div>
+    </div>
+
+    <!-- Модальное окно "Ордера по коллекции" — открывается кнопкой "Смотреть ордера"
+         на Маркете, когда выбрана ровно одна коллекция. Показывает ордера на покупку
+         (свои и чужие), которые можно закрыть, продав подходящий айтем. -->
+    <div id="collectionOrdersModal" class="modal" style="display: none;">
+        <div class="modal-content listing-form collection-orders-content">
+            <button class="close-modal" id="closeCollectionOrdersModal">&times;</button>
+            <h2>Ордера</h2>
+
+            <div class="orders-tabs" id="collectionOrdersTabs">
+                <button class="orders-tab active" data-collection-orders-tab="all">Все ордеры</button>
+                <button class="orders-tab" data-collection-orders-tab="mine">Мои ордеры</button>
+            </div>
+
+            <button class="action-btn collection-orders-add-btn" id="openCreateOrderFromCollectionBtn">
+                <span>+</span> Добавить ордер
+            </button>
+
+            <ul class="history-list collection-orders-list" id="collectionOrdersList"></ul>
         </div>
     </div>
 
