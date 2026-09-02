@@ -1306,6 +1306,7 @@ function renderMyOffers(offers) {
 
         const li = document.createElement('li');
         li.className = 'history-row has-gift';
+        li.dataset.orderId = offer.order_id;
 
         li.innerHTML = `
             <div class="history-thumb" style="background-color:${bg};">
@@ -1350,62 +1351,108 @@ async function loadMyOffers() {
 if (ordersOffersList) {
     ordersOffersList.addEventListener('click', async (e) => {
         const btn = e.target.closest('.offer-accept-btn');
-        if (!btn) return;
+        if (btn) {
+            const listingId = btn.dataset.listingId;
+            const orderId = btn.dataset.orderId;
 
-        const listingId = btn.dataset.listingId;
-        const orderId = btn.dataset.orderId;
-
-        if (!authToken) {
-            alert('Не удалось подтвердить личность. Попробуйте перезайти.');
-            return;
-        }
-        if (!confirm('Продать этот лот по цене предложения?')) return;
-
-        btn.disabled = true;
-
-        try {
-            const res = await fetch(`${API_URL}/api/listings/${listingId}/accept-offer`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`,
-                },
-                body: JSON.stringify({ orderId }),
-            });
-
-            const data = await res.json();
-
-            if (!data.ok) {
-                alert(data.error || 'Не удалось продать лот');
-                btn.disabled = false;
+            if (!authToken) {
+                alert('Не удалось подтвердить личность. Попробуйте перезайти.');
                 return;
             }
+            if (!confirm('Продать этот лот по цене предложения?')) return;
 
-            updateBalanceUI(data.balance);
-            alert('Лот продан!');
-            await loadMyOffers();
-            await loadListings();
-        } catch (err) {
-            alert('Ошибка соединения с сервером');
-            console.error(err);
-            btn.disabled = false;
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`${API_URL}/api/listings/${listingId}/accept-offer`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`,
+                    },
+                    body: JSON.stringify({ orderId }),
+                });
+
+                const data = await res.json();
+
+                if (!data.ok) {
+                    alert(data.error || 'Не удалось продать лот');
+                    btn.disabled = false;
+                    return;
+                }
+
+                updateBalanceUI(data.balance);
+                alert('Лот продан!');
+                await loadMyOffers();
+                await loadListings();
+            } catch (err) {
+                alert('Ошибка соединения с сервером');
+                console.error(err);
+                btn.disabled = false;
+            }
+            return;
         }
+
+        // Клик по самой строке (не по кнопке "Продать") — открываем карточку
+        // подарка, на который прислали предложение, в режиме просмотра.
+        const row = e.target.closest('.history-row[data-order-id]');
+        if (!row) return;
+        const offer = myOffersById.get(row.dataset.orderId);
+        if (!offer) return;
+
+        openListingDetail({
+            id: offer.listing_id,
+            price: offer.listing_price,
+            collection_name: offer.collection_name,
+            gift_number: offer.gift_number,
+            model_name: offer.model_name,
+            model_icon: offer.model_icon,
+            backdrop_name: offer.backdrop_name,
+            backdrop_color: offer.backdrop_color,
+            symbol_name: offer.symbol_name,
+            collection_image: offer.collection_image,
+        }, { viewOnly: true });
     });
 }
 
 // === Переключение вкладок "Активные" / "История" / "Предложения" ===
+let currentOrdersTab = 'active';
+
 if (ordersTabs) {
     ordersTabs.addEventListener('click', (e) => {
         const btn = e.target.closest('.orders-tab');
         if (!btn) return;
 
         const tab = btn.getAttribute('data-orders-tab');
+        currentOrdersTab = tab;
         ordersTabs.querySelectorAll('.orders-tab').forEach(t => t.classList.toggle('active', t === btn));
         ordersActiveList.style.display = tab === 'active' ? '' : 'none';
         ordersHistoryList.style.display = tab === 'history' ? '' : 'none';
         ordersOffersList.style.display = tab === 'offers' ? '' : 'none';
+
+        // Как и на "Трейде": экран "Ордеры" грузит все три списка один раз при
+        // входе (showScreen), поэтому если, например, вам прислали предложение
+        // на лот, пока вы уже стояли на этом экране, вкладка "Предложения"
+        // раньше показывала пусто до полного перезахода. Перезапрашиваем
+        // список при каждом переключении на вкладку.
+        if (tab === 'active') loadActiveOrders();
+        if (tab === 'history') loadOrderHistory();
+        if (tab === 'offers') loadMyOffers();
     });
 }
+
+// Плюс лёгкий фоновый опрос, пока пользователь сидит на экране "Ордеры" и
+// никуда не переключается — тем же способом, что и автообновление маркета
+// (см. MARKET_POLL_INTERVAL_MS выше): опрашиваем только активную подвкладку,
+// чтобы не слать лишние запросы.
+const ORDERS_POLL_INTERVAL_MS = 5000;
+
+setInterval(() => {
+    if (currentScreenName !== 'orders' || document.visibilityState !== 'visible') return;
+    if (currentOrdersTab === 'active') loadActiveOrders();
+    else if (currentOrdersTab === 'history') loadOrderHistory();
+    else if (currentOrdersTab === 'offers') loadMyOffers();
+}, ORDERS_POLL_INTERVAL_MS);
 
 // === Детальная карточка ордера (открывается по клику на аватарку/строку, в т.ч. в истории) ===
 const orderDetailModal = document.getElementById('orderDetailModal');
@@ -2557,11 +2604,14 @@ if (tradeTopupDirection) {
     });
 }
 
+let currentTradeTab = 'new';
+
 if (tradeTabs) {
     tradeTabs.addEventListener('click', (e) => {
         const btn = e.target.closest('.orders-tab');
         if (!btn) return;
         const tab = btn.getAttribute('data-trade-tab');
+        currentTradeTab = tab;
         tradeTabs.querySelectorAll('.orders-tab').forEach(t => t.classList.toggle('active', t === btn));
         tradeNewPanel.style.display = tab === 'new' ? '' : 'none';
         tradeIncomingList.style.display = tab === 'incoming' ? '' : 'none';
@@ -2576,6 +2626,17 @@ if (tradeTabs) {
         if (tab === 'mine') loadMyTrades();
     });
 }
+
+// Плюс лёгкий фоновый опрос, пока пользователь сидит на экране "Трейд" —
+// тем же способом, что и автообновление маркета/ордеров: опрашиваем только
+// активную подвкладку, чтобы не слать лишние запросы.
+const TRADE_POLL_INTERVAL_MS = 5000;
+
+setInterval(() => {
+    if (currentScreenName !== 'trade' || document.visibilityState !== 'visible') return;
+    if (currentTradeTab === 'incoming') loadIncomingTrades();
+    else if (currentTradeTab === 'mine') loadMyTrades();
+}, TRADE_POLL_INTERVAL_MS);
 
 async function searchTradeUsers() {
     if (!tradeRecipientInput || !tradeFoundUsers) return;
