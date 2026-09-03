@@ -2798,30 +2798,88 @@ if (confirmWithdrawBtn) {
     });
 }
 
-// === БЛОК ПОПОЛНЕНИЯ СРЕДСТВ ===
+// === БЛОК ПОПОЛНЕНИЯ СРЕДСТВ (реальный TON через TonConnect) ===
+//
+// Схема: /api/deposit/init создаёт заявку с уникальным memo → мы просим
+// подключённый кошелёк отправить TON на адрес площадки с этим memo в
+// комментарии → поллим /api/deposit/:id/status, пока сервер не увидит
+// эту транзакцию в блокчейне (через TonAPI) и не зачислит баланс.
 const depositModal = document.getElementById('depositModal');
 const plusDepositBtn = document.getElementById('plusDepositBtn');
 const quickDepositBtn = document.getElementById('quickDepositBtn');
 const closeDepositModalBtn = document.getElementById('closeDepositModal');
 const confirmDepositBtn = document.getElementById('confirmDepositBtn');
 const depositAmountInput = document.getElementById('depositAmount');
+const depositStepAmount = document.getElementById('depositStepAmount');
+const depositStepPending = document.getElementById('depositStepPending');
+const depositPendingStatus = document.getElementById('depositPendingStatus');
+const depositManualBox = document.getElementById('depositManualBox');
+const depositManualAddress = document.getElementById('depositManualAddress');
+const depositManualMemo = document.getElementById('depositManualMemo');
+const depositManualAmount = document.getElementById('depositManualAmount');
+const depositCheckAgainBtn = document.getElementById('depositCheckAgainBtn');
+const depositCancelPendingBtn = document.getElementById('depositCancelPendingBtn');
 
-if (quickDepositBtn && depositModal) {
-    quickDepositBtn.addEventListener('click', () => {
-        depositModal.style.display = 'flex';
-    });
+let depositPollTimer = null;
+let depositActiveId = null;
+
+function openDepositModal() {
+    if (!depositModal) return;
+    depositStepAmount.style.display = 'block';
+    depositStepPending.style.display = 'none';
+    depositManualBox.style.display = 'none';
+    depositModal.style.display = 'flex';
 }
 
-if (plusDepositBtn && depositModal) {
-    plusDepositBtn.addEventListener('click', () => {
-        depositModal.style.display = 'flex';
-    });
+function closeDepositModal() {
+    if (!depositModal) return;
+    depositModal.style.display = 'none';
+    if (depositPollTimer) {
+        clearInterval(depositPollTimer);
+        depositPollTimer = null;
+    }
 }
 
-if (closeDepositModalBtn && depositModal) {
-    closeDepositModalBtn.addEventListener('click', () => {
-        depositModal.style.display = 'none';
-    });
+if (quickDepositBtn) quickDepositBtn.addEventListener('click', openDepositModal);
+if (plusDepositBtn) plusDepositBtn.addEventListener('click', openDepositModal);
+if (closeDepositModalBtn) closeDepositModalBtn.addEventListener('click', closeDepositModal);
+if (depositCancelPendingBtn) depositCancelPendingBtn.addEventListener('click', closeDepositModal);
+
+// Кодирует текстовый комментарий в стандартный TON-комментарий (32 нулевых
+// бита + UTF-8 текст), упакованный в BOC — именно так TonConnect-кошельки
+// понимают "комментарий к переводу". Рецепт из официальной документации TON
+// (docs.ton.org/develop/dapps/ton-connect/transactions).
+async function buildTonCommentPayload(text) {
+    const cell = new window.TonWeb.boc.Cell();
+    cell.bits.writeUint(0, 32);
+    cell.bits.writeString(text);
+    const boc = await cell.toBoc();
+    return window.TonWeb.utils.bytesToBase64(boc);
+}
+
+async function pollDepositStatus(depositId, expectedAmount) {
+    try {
+        const res = await fetch(`${API_URL}/api/deposit/${depositId}/status`, {
+            headers: { 'Authorization': `Bearer ${authToken}` },
+        });
+        const data = await res.json();
+        if (!data.ok) return;
+
+        if (data.status === 'confirmed') {
+            clearInterval(depositPollTimer);
+            depositPollTimer = null;
+            updateBalanceUI(data.balance);
+            depositPendingStatus.textContent = `Готово! Баланс пополнен на ${expectedAmount} 💎`;
+            setTimeout(closeDepositModal, 1800);
+        } else if (data.status === 'expired') {
+            clearInterval(depositPollTimer);
+            depositPollTimer = null;
+            depositPendingStatus.textContent = 'Время ожидания истекло. Если вы уже отправили TON, напишите в поддержку с адресом и суммой перевода.';
+        }
+        // status === 'pending' — просто продолжаем ждать следующего тика
+    } catch (e) {
+        console.error('Не удалось проверить статус пополнения:', e);
+    }
 }
 
 if (confirmDepositBtn && depositAmountInput) {
@@ -2832,14 +2890,20 @@ if (confirmDepositBtn && depositAmountInput) {
             alert('Сумма должна быть от 0.1 до 100000, максимум с одним знаком после запятой (например: 0.2, 1.4, 10.7, 10)');
             return;
         }
-
         if (!authToken) {
             alert('Не удалось подтвердить личность. Попробуйте перезайти.');
             return;
         }
+        if (!tonConnectUI.connected) {
+            alert('Сначала подключите кошелёк кнопкой Connect Wallet');
+            return;
+        }
+
+        confirmDepositBtn.disabled = true;
 
         try {
-            const res = await fetch(`${API_URL}/api/deposit`, {
+            // 1. Заводим заявку на сервере — получаем адрес площадки и уникальный memo.
+            const initRes = await fetch(`${API_URL}/api/deposit/init`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -2847,21 +2911,66 @@ if (confirmDepositBtn && depositAmountInput) {
                 },
                 body: JSON.stringify({ amount }),
             });
+            const initData = await initRes.json();
 
-            const data = await res.json();
-
-            if (!data.ok) {
-                alert(data.error || 'Не удалось выполнить пополнение');
+            if (!initData.ok) {
+                alert(initData.error || 'Не удалось создать заявку на пополнение');
                 return;
             }
 
-            updateBalanceUI(data.balance);
-            alert(`Баланс успешно пополнен на ${amount}!`);
-            depositModal.style.display = 'none';
-            depositAmountInput.value = '';
+            depositActiveId = initData.depositId;
+
+            // Показываем шаг ожидания и данные для ручного перевода сразу —
+            // на случай, если автоматическая отправка через кошелёк не сработает.
+            depositStepAmount.style.display = 'none';
+            depositStepPending.style.display = 'block';
+            depositManualBox.style.display = 'block';
+            depositManualAddress.textContent = initData.address;
+            depositManualMemo.textContent = initData.memo;
+            depositManualAmount.textContent = `${initData.amount} TON`;
+            depositPendingStatus.textContent = 'Подтвердите отправку в кошельке...';
+
+            // 2. Пробуем отправить транзакцию через уже подключённый кошелёк.
+            try {
+                const payload = await buildTonCommentPayload(initData.memo);
+                await tonConnectUI.sendTransaction({
+                    validUntil: Math.floor(Date.now() / 1000) + 300,
+                    messages: [
+                        {
+                            address: initData.address,
+                            amount: Math.round(initData.amount * 1e9).toString(),
+                            payload,
+                        },
+                    ],
+                });
+                depositPendingStatus.textContent = 'Ждём подтверждения в блокчейне...';
+            } catch (txError) {
+                // Пользователь мог отклонить транзакцию в кошельке, или кошелёк
+                // не поддержал запрос — не страшно, оставляем данные для ручного
+                // перевода и просто продолжаем поллинг на случай, если он всё же
+                // отправит перевод другим способом.
+                console.warn('Транзакция не отправлена автоматически:', txError);
+                depositPendingStatus.textContent = 'Не удалось отправить автоматически — переведите TON вручную (данные ниже) или попробуйте снова.';
+            }
+
+            // 3. Опрашиваем статус, пока сервер не увидит перевод в блокчейне.
+            if (depositPollTimer) clearInterval(depositPollTimer);
+            depositPollTimer = setInterval(() => pollDepositStatus(depositActiveId, initData.amount), 4000);
+            pollDepositStatus(depositActiveId, initData.amount);
         } catch (e) {
             alert('Ошибка соединения с сервером');
             console.error(e);
+        } finally {
+            confirmDepositBtn.disabled = false;
+        }
+    });
+}
+
+if (depositCheckAgainBtn) {
+    depositCheckAgainBtn.addEventListener('click', () => {
+        if (depositActiveId) {
+            depositPendingStatus.textContent = 'Проверяем...';
+            pollDepositStatus(depositActiveId, depositManualAmount.textContent.replace(' TON', ''));
         }
     });
 }

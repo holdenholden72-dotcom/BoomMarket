@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="style.css?v=24">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+<script src="https://unpkg.com/tonweb@0.0.66/dist/tonweb.js"></script>
 </head>
 <body>
 
@@ -1366,16 +1367,44 @@
             <button class="action-btn" id="confirmWithdrawBtn">Вывести</button>
         </div>
     </div>
-       <div id="depositModal" class="modal" style="display: none;">
-    <div class="modal-content">
-        <button class="close-modal" id="closeDepositModal" onclick="document.getElementById('depositModal').style.display='none'">&times;</button>
-        <h2>Пополнение баланса</h2>
-        <div class="withdraw-input-box">
-            <input type="number" id="depositAmount" placeholder="Сумма (0.1 - 100000)" step="0.1" min="0.1" max="100000">
+    <div id="depositModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <button class="close-modal" id="closeDepositModal">&times;</button>
+            <h2>Пополнение баланса</h2>
+
+            <!-- Шаг 1: ввод суммы -->
+            <div id="depositStepAmount">
+                <div class="withdraw-input-box">
+                    <input type="number" id="depositAmount" placeholder="Сумма (0.1 - 100000)" step="0.1" min="0.1" max="100000">
+                </div>
+                <div class="listing-fee-note">Пополнение — реальный перевод TON с вашего подключённого кошелька на кошелёк площадки. Баланс зачислится автоматически после подтверждения в блокчейне.</div>
+                <button class="action-btn" id="confirmDepositBtn">Пополнить</button>
+            </div>
+
+            <!-- Шаг 2: ожидание транзакции/подтверждения — показывается после отправки -->
+            <div id="depositStepPending" style="display:none;">
+                <div class="deposit-pending-spinner"></div>
+                <div class="deposit-pending-status" id="depositPendingStatus">Ждём подтверждения в блокчейне...</div>
+                <div class="deposit-manual-box" id="depositManualBox" style="display:none;">
+                    <div class="listing-fee-note">Если кошелёк не открылся сам — переведите TON вручную на этот адрес, обязательно с этим комментарием:</div>
+                    <div class="deposit-manual-row">
+                        <span>Адрес</span>
+                        <code id="depositManualAddress"></code>
+                    </div>
+                    <div class="deposit-manual-row">
+                        <span>Комментарий</span>
+                        <code id="depositManualMemo"></code>
+                    </div>
+                    <div class="deposit-manual-row">
+                        <span>Сумма</span>
+                        <code id="depositManualAmount"></code>
+                    </div>
+                </div>
+                <button class="action-btn" id="depositCheckAgainBtn">Проверить ещё раз</button>
+                <button class="action-btn secondary-btn" id="depositCancelPendingBtn">Отмена</button>
+            </div>
         </div>
-        <button class="action-btn" id="confirmDepositBtn">Пополнить</button>
     </div>
-</div>
 
     <!-- Модальное окно выставления NFT на продажу -->
     <div id="createListingModal" class="modal" style="display: none;">

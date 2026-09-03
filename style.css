@@ -4175,3 +4175,70 @@ body {
     filter: brightness(1.05);
 }
 
+
+/* =====================================================================
+   ПОПОЛНЕНИЕ БАЛАНСА (реальный TON) — экран ожидания подтверждения
+   транзакции в блокчейне + карточка с данными для ручного перевода.
+   ===================================================================== */
+
+.deposit-pending-spinner {
+    width: 36px;
+    height: 36px;
+    margin: 12px auto 16px;
+    border: 3px solid rgba(255, 215, 0, 0.2);
+    border-top-color: #ffd700;
+    border-radius: 50%;
+    animation: deposit-spin 0.9s linear infinite;
+}
+
+@keyframes deposit-spin {
+    to { transform: rotate(360deg); }
+}
+
+.deposit-pending-status {
+    text-align: center;
+    font-size: 13px;
+    color: #d0d0d5;
+    margin-bottom: 14px;
+    min-height: 32px;
+}
+
+.deposit-manual-box {
+    background: #16161a;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+}
+
+.deposit-manual-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 12px;
+    color: #9a9a9f;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.deposit-manual-row:last-child {
+    border-bottom: none;
+}
+
+.deposit-manual-row code {
+    color: #ffd700;
+    font-size: 12px;
+    font-weight: 700;
+    word-break: break-all;
+    text-align: right;
+    margin-left: 10px;
+}
+
+/* Второстепенная кнопка (например "Отмена" рядом с основным действием) —
+   тот же .action-btn, просто без заливки, с рамкой. */
+.secondary-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #9a9a9f;
+    margin-top: 8px;
+}
