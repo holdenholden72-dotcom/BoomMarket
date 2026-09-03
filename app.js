@@ -2647,6 +2647,19 @@ async function authenticateWithBackend(initData) {
     }
 }
 
+/** Пишет отступы safe area Telegram (родная панель + вырезы устройства) в
+ * CSS-переменные — используются в style.css, чтобы отодвинуть контент вниз
+ * от "родных" плавающих элементов Telegram в полноэкранном режиме. */
+function applyTelegramSafeArea() {
+    if (!tg) return;
+    const safe = tg.safeAreaInset || {};
+    const content = tg.contentSafeAreaInset || {};
+    const top = (safe.top || 0) + (content.top || 0);
+    const bottom = (safe.bottom || 0) + (content.bottom || 0);
+    document.documentElement.style.setProperty('--tg-safe-top', `${top}px`);
+    document.documentElement.style.setProperty('--tg-safe-bottom', `${bottom}px`);
+}
+
 if (tg) {
     tg.ready();
     tg.expand();
@@ -2661,6 +2674,19 @@ if (tg) {
         }
     } catch (e) {
         console.warn('requestFullscreen недоступен в этом клиенте Telegram:', e);
+    }
+
+    // В полноэкранном режиме собственная "шапка" Telegram (крестик, название
+    // мини-аппа, шеврон, кебаб-меню) рисуется ПОВЕРХ контента приложения, а
+    // не сдвигает его вниз — поэтому без учёта safeAreaInset наш собственный
+    // хедер (аватар/баланс/кошелёк) оказывается прямо под ней и накладывается.
+    // safeAreaInset — отступ именно от "родной" панели Telegram; contentSafeAreaInset —
+    // дополнительный отступ под вырезы/чёлки самого устройства поверх этого.
+    applyTelegramSafeArea();
+    if (typeof tg.onEvent === 'function') {
+        tg.onEvent('safeAreaChanged', applyTelegramSafeArea);
+        tg.onEvent('contentSafeAreaChanged', applyTelegramSafeArea);
+        tg.onEvent('fullscreenChanged', applyTelegramSafeArea);
     }
 
     const user = tg.initDataUnsafe?.user;
