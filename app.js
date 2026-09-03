@@ -2650,6 +2650,18 @@ async function authenticateWithBackend(initData) {
 if (tg) {
     tg.ready();
     tg.expand();
+    // requestFullscreen (Bot API 8.0+) — именно то, что реально разворачивает
+    // мини-апп на весь экран (в т.ч. в Telegram Web/Desktop, где expand()
+    // сам по себе оставляет маленькое всплывающее окно). Метод есть не во
+    // всех клиентах, поэтому проверяем поддержку и не роняем скрипт, если
+    // её нет (старые версии Telegram/некоторые ОС).
+    try {
+        if (typeof tg.isVersionAtLeast === 'function' && tg.isVersionAtLeast('8.0') && typeof tg.requestFullscreen === 'function') {
+            tg.requestFullscreen();
+        }
+    } catch (e) {
+        console.warn('requestFullscreen недоступен в этом клиенте Telegram:', e);
+    }
 
     const user = tg.initDataUnsafe?.user;
 
