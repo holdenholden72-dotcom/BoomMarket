@@ -1519,7 +1519,7 @@ if (historyFiltersEl) {
     });
 }
 
-async function loadHistory() {
+async function loadHistory(opts = {}) {
     if (!historyList) return;
 
     if (!authToken) {
@@ -1527,7 +1527,11 @@ async function loadHistory() {
         return;
     }
 
-    historyList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
+    // silent: true — для фонового автообновления (см. HISTORY_POLL_INTERVAL_MS
+    // ниже), чтобы список не стирался на "Загрузка..." каждые несколько секунд,
+    // если в нём на самом деле ничего не изменилось (тот же приём, что и для
+    // "Ордеров"/"Трейда").
+    if (!opts.silent) historyList.innerHTML = `<div class="empty-state">Загрузка...</div>`;
 
     try {
         const res = await fetch(`${API_URL}/api/history`, {
@@ -1536,17 +1540,29 @@ async function loadHistory() {
         const data = await res.json();
 
         if (!data.ok) {
-            historyList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить историю'}</div>`;
+            if (!opts.silent) historyList.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить историю'}</div>`;
             return;
         }
 
         historyAllItems = data.history || [];
         applyHistoryFilter();
     } catch (e) {
-        historyList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+        if (!opts.silent) historyList.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
         console.error(e);
     }
 }
+
+// Фоновый опрос, пока пользователь сидит на экране "История" — раньше список
+// обновлялся только при переходе на экран (showScreen), поэтому если баланс
+// менялся (потратили/выиграли в игре, купили лот и т.п.) прямо во время
+// просмотра истории, новая операция появлялась только после ухода на другой
+// экран и возврата обратно.
+const HISTORY_POLL_INTERVAL_MS = 5000;
+
+setInterval(() => {
+    if (currentScreenName !== 'history' || document.visibilityState !== 'visible') return;
+    loadHistory({ silent: true });
+}, HISTORY_POLL_INTERVAL_MS);
 
 // === Детальная карточка операции (открывается по клику на картинку подарка) ===
 const historyDetailModal = document.getElementById('historyDetailModal');
