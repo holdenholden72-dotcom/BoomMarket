@@ -2767,6 +2767,13 @@ if (confirmWithdrawBtn) {
             return;
         }
 
+        if (!tonConnectUI.connected || !tonConnectUI.account?.address) {
+            alert('Сначала подключите кошелёк кнопкой Connect Wallet — вывод идёт именно на него');
+            return;
+        }
+
+        confirmWithdrawBtn.disabled = true;
+
         try {
             const res = await fetch(`${API_URL}/api/withdraw`, {
                 method: 'POST',
@@ -2774,18 +2781,19 @@ if (confirmWithdrawBtn) {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${authToken}`,
                 },
-                body: JSON.stringify({ amount }),
+                body: JSON.stringify({ amount, address: tonConnectUI.account.address }),
             });
 
             const data = await res.json();
 
             if (!data.ok) {
                 alert(data.error || 'Не удалось выполнить вывод');
+                if (typeof data.balance === 'number') updateBalanceUI(data.balance);
                 return;
             }
 
             updateBalanceUI(data.balance);
-            alert(`Запрос на вывод ${amount} успешно создан!`);
+            alert(`${amount} TON отправлено на ваш кошелёк!`);
 
             if (withdrawModal) {
                 withdrawModal.style.display = 'none';
@@ -2794,6 +2802,8 @@ if (confirmWithdrawBtn) {
         } catch (e) {
             alert('Ошибка соединения с сервером');
             console.error(e);
+        } finally {
+            confirmWithdrawBtn.disabled = false;
         }
     });
 }

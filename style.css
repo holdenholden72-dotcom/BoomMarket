@@ -880,6 +880,13 @@ body {
     color: #fff;
 }
 
+.withdraw-hint {
+    color: #8e8e93;
+    font-size: 13px;
+    margin-top: 6px;
+    line-height: 1.4;
+}
+
 .withdraw-input-box {
     margin: 20px 0;
 }
