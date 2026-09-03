@@ -2254,45 +2254,30 @@ function updateMarketOrdersButton() {
     marketOrdersBtn.style.display = activeFilters.collectionIds.length === 1 ? 'inline-flex' : 'none';
 }
 
-/** Схлопывает плоский список ордеров в строки по комбинации модель/фон/символ,
- * затем оставляет только 10 САМЫХ ДОРОГИХ (по максимальной цене в группе) —
- * ордербук по коллекции показывает не всё подряд, а именно топ-10 предложений. */
+/** Готовит СПИСОК отдельных ордеров для показа — каждый ордер своей строкой
+ * (без склеивания разных покупателей в одну строку с диапазоном цены: это
+ * было непонятно — не видно, какая цена к какому ордеру относится, и по
+ * какой именно цене реально пройдёт сделка). Сортировка по цене (сначала
+ * самые дорогие — им выгоднее продать), не более 10 штук в списке. */
 function groupCollectionOrders(items) {
-    const groups = new Map();
+    let list = items.map(item => ({
+        id: item.id,
+        label: item.model_name || item.collection_name,
+        image: item.model_image || item.collection_image || '',
+        backdropColor: item.backdrop_color || '#333',
+        traitsLabel: [item.model_name, item.backdrop_name, item.symbol_name].filter(Boolean).join(' · ') || 'Любые трейты',
+        quantity: item.quantity,
+        filled: item.filled_count,
+        price: item.max_price,
+        isMine: String(item.buyer_tg_id) === String(currentTgId),
+    }));
 
-    items.forEach(item => {
-        const key = [item.model_name || '', item.backdrop_name || '', item.symbol_name || ''].join('||');
-        let group = groups.get(key);
-        if (!group) {
-            group = {
-                key,
-                label: item.model_name || item.collection_name,
-                image: item.model_image || item.collection_image || '',
-                backdropColor: item.backdrop_color || '#333',
-                totalQuantity: 0,
-                totalFilled: 0,
-                minPrice: Infinity,
-                maxPrice: -Infinity,
-                hasMine: false,
-                orders: [],
-            };
-            groups.set(key, group);
-        }
-        group.totalQuantity += item.quantity;
-        group.totalFilled += item.filled_count;
-        group.minPrice = Math.min(group.minPrice, item.max_price);
-        group.maxPrice = Math.max(group.maxPrice, item.max_price);
-        if (String(item.buyer_tg_id) === String(currentTgId)) group.hasMine = true;
-        group.orders.push(item);
-    });
-
-    let list = Array.from(groups.values());
     // Всегда только 10 самых дорогих — сортировка по кнопке "Цена" ниже
     // переупорядочивает уже эту десятку, а не весь список.
-    list.sort((a, b) => b.maxPrice - a.maxPrice);
+    list.sort((a, b) => b.price - a.price);
     list = list.slice(0, 10);
     if (collectionOrdersSortDir) {
-        list.sort((a, b) => collectionOrdersSortDir === 'asc' ? a.minPrice - b.minPrice : b.maxPrice - a.maxPrice);
+        list.sort((a, b) => collectionOrdersSortDir === 'asc' ? a.price - b.price : b.price - a.price);
     }
     return list;
 }
@@ -2312,30 +2297,29 @@ function renderCollectionOrdersList() {
 
     const groups = groupCollectionOrders(items);
 
-    groups.forEach(group => {
+    groups.forEach(order => {
         const li = document.createElement('li');
-        li.className = `collection-order-row${group.hasMine ? ' is-mine' : ''}`;
+        li.className = `collection-order-row${order.isMine ? ' is-mine' : ''}`;
 
-        const fillPct = group.totalQuantity > 0
-            ? Math.min(100, Math.round((group.totalFilled / group.totalQuantity) * 100))
+        const fillPct = order.quantity > 0
+            ? Math.min(100, Math.round((order.filled / order.quantity) * 100))
             : 0;
-
-        const priceText = group.minPrice === group.maxPrice
-            ? `💎 ${formatGram(group.minPrice)}`
-            : `💎 ${formatGram(group.minPrice)} - 💎 ${formatGram(group.maxPrice)}`;
 
         li.innerHTML = `
             <div class="collection-order-col-name">
-                <div class="collection-order-thumb" style="background-color:${group.backdropColor};">
-                    ${group.image ? `<img src="${group.image}" alt="">` : ''}
+                <div class="collection-order-thumb" style="background-color:${order.backdropColor};">
+                    ${order.image ? `<img src="${order.image}" alt="">` : ''}
                 </div>
-                <span class="collection-order-name">${group.label}</span>
+                <div>
+                    <span class="collection-order-name">${order.label}</span>
+                    <div class="collection-order-traits">${order.traitsLabel}</div>
+                </div>
             </div>
             <div class="collection-order-col-qty">
-                <span>${group.totalFilled}/${group.totalQuantity}</span>
+                <span>${order.filled}/${order.quantity}</span>
                 <div class="collection-order-progress"><div class="collection-order-progress-fill" style="width:${fillPct}%;"></div></div>
             </div>
-            <div class="collection-order-col-price">${priceText}</div>
+            <div class="collection-order-col-price">💎 ${formatGram(order.price)}</div>
         `;
 
         collectionOrdersList.appendChild(li);

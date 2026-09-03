@@ -3551,6 +3551,11 @@ body {
     min-width: 0;
 }
 
+.collection-order-col-name > div {
+    min-width: 0;
+    flex: 1;
+}
+
 .collection-order-thumb {
     width: 34px;
     height: 34px;
@@ -3575,6 +3580,15 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.collection-order-traits {
+    font-size: 10.5px;
+    color: #8e8e93;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 1px;
 }
 
 .collection-order-col-qty {
