@@ -254,6 +254,7 @@ const activeFilters = {
     backdrops: [],        // выбранные названия фонов
     symbols: [],          // выбранные названия символов
     sort: null,
+    mineOnly: false,      // фильтр "Мои лоты" — только собственные листинги
 };
 
 let currentSearch = '';
@@ -293,6 +294,18 @@ const filterButtons = {
     backdrop: document.getElementById('filterBgBtn'),
     symbol: document.getElementById('filterSymbolBtn'),
 };
+
+// "Мои лоты" — простой тумблер (не открывает модалку мультивыбора, как
+// остальные пилюли), сразу переключает фильтр и перезагружает список.
+const myListingsBtn = document.getElementById('myListingsBtn');
+if (myListingsBtn) {
+    myListingsBtn.addEventListener('click', () => {
+        if (!currentTgId) return;
+        activeFilters.mineOnly = !activeFilters.mineOnly;
+        myListingsBtn.classList.toggle('has-selection', activeFilters.mineOnly);
+        loadListings();
+    });
+}
 
 const storageFilterButtons = {
     collection: document.getElementById('storageFilterNftBtn'),
@@ -630,6 +643,7 @@ function buildListingsQuery() {
     if (activeFilters.symbols.length) params.set('symbol', activeFilters.symbols.join(','));
     if (currentSearch) params.set('search', currentSearch);
     if (activeFilters.sort) params.set('sort', activeFilters.sort);
+    if (activeFilters.mineOnly && currentTgId) params.set('ownerTgId', currentTgId);
     return params.toString();
 }
 
