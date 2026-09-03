@@ -232,24 +232,24 @@ body {
 }
 
 #storageGrid .nft-image-container {
-    height: 150px;
+    height: 120px;
 }
 
 #storageGrid .nft-title {
-    font-size: 16px;
+    font-size: 15px;
 }
 
 #storageGrid .nft-number {
-    font-size: 13px;
+    font-size: 12px;
     margin-bottom: 0;
 }
 
 #storageGrid .nft-info {
-    padding: 12px 12px 14px;
+    padding: 10px 10px 12px;
 }
 
 .nft-image-container {
-    height: 160px;
+    height: 130px;
     position: relative;
     overflow: hidden;
     background: radial-gradient(circle at 50% 30%, rgba(124, 92, 255, 0.16) 0%, rgba(255, 255, 255, 0) 70%), #121214;
@@ -281,7 +281,7 @@ body {
 }
 
 .nft-info {
-    padding: 12px;
+    padding: 10px;
 }
 
 .nft-title {
@@ -293,7 +293,7 @@ body {
 .nft-number {
     font-size: 12px;
     color: #8e8e93;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
 }
 
 .nft-bottom {
@@ -314,9 +314,9 @@ body {
 .cart-btn {
     background: linear-gradient(135deg, #8a6bff 0%, #5b3fd9 100%);
     border: none;
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
     color: #fff;
     display: flex;
     align-items: center;
@@ -339,11 +339,11 @@ body {
 .order-quick-btn {
     background: rgba(255, 215, 0, 0.12);
     border: 1px solid rgba(255, 215, 0, 0.45);
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
     color: #ffd700;
-    font-size: 14px;
+    font-size: 13px;
     display: flex;
     align-items: center;
     justify-content: center;
