@@ -3420,6 +3420,45 @@ if (relistConfirmBtn) {
     });
 }
 
+const withdrawGiftBtn = document.getElementById('withdrawGiftBtn');
+
+if (withdrawGiftBtn) {
+    withdrawGiftBtn.addEventListener('click', async () => {
+        if (!currentRelistItemId) return;
+        if (!authToken) {
+            alert('Не удалось подтвердить личность. Попробуйте перезайти.');
+            return;
+        }
+        if (!confirm('Вывести этот подарок обратно в Telegram? Это необратимо.')) return;
+
+        withdrawGiftBtn.disabled = true;
+
+        try {
+            const res = await fetch(`${API_URL}/api/inventory/${currentRelistItemId}/withdraw-gift`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${authToken}` },
+            });
+            const data = await res.json();
+
+            if (!data.ok) {
+                alert(data.error || 'Не удалось вывести подарок');
+                return;
+            }
+
+            alert('Подарок отправлен в Telegram!');
+            relistModal.style.display = 'none';
+            currentRelistItemId = null;
+
+            await loadInventory();
+        } catch (e) {
+            alert('Ошибка соединения с сервером');
+            console.error(e);
+        } finally {
+            withdrawGiftBtn.disabled = false;
+        }
+    });
+}
+
 // =====================================================================
 // ТРЕЙД (P2P-обмен подарками между пользователями)
 // =====================================================================
