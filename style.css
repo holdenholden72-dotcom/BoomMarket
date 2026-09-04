@@ -4275,3 +4275,44 @@ body {
     margin: 0 0 18px;
 }
 
+.insufficient-funds-content #insufficientFundsDepositBtn {
+    flex-direction: row;
+    justify-content: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #6ec6ff 0%, #0a84ff 55%, #0060d1 100%);
+    color: #fff;
+    font-weight: 800;
+    letter-spacing: 0.2px;
+    box-shadow: 0 8px 20px rgba(10, 132, 255, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.insufficient-funds-content #insufficientFundsDepositBtn::before {
+    content: '+';
+    font-size: 16px;
+    font-weight: 800;
+    margin-right: 2px;
+}
+
+.insufficient-funds-content #insufficientFundsDepositBtn:active {
+    transform: scale(0.97);
+    box-shadow: 0 4px 12px rgba(10, 132, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.insufficient-funds-content #insufficientFundsCloseBtn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #b8b8bd;
+    font-weight: 600;
+    margin-top: 10px;
+    transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.12s ease;
+}
+
+.insufficient-funds-content #insufficientFundsCloseBtn:active {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.24);
+    color: #fff;
+    transform: scale(0.97);
+}
+
+
