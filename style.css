@@ -4249,3 +4249,29 @@ body {
     color: #9a9a9f;
     margin-top: 8px;
 }
+
+/* Модалка "Недостаточно средств" при попытке начать игру без нужного баланса */
+.insufficient-funds-content h2 {
+    font-size: 18px;
+    margin: 4px 0 10px;
+}
+
+.insufficient-funds-icon {
+    width: 56px;
+    height: 56px;
+    margin: 6px auto 12px;
+    border-radius: 50%;
+    background: rgba(255, 69, 58, 0.14);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+}
+
+.insufficient-funds-text {
+    color: #9a9a9f;
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 0 0 18px;
+}
+

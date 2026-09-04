@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Telegram NFT Market</title>
-    <link rel="stylesheet" href="style.css?v=24">
+    <link rel="stylesheet" href="style.css?v=25">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <script src="https://unpkg.com/tonweb@0.0.66/dist/tonweb.js"></script>
@@ -1408,6 +1408,19 @@
         </div>
     </div>
 
+    <!-- Модальное окно "Недостаточно средств" — всплывает при попытке начать
+         игру (слоты/рулетка/бомбер/башня/кости/плинко) без нужного баланса -->
+    <div id="insufficientFundsModal" class="modal" style="display: none;">
+        <div class="modal-content insufficient-funds-content">
+            <button class="close-modal" id="closeInsufficientFundsModal">&times;</button>
+            <div class="insufficient-funds-icon">💎</div>
+            <h2>Недостаточно средств</h2>
+            <p class="insufficient-funds-text">На балансе не хватает GRAM для этой ставки. Пополните баланс или уменьшите ставку.</p>
+            <button class="action-btn" id="insufficientFundsDepositBtn">Пополнить баланс</button>
+            <button class="action-btn secondary-btn" id="insufficientFundsCloseBtn">Понятно</button>
+        </div>
+    </div>
+
     <!-- Модальное окно выставления NFT на продажу -->
     <div id="createListingModal" class="modal" style="display: none;">
         <div class="modal-content listing-form">
@@ -1688,6 +1701,6 @@
     </div>
 
     <!-- Скрипт подключаем один раз в самом конце -->
-    <script src="app.js?v=22"></script>
+    <script src="app.js?v=23"></script>
 </body>
 </html>

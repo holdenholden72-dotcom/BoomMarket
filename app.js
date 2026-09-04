@@ -2855,6 +2855,39 @@ if (plusDepositBtn) plusDepositBtn.addEventListener('click', openDepositModal);
 if (closeDepositModalBtn) closeDepositModalBtn.addEventListener('click', closeDepositModal);
 if (depositCancelPendingBtn) depositCancelPendingBtn.addEventListener('click', closeDepositModal);
 
+// === Модалка "Недостаточно средств" — показывается при попытке начать
+// игру (слоты/рулетка/бомбер/башня/кости/плинко), если на балансе не
+// хватает на ставку. Текст ошибки приходит с сервера, здесь просто узнаём
+// именно эту ошибку по тексту и показываем табличку вместо обычного inline-текста.
+const INSUFFICIENT_FUNDS_ERROR = 'Недостаточно средств на балансе';
+const insufficientFundsModal = document.getElementById('insufficientFundsModal');
+const closeInsufficientFundsModal = document.getElementById('closeInsufficientFundsModal');
+const insufficientFundsCloseBtn = document.getElementById('insufficientFundsCloseBtn');
+const insufficientFundsDepositBtn = document.getElementById('insufficientFundsDepositBtn');
+
+function isInsufficientFundsError(message) {
+    return message === INSUFFICIENT_FUNDS_ERROR;
+}
+
+function showInsufficientFundsModal() {
+    if (!insufficientFundsModal) return;
+    insufficientFundsModal.style.display = 'flex';
+}
+
+function hideInsufficientFundsModal() {
+    if (!insufficientFundsModal) return;
+    insufficientFundsModal.style.display = 'none';
+}
+
+if (closeInsufficientFundsModal) closeInsufficientFundsModal.addEventListener('click', hideInsufficientFundsModal);
+if (insufficientFundsCloseBtn) insufficientFundsCloseBtn.addEventListener('click', hideInsufficientFundsModal);
+if (insufficientFundsDepositBtn) {
+    insufficientFundsDepositBtn.addEventListener('click', () => {
+        hideInsufficientFundsModal();
+        openDepositModal();
+    });
+}
+
 // Кодирует текстовый комментарий в стандартный TON-комментарий (32 нулевых
 // бита + UTF-8 текст), упакованный в BOC — именно так TonConnect-кошельки
 // понимают "комментарий к переводу". Рецепт из официальной документации TON
@@ -4217,6 +4250,7 @@ async function handleSlotsSpin() {
             slotsResultEl.className = 'slots-result';
             slotsResultEl.textContent = data.error || 'Не удалось запустить игру';
             setSlotsSpinningUI(false);
+            if (isInsufficientFundsError(data.error)) showInsufficientFundsModal();
             return;
         }
 
@@ -4463,6 +4497,7 @@ async function handleRouletteSpin() {
             rouletteResultEl.textContent = data.error || 'Не удалось запустить игру';
             setRouletteSpinningUI(false);
             if (rouletteWheelWrapEl) rouletteWheelWrapEl.classList.remove('is-spinning');
+            if (isInsufficientFundsError(data.error)) showInsufficientFundsModal();
             return;
         }
 
@@ -4708,6 +4743,7 @@ async function bomberStartGame() {
             bomberResultEl.textContent = data.error || 'Не удалось начать игру';
             bomberBusy = false;
             if (bomberStartBtn) bomberStartBtn.disabled = false;
+            if (isInsufficientFundsError(data.error)) showInsufficientFundsModal();
             return;
         }
 
@@ -5128,6 +5164,7 @@ async function towerStartGame() {
             towerResultEl.textContent = data.error || 'Не удалось начать игру';
             towerBusy = false;
             if (towerStartBtn) towerStartBtn.disabled = false;
+            if (isInsufficientFundsError(data.error)) showInsufficientFundsModal();
             return;
         }
 
@@ -5481,6 +5518,7 @@ async function handleDiceRoll() {
         if (!data.ok) {
             diceResultEl.textContent = data.error || 'Не удалось бросить кубик';
             diceSetControlsDisabled(false);
+            if (isInsufficientFundsError(data.error)) showInsufficientFundsModal();
             return;
         }
 
@@ -5768,6 +5806,7 @@ async function handlePlinkoDrop() {
         if (!data.ok) {
             plinkoResultEl.textContent = data.error || 'Не удалось бросить шарик';
             plinkoSetControlsDisabled(false);
+            if (isInsufficientFundsError(data.error)) showInsufficientFundsModal();
             return;
         }
 
