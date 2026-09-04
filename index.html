@@ -1422,36 +1422,35 @@
     </div>
 
     <!-- Модальное окно выставления NFT на продажу -->
+    <!-- Модалка "Добавить NFT в Хранилище": реальный депозит через Telegram
+         Business — пользователь отправляет подарок нашему аккаунту в Telegram,
+         сервер сам увидит его через вебхук и зачислит (см. server.js,
+         handleTelegramUpdate/creditIncomingGift). Никаких ручных полей —
+         раньше здесь была форма "впишите коллекцию/модель сами", это было
+         дырой безопасности (можно было нарисовать себе любой NFT). -->
     <div id="createListingModal" class="modal" style="display: none;">
-        <div class="modal-content listing-form">
+        <div class="modal-content listing-form deposit-nft-content">
             <button class="close-modal" id="closeCreateListingModal">&times;</button>
             <h2>Добавить NFT</h2>
 
-            <label class="listing-field-label">Коллекция</label>
-            <select id="listingCollectionSelect" class="dropdown-filter listing-select">
-                <option value="">Выберите коллекцию</option>
-            </select>
+            <div class="deposit-nft-icon">🎁</div>
 
-            <label class="listing-field-label">Модель</label>
-            <select id="listingModelSelect" class="dropdown-filter listing-select" disabled>
-                <option value="">Сначала выберите коллекцию</option>
-            </select>
+            <p class="listing-fee-note deposit-nft-desc">
+                Чтобы NFT-подарок появился в вашем Хранилище, отправьте его нашему
+                аккаунту прямо в Telegram — как обычный подарок. Как только Telegram
+                подтвердит передачу, подарок зачислится автоматически, обычно в
+                течение минуты, и мы пришлём уведомление.
+            </p>
 
-            <label class="listing-field-label">Фон</label>
-            <select id="listingBackdropSelect" class="dropdown-filter listing-select" disabled>
-                <option value="">Сначала выберите коллекцию</option>
-            </select>
+            <a href="#" id="depositNftOpenChatBtn" class="action-btn deposit-nft-open-chat-btn" target="_blank" rel="noopener">
+                Открыть чат и отправить подарок
+            </a>
 
-            <label class="listing-field-label">Символ</label>
-            <select id="listingSymbolSelect" class="dropdown-filter listing-select" disabled>
-                <option value="">Сначала выберите коллекцию</option>
-            </select>
-
-            <div class="withdraw-input-box">
-                <input type="number" id="listingGiftNumber" placeholder="Номер подарка (напр. 56824)" min="1" step="1">
+            <div class="listing-fee-note" id="depositNftUnavailableNote" style="display:none;">
+                Приём подарков сейчас не настроен — попробуйте позже.
             </div>
 
-            <button class="action-btn" id="confirmCreateListingBtn">Добавить</button>
+            <button class="action-btn secondary-btn" id="depositNftRefreshBtn">Я уже отправил — проверить Хранилище</button>
         </div>
     </div>
 

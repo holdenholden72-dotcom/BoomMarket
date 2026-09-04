@@ -4316,3 +4316,33 @@ body {
 }
 
 
+/* =====================================================================
+   МОДАЛКА "ДОБАВИТЬ NFT" — теперь просто инструкция по реальному депозиту
+   через Telegram Business (никаких ручных полей, никакого фейкового
+   ввода трейтов — см. app.js).
+   ===================================================================== */
+
+.deposit-nft-content {
+    text-align: center;
+}
+
+.deposit-nft-icon {
+    font-size: 40px;
+    margin: 4px 0 12px;
+}
+
+.deposit-nft-desc {
+    text-align: left;
+    margin-bottom: 16px;
+}
+
+.deposit-nft-open-chat-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    background: linear-gradient(135deg, #ffe066 0%, #ffd700 45%, #ff9f0a 100%);
+    color: #1c1c1e;
+    font-weight: 700;
+    margin-bottom: 8px;
+}

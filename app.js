@@ -3034,20 +3034,8 @@ if (closeWithdrawModalBtn && withdrawModal) {
 }
 
 // === БЛОК ВЫСТАВЛЕНИЯ NFT НА ПРОДАЖУ ===
-const createListingModal = document.getElementById('createListingModal');
-const addListingBtn = document.getElementById('addListingBtn');
-const closeCreateListingModalBtn = document.getElementById('closeCreateListingModal');
-const listingCollectionSelect = document.getElementById('listingCollectionSelect');
-const listingModelSelect = document.getElementById('listingModelSelect');
-const listingBackdropSelect = document.getElementById('listingBackdropSelect');
-const listingSymbolSelect = document.getElementById('listingSymbolSelect');
-const listingGiftNumberInput = document.getElementById('listingGiftNumber');
-const confirmCreateListingBtn = document.getElementById('confirmCreateListingBtn');
-
-// Полные трейты (с id!) для ВЫБРАННОЙ в форме коллекции — отдельный кэш от
-// traitsCache фильтров маркета, потому что здесь нужны именно id для отправки на сервер.
-let listingTraitsCache = { models: [], backdrops: [], symbols: [] };
-
+// Общая утилита — заполняет <select> вариантами трейтов (модель/фон/символ),
+// используется формой создания ордера (см. #orderModelSelect и т.д. ниже).
 function fillListingSelect(selectEl, items, placeholder, labelFn) {
     selectEl.innerHTML = `<option value="">${placeholder}</option>`;
     items.forEach(item => {
@@ -3059,39 +3047,45 @@ function fillListingSelect(selectEl, items, placeholder, labelFn) {
     selectEl.disabled = items.length === 0;
 }
 
-function resetListingForm() {
-    listingCollectionSelect.value = '';
-    listingModelSelect.innerHTML = '<option value="">Сначала выберите коллекцию</option>';
-    listingBackdropSelect.innerHTML = '<option value="">Сначала выберите коллекцию</option>';
-    listingSymbolSelect.innerHTML = '<option value="">Сначала выберите коллекцию</option>';
-    listingModelSelect.disabled = true;
-    listingBackdropSelect.disabled = true;
-    listingSymbolSelect.disabled = true;
-    listingGiftNumberInput.value = '';
-    listingTraitsCache = { models: [], backdrops: [], symbols: [] };
-}
+// === Модалка "Добавить NFT" — реальный депозит через Telegram Business.
+// Никаких данных на сервер отсюда не отправляется: сервер узнаёт о новом
+// подарке сам, через вебхук, когда пользователь реально пришлёт его в
+// Telegram (см. /api/telegram/webhook на бэкенде). Кнопка тут только
+// открывает чат и, для удобства, обновляет Хранилище по запросу. ===
+const createListingModal = document.getElementById('createListingModal');
+const addListingBtn = document.getElementById('addListingBtn');
+const closeCreateListingModalBtn = document.getElementById('closeCreateListingModal');
+const depositNftOpenChatBtn = document.getElementById('depositNftOpenChatBtn');
+const depositNftUnavailableNote = document.getElementById('depositNftUnavailableNote');
+const depositNftRefreshBtn = document.getElementById('depositNftRefreshBtn');
 
-async function populateListingCollectionSelect() {
-    // Коллекции уже загружены маркетом в collectionsCache при старте —
-    // переиспользуем, чтобы не дёргать сервер второй раз.
-    listingCollectionSelect.innerHTML = '<option value="">Выберите коллекцию</option>';
-    collectionsCache.forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = c.id;
-        opt.textContent = c.name;
-        listingCollectionSelect.appendChild(opt);
-    });
+let businessAccountUsername = null;
+
+async function loadDepositNftInfo() {
+    if (businessAccountUsername !== null) return; // уже грузили
+    try {
+        const res = await fetch(`${API_URL}/api/deposit-nft-info`);
+        const data = await res.json();
+        businessAccountUsername = (data.ok && data.username) ? data.username : '';
+    } catch (e) {
+        console.error('Не удалось получить данные для депозита NFT:', e);
+        businessAccountUsername = '';
+    }
+
+    if (businessAccountUsername) {
+        depositNftOpenChatBtn.href = `https://t.me/${businessAccountUsername}`;
+        depositNftOpenChatBtn.style.display = 'flex';
+        depositNftUnavailableNote.style.display = 'none';
+    } else {
+        depositNftOpenChatBtn.style.display = 'none';
+        depositNftUnavailableNote.style.display = 'block';
+    }
 }
 
 if (addListingBtn && createListingModal) {
     addListingBtn.addEventListener('click', async () => {
-        if (!authToken) {
-            alert('Не удалось подтвердить личность. Попробуйте перезайти.');
-            return;
-        }
-        resetListingForm();
-        await populateListingCollectionSelect();
         createListingModal.style.display = 'flex';
+        await loadDepositNftInfo();
     });
 }
 
@@ -3101,108 +3095,10 @@ if (closeCreateListingModalBtn && createListingModal) {
     });
 }
 
-// При выборе коллекции — подгружаем её реальные модели/фоны/символы (с id)
-// через /api/collections/:id/filters и заполняем остальные select'ы.
-listingCollectionSelect.addEventListener('change', async () => {
-    const collectionId = listingCollectionSelect.value;
-
-    if (!collectionId) {
-        listingModelSelect.innerHTML = '<option value="">Сначала выберите коллекцию</option>';
-        listingBackdropSelect.innerHTML = '<option value="">Сначала выберите коллекцию</option>';
-        listingSymbolSelect.innerHTML = '<option value="">Сначала выберите коллекцию</option>';
-        listingModelSelect.disabled = true;
-        listingBackdropSelect.disabled = true;
-        listingSymbolSelect.disabled = true;
-        return;
-    }
-
-    listingModelSelect.innerHTML = '<option value="">Загрузка...</option>';
-    listingBackdropSelect.innerHTML = '<option value="">Загрузка...</option>';
-    listingSymbolSelect.innerHTML = '<option value="">Загрузка...</option>';
-
-    try {
-        const res = await fetch(`${API_URL}/api/collections/${collectionId}/filters`);
-        const data = await res.json();
-
-        if (!data.ok) throw new Error(data.error || 'Не удалось загрузить трейты');
-
-        listingTraitsCache = data.filters;
-
-        fillListingSelect(listingModelSelect, listingTraitsCache.models, 'Выберите модель', m =>
-            m.rarity_permille != null ? `${m.name} (${m.rarity_permille}%)` : m.name);
-        fillListingSelect(listingBackdropSelect, listingTraitsCache.backdrops, 'Выберите фон', b =>
-            b.rarity_permille != null ? `${b.name} (${b.rarity_permille}%)` : b.name);
-        fillListingSelect(listingSymbolSelect, listingTraitsCache.symbols, 'Выберите символ', s =>
-            s.rarity_permille != null ? `${s.name} (${s.rarity_permille}%)` : s.name);
-    } catch (e) {
-        console.error('Не удалось загрузить трейты коллекции:', e);
-        listingModelSelect.innerHTML = '<option value="">Ошибка загрузки</option>';
-        listingBackdropSelect.innerHTML = '<option value="">Ошибка загрузки</option>';
-        listingSymbolSelect.innerHTML = '<option value="">Ошибка загрузки</option>';
-    }
-});
-
-if (confirmCreateListingBtn) {
-    confirmCreateListingBtn.addEventListener('click', async () => {
-        const collectionId = parseInt(listingCollectionSelect.value, 10);
-        const modelId = parseInt(listingModelSelect.value, 10);
-        const backdropId = parseInt(listingBackdropSelect.value, 10);
-        const symbolId = parseInt(listingSymbolSelect.value, 10);
-        const giftNumber = parseInt(listingGiftNumberInput.value, 10);
-
-        if (!collectionId) {
-            alert('Выберите коллекцию');
-            return;
-        }
-        if (!modelId) {
-            alert('Выберите модель');
-            return;
-        }
-        if (!backdropId) {
-            alert('Выберите фон');
-            return;
-        }
-        if (!symbolId) {
-            alert('Выберите символ');
-            return;
-        }
-        if (!giftNumber || giftNumber <= 0) {
-            alert('Укажите корректный номер подарка');
-            return;
-        }
-        if (!authToken) {
-            alert('Не удалось подтвердить личность. Попробуйте перезайти.');
-            return;
-        }
-
-        try {
-            const res = await fetch(`${API_URL}/api/inventory/add`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`,
-                },
-                body: JSON.stringify({ collectionId, modelId, backdropId, symbolId, giftNumber }),
-            });
-
-            const data = await res.json();
-
-            if (!data.ok) {
-                alert(data.error || 'Не удалось добавить NFT');
-                return;
-            }
-
-            alert('NFT добавлен в Хранилище!');
-            createListingModal.style.display = 'none';
-            resetListingForm();
-
-            // Открываем Хранилище и обновляем список — новый подарок должен появиться сразу.
-            showScreen('storage');
-            await loadInventory();
-        } catch (e) {
-            alert('Ошибка соединения с сервером');
-            console.error(e);
-        }
+if (depositNftRefreshBtn) {
+    depositNftRefreshBtn.addEventListener('click', () => {
+        createListingModal.style.display = 'none';
+        showScreen('storage');
     });
 }
 
