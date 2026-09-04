@@ -3056,6 +3056,7 @@ const createListingModal = document.getElementById('createListingModal');
 const addListingBtn = document.getElementById('addListingBtn');
 const closeCreateListingModalBtn = document.getElementById('closeCreateListingModal');
 const depositNftOpenChatBtn = document.getElementById('depositNftOpenChatBtn');
+const depositNftUsernameEl = document.getElementById('depositNftUsername');
 const depositNftUnavailableNote = document.getElementById('depositNftUnavailableNote');
 const depositNftRefreshBtn = document.getElementById('depositNftRefreshBtn');
 
@@ -3074,6 +3075,7 @@ async function loadDepositNftInfo() {
 
     if (businessAccountUsername) {
         depositNftOpenChatBtn.href = `https://t.me/${businessAccountUsername}`;
+        depositNftUsernameEl.textContent = `@${businessAccountUsername}`;
         depositNftOpenChatBtn.style.display = 'flex';
         depositNftUnavailableNote.style.display = 'none';
     } else {

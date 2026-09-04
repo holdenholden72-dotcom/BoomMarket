@@ -4317,9 +4317,9 @@ body {
 
 
 /* =====================================================================
-   МОДАЛКА "ДОБАВИТЬ NFT" — теперь просто инструкция по реальному депозиту
-   через Telegram Business (никаких ручных полей, никакого фейкового
-   ввода трейтов — см. app.js).
+   МОДАЛКА "ДОБАВИТЬ NFT" — просто инструкция по реальному депозиту через
+   Telegram Business (никаких ручных полей, никакого фейкового ввода
+   трейтов — см. app.js). Карточка-ссылка на чат + кнопка обновить.
    ===================================================================== */
 
 .deposit-nft-content {
@@ -4327,22 +4327,132 @@ body {
 }
 
 .deposit-nft-icon {
-    font-size: 40px;
-    margin: 4px 0 12px;
+    width: 64px;
+    height: 64px;
+    margin: 4px auto 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, rgba(255, 215, 0, 0.35), rgba(255, 159, 10, 0.08) 70%);
+    border: 1px solid rgba(255, 215, 0, 0.25);
+}
+
+.deposit-nft-content h2 {
+    margin-bottom: 10px;
 }
 
 .deposit-nft-desc {
     text-align: left;
-    margin-bottom: 16px;
+    color: #9a9a9f;
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 0 0 16px;
 }
 
-.deposit-nft-open-chat-btn {
+/* Карточка-ссылка на чат — самолётик слева, юзернейм по центру, стрелка
+   справа: выглядит как переход, а не как обычная кнопка с текстом. */
+.deposit-nft-target-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    background: linear-gradient(135deg, rgba(255, 224, 102, 0.14) 0%, rgba(255, 159, 10, 0.10) 100%);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 16px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.deposit-nft-target-card:active {
+    transform: scale(0.98);
+    border-color: rgba(255, 215, 0, 0.55);
+}
+
+.deposit-nft-target-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
-    text-decoration: none;
+    font-size: 18px;
+    border-radius: 50%;
     background: linear-gradient(135deg, #ffe066 0%, #ffd700 45%, #ff9f0a 100%);
-    color: #1c1c1e;
+}
+
+.deposit-nft-target-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    text-align: left;
+}
+
+.deposit-nft-target-label {
+    font-size: 11px;
+    color: #9a9a9f;
+}
+
+.deposit-nft-target-username {
+    font-size: 15px;
     font-weight: 700;
-    margin-bottom: 8px;
+    color: #ffd700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.deposit-nft-target-arrow {
+    flex-shrink: 0;
+    color: #ffd700;
+    display: flex;
+    align-items: center;
+}
+
+.deposit-nft-unavailable {
+    text-align: center;
+    font-size: 12px;
+    color: #ff6b6b;
+    background: rgba(255, 107, 107, 0.08);
+    border: 1px solid rgba(255, 107, 107, 0.25);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+}
+
+/* Второстепенная кнопка "Я уже отправил" — тонкая рамка, значок обновления
+   слегка крутится при наведении/клике, чтобы явно читаться как "проверить". */
+.deposit-nft-refresh-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    padding: 12px 0;
+    color: #d0d0d5;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.deposit-nft-refresh-btn:active {
+    border-color: rgba(255, 215, 0, 0.4);
+    color: #ffd700;
+}
+
+.deposit-nft-refresh-icon {
+    font-size: 15px;
+    transition: transform 0.4s ease;
+}
+
+.deposit-nft-refresh-btn:active .deposit-nft-refresh-icon {
+    transform: rotate(180deg);
 }

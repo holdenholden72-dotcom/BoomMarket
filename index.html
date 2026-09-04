@@ -1431,26 +1431,35 @@
     <div id="createListingModal" class="modal" style="display: none;">
         <div class="modal-content listing-form deposit-nft-content">
             <button class="close-modal" id="closeCreateListingModal">&times;</button>
-            <h2>Добавить NFT</h2>
 
             <div class="deposit-nft-icon">🎁</div>
+            <h2>Добавить NFT</h2>
 
-            <p class="listing-fee-note deposit-nft-desc">
-                Чтобы NFT-подарок появился в вашем Хранилище, отправьте его нашему
-                аккаунту прямо в Telegram — как обычный подарок. Как только Telegram
-                подтвердит передачу, подарок зачислится автоматически, обычно в
-                течение минуты, и мы пришлём уведомление.
+            <p class="deposit-nft-desc">
+                Отправьте подарок нашему аккаунту прямо в Telegram — как обычный
+                подарок другу. Как только Telegram подтвердит передачу, он
+                появится в вашем Хранилище автоматически, обычно в течение минуты.
             </p>
 
-            <a href="#" id="depositNftOpenChatBtn" class="action-btn deposit-nft-open-chat-btn" target="_blank" rel="noopener">
-                Открыть чат и отправить подарок
+            <a href="#" id="depositNftOpenChatBtn" class="deposit-nft-target-card" target="_blank" rel="noopener">
+                <span class="deposit-nft-target-icon">✈️</span>
+                <span class="deposit-nft-target-info">
+                    <span class="deposit-nft-target-label">Отправить подарок сюда</span>
+                    <span class="deposit-nft-target-username" id="depositNftUsername">@...</span>
+                </span>
+                <span class="deposit-nft-target-arrow">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                </span>
             </a>
 
-            <div class="listing-fee-note" id="depositNftUnavailableNote" style="display:none;">
+            <div class="deposit-nft-unavailable" id="depositNftUnavailableNote" style="display:none;">
                 Приём подарков сейчас не настроен — попробуйте позже.
             </div>
 
-            <button class="action-btn secondary-btn" id="depositNftRefreshBtn">Я уже отправил — проверить Хранилище</button>
+            <button class="deposit-nft-refresh-btn" id="depositNftRefreshBtn">
+                <span class="deposit-nft-refresh-icon">↻</span>
+                Я уже отправил — проверить Хранилище
+            </button>
         </div>
     </div>
 
