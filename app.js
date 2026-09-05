@@ -19,6 +19,7 @@ const bomberScreen = document.getElementById('bomberScreen');
 const towerScreen = document.getElementById('towerScreen');
 const diceScreen = document.getElementById('diceScreen');
 const plinkoScreen = document.getElementById('plinkoScreen');
+const adminScreen = document.getElementById('adminScreen');
 const openProfileBtn = document.getElementById('openProfileBtn');
 const backToMarketBtn = document.getElementById('backToMarketBtn');
 const backToProfileFromHistoryBtn = document.getElementById('backToProfileFromHistoryBtn');
@@ -45,6 +46,7 @@ const screensByName = {
     tower: towerScreen,
     dice: diceScreen,
     plinko: plinkoScreen,
+    admin: adminScreen,
 };
 
 /** Показывает один экран из screensByName, скрывая остальные, и подсвечивает
@@ -94,6 +96,9 @@ function showScreen(name) {
         // пропадали только после полного перезахода в бота).
         loadListings();
     }
+    if (name === 'admin') {
+        loadAdminStats();
+    }
 }
 
 // === Автообновление маркета, пока пользователь на нём стоит ===
@@ -119,6 +124,17 @@ document.addEventListener('visibilitychange', () => {
         refreshBalance();
     }
 });
+
+// === Автообновление админ-консоли, пока она открыта ===
+// "Активны сейчас" особенно быстро устаревает, поэтому обновляем чаще, чем
+// маркет, но только пока сам экран реально открыт.
+const ADMIN_STATS_POLL_INTERVAL_MS = 10000;
+
+setInterval(() => {
+    if (currentScreenName === 'admin' && document.visibilityState === 'visible') {
+        loadAdminStats();
+    }
+}, ADMIN_STATS_POLL_INTERVAL_MS);
 
 openProfileBtn.addEventListener('click', () => {
     showScreen('profile');
@@ -206,6 +222,55 @@ if (ordersStatCard) {
             showScreen('orders');
         }
     });
+}
+
+// Кнопка админ-консоли в профиле — в разметке всегда, но display:none по
+// умолчанию; показывается только своему (см. authenticateWithBackend).
+const adminPanelBtn = document.getElementById('adminPanelBtn');
+if (adminPanelBtn) {
+    adminPanelBtn.addEventListener('click', () => showScreen('admin'));
+}
+const adminBackBtn = document.getElementById('adminBackBtn');
+if (adminBackBtn) {
+    adminBackBtn.addEventListener('click', () => showScreen('profile'));
+}
+const adminRefreshBtn = document.getElementById('adminRefreshBtn');
+if (adminRefreshBtn) {
+    adminRefreshBtn.addEventListener('click', () => loadAdminStats());
+}
+
+async function loadAdminStats() {
+    if (!authToken) return;
+    const grid = document.getElementById('adminStatsGrid');
+    if (!grid) return;
+
+    try {
+        const res = await fetch(`${API_URL}/api/admin/stats`, {
+            headers: { 'Authorization': `Bearer ${authToken}` },
+        });
+        const data = await res.json();
+
+        if (!data.ok) {
+            grid.innerHTML = `<div class="empty-state">${data.error || 'Не удалось загрузить статистику'}</div>`;
+            return;
+        }
+
+        const s = data.stats;
+        const setVal = (id, value) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = value;
+        };
+
+        setVal('adminStatOnline', s.onlineNow);
+        setVal('adminStatVisits', s.visits24h);
+        setVal('adminStatDeposits', `💎 ${formatGram(s.deposits24h)}`);
+        setVal('adminStatWithdrawals', `💎 ${formatGram(s.withdrawals24h)}`);
+        setVal('adminStatTotalBalance', `💎 ${formatGram(s.totalBalance)}`);
+        setVal('adminStatNftCount', s.totalNftCount);
+    } catch (e) {
+        console.error('Не удалось загрузить админ-статистику:', e);
+        grid.innerHTML = `<div class="empty-state">Ошибка соединения с сервером</div>`;
+    }
 }
 
 // Игровой хаб в профиле — "Слоты" и "Рулетка" ведут в реальные игры,
@@ -2670,6 +2735,13 @@ async function authenticateWithBackend(initData) {
         currentTgId = data.user.id;
         updateBalanceUI(data.user.balance);
         refreshOrdersStat();
+
+        // Кнопка админ-консоли — существует в разметке всегда, но видна
+        // только тому, чей tg_id в ADMIN_TG_ID на сервере. Обычные
+        // пользователи её просто никогда не увидят.
+        if (adminPanelBtn) {
+            adminPanelBtn.style.display = data.user.isAdmin ? '' : 'none';
+        }
 
         console.log('Авторизован как:', data.user.username || data.user.first_name);
     } catch (e) {

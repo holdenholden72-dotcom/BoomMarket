@@ -1996,6 +1996,84 @@ body {
     transform: scale(0.96);
 }
 
+/* Кнопка "Админ-консоль" в профиле — выглядит как остальные пункты списка,
+   а не квадратная плитка (переопределяем колоночный .action-btn). */
+.admin-panel-btn {
+    flex-direction: row;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 24px;
+    background: rgba(255, 69, 58, 0.1);
+    border: 1px solid rgba(255, 69, 58, 0.35);
+    color: #ff6961;
+}
+
+.admin-panel-btn:active {
+    background: rgba(255, 69, 58, 0.18);
+}
+
+.admin-panel-btn .action-icon {
+    background: rgba(255, 69, 58, 0.16);
+}
+
+/* Круглая кнопка "Обновить" в шапке админ-консоли */
+.admin-refresh-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #fff;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.admin-refresh-btn:active {
+    background: rgba(255, 255, 255, 0.12);
+    transform: rotate(90deg);
+    transition: transform 0.3s ease;
+}
+
+/* Сетка статистики админ-консоли */
+.admin-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.admin-stat-card {
+    background: linear-gradient(160deg, #1f1f22 0%, #17171a 100%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+    padding: 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.admin-stat-card-wide {
+    grid-column: span 2;
+}
+
+.admin-stat-icon {
+    font-size: 20px;
+}
+
+.admin-stat-value {
+    font-size: 20px;
+    font-weight: 800;
+    color: #ffd700;
+    word-break: break-word;
+}
+
+.admin-stat-label {
+    font-size: 12px;
+    color: #8e8e93;
+}
+
 .slots-rules-btn-icon {
     width: 18px;
     height: 18px;
