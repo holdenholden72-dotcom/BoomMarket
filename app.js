@@ -2675,7 +2675,7 @@ if (storageSortApplyBtn) {
 
 // Инициализация TonConnect UI
 const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-    manifestUrl: 'https://holdenholden72-dotcom.github.io/BoomMarket/tonconnect-manifest.json',
+    manifestUrl: 'https://boommarkett.github.io/BoomMarket/tonconnect-manifest.json',
     buttonRootId: 'walletBtn'
 });
 
