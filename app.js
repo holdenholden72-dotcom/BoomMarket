@@ -2757,8 +2757,8 @@ if (confirmWithdrawBtn) {
     confirmWithdrawBtn.addEventListener('click', async () => {
         const amount = parseFloat(withdrawAmountInput.value);
 
-        if (!isValidAmount(amount, 0.5, 100000)) {
-            alert('Сумма должна быть от 0.5 до 100000, максимум с одним знаком после запятой (например: 0.5, 1.4, 10.7, 10)');
+        if (!isValidAmount(amount, 0.5, 1000)) {
+            alert('Сумма должна быть от 0.5 до 1000, максимум с одним знаком после запятой (например: 0.5, 1.4, 10.7, 10)');
             return;
         }
 
@@ -2793,7 +2793,14 @@ if (confirmWithdrawBtn) {
             }
 
             updateBalanceUI(data.balance);
-            alert(`${amount} TON отправлено на ваш кошелёк!`);
+
+            if (data.pending) {
+                // Сумма ≥ порога ручного подтверждения — TON ещё не отправлен,
+                // баланс списан и ждём решения администратора.
+                alert(data.message || 'Вывод отправлен на ручное подтверждение.');
+            } else {
+                alert(`${amount} TON отправлено на ваш кошелёк!`);
+            }
 
             if (withdrawModal) {
                 withdrawModal.style.display = 'none';
